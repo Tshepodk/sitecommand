@@ -14,10 +14,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .logo span{color:var(--text2);font-weight:400}
 .header-badge{background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:3px 12px;font-size:11px;font-family:var(--font-d);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal)}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s}
-.conn-dot.connected{background:var(--green);animation:pulse 2s infinite}
-.conn-label{font-size:11px;color:var(--text3)}
+.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-.shell{max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.shell{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
 .section{margin-bottom:2rem}
 .section-label{font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
 .section-label::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -35,27 +34,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .form-select option{background:var(--bg2)}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
 .card-inner{padding:1.25rem}
-.cost-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.cost-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;transition:border-color 0.15s}
-.cost-cat:hover{border-color:var(--border2)}
-.cost-cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.cost-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
-.cost-cat-name{font-family:var(--font-d);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
-.cost-input-row{display:flex;gap:6px;align-items:center}
-.cost-prefix{font-size:13px;color:var(--text3);font-weight:500;flex-shrink:0}
-.task-log{display:flex;flex-direction:column;gap:8px}
-.task-entry{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}
-.task-entry-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.task-remove{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:14px;border-radius:4px;transition:color 0.12s}
-.task-remove:hover{color:var(--red)}
-.add-row-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border2);border-radius:var(--r);padding:8px 14px;color:var(--text3);cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;width:100%;justify-content:center;margin-top:6px}
-.add-row-btn:hover{border-color:var(--accent);color:var(--accent)}
-.summary-bar{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1rem 1.25rem;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;position:sticky;top:56px;z-index:9}
-.sum-item{display:flex;flex-direction:column;gap:2px}
-.sum-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
-.sum-val{font-family:var(--font-d);font-size:20px;font-weight:700;line-height:1}
-.sum-total{margin-left:auto;text-align:right}
-.sum-total .sum-val{color:var(--accent);font-size:26px}
+/* Steps */
 .steps{display:flex;gap:0;margin-bottom:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
 .step{flex:1;padding:10px 14px;display:flex;align-items:center;gap:7px;font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3);border-right:1px solid var(--border);cursor:pointer;transition:all 0.15s}
 .step:last-child{border-right:none}
@@ -63,6 +42,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .step.done{color:var(--green)}
 .step-num{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
 .step.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+/* Summary bar */
+.summary-bar{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1rem 1.25rem;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;position:sticky;top:56px;z-index:9}
+.sum-item{display:flex;flex-direction:column;gap:2px}
+.sum-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.sum-val{font-family:var(--font-d);font-size:20px;font-weight:700;line-height:1}
+.sum-total{margin-left:auto;text-align:right}
+.sum-total .sum-val{color:var(--accent);font-size:26px}
+/* Buttons */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s}
 .btn-primary{background:var(--accent);color:#000}
 .btn-primary:hover{background:var(--accent2)}
@@ -71,26 +58,51 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .btn-success{background:var(--green);color:#000}
 .btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
-.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
-.sp-green{background:rgba(34,197,94,0.12);color:#4ade80}
-.sp-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
-.sp-red{background:rgba(239,68,68,0.12);color:#f87171}
+/* Workers */
+.workers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.worker-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px}
+.worker-cat-name{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+/* Task qty rows */
+.task-qty-rows{display:flex;flex-direction:column;gap:8px}
+.task-qty-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.tqr-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.tqr-title{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.tqr-meta{font-size:11px;color:var(--text3)}
+.tqr-progress-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tqr-bar-wrap{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.tqr-bar-fill{height:100%;border-radius:3px;background:var(--blue);transition:width 0.3s}
+.tqr-pct{font-family:var(--font-d);font-size:13px;font-weight:700;min-width:40px;text-align:right;color:var(--blue)}
+.tqr-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end}
+.tqr-input-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.no-tasks-msg{background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--r);padding:1.5rem;text-align:center;color:var(--text3);font-size:13px}
+/* Costs */
+.cost-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cost-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:1rem}
+.cost-cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cost-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.cost-cat-name{font-family:var(--font-d);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.cost-input-row{display:flex;gap:6px;align-items:center}
+.cost-prefix{font-size:13px;color:var(--text3);font-weight:500;flex-shrink:0}
+/* Weather */
 .weather-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .weather-opt{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all 0.15s}
 .weather-opt.selected{border-color:var(--accent);background:rgba(245,166,35,0.08)}
 .weather-opt input{display:none}
 .weather-icon{font-size:20px}
 .weather-name{font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text2)}
+/* Status pill */
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.sp-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.sp-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.sp-red{background:rgba(239,68,68,0.12);color:#f87171}
+/* Toast */
 .toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;z-index:100;display:none;animation:slideup 0.3s ease}
-.toast.success{background:var(--green);color:#000}
-.toast.error{background:var(--red);color:#fff}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
 @keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.workers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.worker-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px}
-.worker-cat-name{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+.spinner-sm{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:600px){.form-grid.cols-2,.form-grid.cols-3{grid-template-columns:1fr}.cost-cats{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(2,1fr)}.workers-grid{grid-template-columns:1fr 1fr}.steps{flex-wrap:wrap}.step{min-width:45%}}
+@media(max-width:600px){.form-grid.cols-2,.form-grid.cols-3{grid-template-columns:1fr}.cost-cats{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(2,1fr)}.workers-grid{grid-template-columns:1fr 1fr}.steps{flex-wrap:wrap}.step{min-width:45%}.tqr-inputs{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -100,57 +112,53 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
   <div class="header-badge">Daily Intake</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <div class="conn-dot" id="conn-dot"></div>
-    <span class="conn-label" id="conn-label">Connecting...</span>
+    <span style="font-size:11px;color:var(--text3)" id="conn-label">Connecting...</span>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
     <span id="today-date" style="font-size:12px;color:var(--text3)"></span>
-    <a href="index.html" style="font-size:12px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);text-decoration:none">← Dashboard</a>
+    <a href="index.html" style="font-size:12px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);text-decoration:none">&#8592; Dashboard</a>
   </div>
 </div>
 
 <div class="shell">
   <div style="margin-bottom:1.5rem">
     <h1 style="font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;line-height:1.1">Daily Site Report</h1>
-    <p style="color:var(--text2);font-size:13px;margin-top:4px">All entries are saved to the cloud and update the project dashboard in real time.</p>
+    <p style="color:var(--text2);font-size:13px;margin-top:4px">Quantities entered here automatically update project task progress in real time.</p>
   </div>
 
   <div class="steps" id="steps-bar">
     <div class="step active" onclick="goStep(0)"><div class="step-num">1</div>Project Info</div>
-    <div class="step" onclick="goStep(1)"><div class="step-num">2</div>Daily Tasks</div>
+    <div class="step" onclick="goStep(1)"><div class="step-num">2</div>Task Quantities</div>
     <div class="step" onclick="goStep(2)"><div class="step-num">3</div>Costs</div>
     <div class="step" onclick="goStep(3)"><div class="step-num">4</div>Site Conditions</div>
-    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Review</div>
+    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Review & Submit</div>
   </div>
 
   <div class="summary-bar">
-    <div class="sum-item"><div class="sum-label">Project</div><div class="sum-val" id="sum-project" style="font-size:15px;color:var(--text)">—</div></div>
-    <div class="sum-item"><div class="sum-label">Tasks logged</div><div class="sum-val" id="sum-tasks" style="color:var(--blue)">0</div></div>
+    <div class="sum-item"><div class="sum-label">Project</div><div class="sum-val" id="sum-project" style="font-size:15px;color:var(--text)">-</div></div>
+    <div class="sum-item"><div class="sum-label">Task updates</div><div class="sum-val" id="sum-tasks" style="color:var(--blue)">0</div></div>
     <div class="sum-item"><div class="sum-label">Workers on site</div><div class="sum-val" id="sum-workers" style="color:var(--teal)">0</div></div>
     <div class="sum-total"><div class="sum-label">Today's total cost</div><div class="sum-val" id="sum-cost">R 0</div></div>
   </div>
 
-  <!-- STEP 0 -->
+  <!-- STEP 0: Project Info -->
   <div id="step-0">
     <div class="section">
       <div class="section-label"><div class="section-num">1</div>Project Information</div>
       <div class="card"><div class="card-inner">
         <div class="form-grid cols-2">
           <div class="form-group"><label class="form-label">Project <span class="req">*</span></label>
-            <select class="form-select" id="f-project" onchange="updateSummary()">
-              <option value="">— Select project —</option>
-              <option>N3 Highway Expansion</option>
-              <option>Vodacom 5G Rollout</option>
-              <option>Sandton Substation</option>
-              <option>MTN Tower Upgrade</option>
+            <select class="form-select" id="f-project" onchange="onProjectChange()">
+              <option value="">- Select project -</option>
             </select>
           </div>
           <div class="form-group"><label class="form-label">Report Date <span class="req">*</span></label><input class="form-input" type="date" id="f-date"/></div>
-          <div class="form-group"><label class="form-label">Site Location / Zone</label><input class="form-input" type="text" id="f-location" placeholder="e.g. Sector 4, km 47–52"/></div>
+          <div class="form-group"><label class="form-label">Site Location / Zone</label><input class="form-input" type="text" id="f-location" placeholder="e.g. Sector 4, km 47-52"/></div>
           <div class="form-group"><label class="form-label">Reported By <span class="req">*</span></label><input class="form-input" type="text" id="f-reporter" placeholder="Full name"/></div>
           <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" type="text" id="f-role" placeholder="e.g. Site Foreman"/></div>
           <div class="form-group"><label class="form-label">Report Period</label>
             <select class="form-select" id="f-period">
-              <option>Day shift (06:00–18:00)</option><option>Night shift (18:00–06:00)</option><option>Full day</option>
+              <option>Day shift (06:00-18:00)</option><option>Night shift (18:00-06:00)</option><option>Full day</option>
             </select>
           </div>
         </div>
@@ -170,41 +178,41 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
         </div>
       </div></div>
     </div>
-    <div class="btn-row"><button class="btn btn-primary" onclick="goStep(1)">Next: Daily Tasks →</button></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goStep(1)">Next: Task Quantities &#8594;</button></div>
   </div>
 
-  <!-- STEP 1 -->
+  <!-- STEP 1: Task Quantities -->
   <div id="step-1" style="display:none">
     <div class="section">
-      <div class="section-label"><div class="section-num">2</div>Daily Task Updates</div>
-      <div class="card"><div class="card-inner">
-        <div class="task-log" id="task-log"></div>
-        <button class="add-row-btn" onclick="addTask()">+ Add Task Update</button>
-      </div></div>
+      <div class="section-label"><div class="section-num">2</div>Daily Task Quantities</div>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Enter the quantity completed <strong>today</strong> for each task. Progress % is calculated automatically and accumulated to the project total.</p>
+      <div class="task-qty-rows" id="task-qty-rows">
+        <div class="no-tasks-msg">Select a project in Step 1 to load its tasks.</div>
+      </div>
     </div>
     <div class="form-group" style="margin-bottom:1.5rem">
       <label class="form-label">Overall Daily Progress Note</label>
-      <textarea class="form-textarea" id="f-progress-note" placeholder="Describe what was achieved today, blockers encountered, carry-over work..."></textarea>
+      <textarea class="form-textarea" id="f-progress-note" placeholder="Describe what was achieved today, blockers, carry-over work..."></textarea>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(0)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(2)">Next: Costs →</button>
+      <button class="btn btn-ghost" onclick="goStep(0)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(2)">Next: Costs &#8594;</button>
     </div>
   </div>
 
-  <!-- STEP 2 -->
+  <!-- STEP 2: Costs -->
   <div id="step-2" style="display:none">
     <div class="section">
       <div class="section-label"><div class="section-num">3</div>Cost Categories</div>
       <div class="cost-cats">
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(59,130,246,0.12);color:#60a5fa">🚛</div><div class="cost-cat-name" style="color:#60a5fa">Transport</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-transport" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-transport" placeholder="Notes — vehicle types, trips, km..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">🧱</div><div class="cost-cat-name" style="color:var(--accent)">Materials</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-materials" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-materials" placeholder="Notes — items, quantities..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(168,85,247,0.12);color:#c084fc">🏨</div><div class="cost-cat-name" style="color:#c084fc">Accommodation</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-accommodation" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-accommodation" placeholder="Notes — workers, nights..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(34,197,94,0.12);color:#4ade80">👷</div><div class="cost-cat-name" style="color:#4ade80">Labour</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-labour" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-labour" placeholder="Notes — overtime, subcontractors..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(20,184,166,0.12);color:#2dd4bf">🏗</div><div class="cost-cat-name" style="color:#2dd4bf">Plant & Equipment</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-plant" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-plant" placeholder="Notes — hire rates, fuel..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(239,68,68,0.12);color:#f87171">📡</div><div class="cost-cat-name" style="color:#f87171">Telecoms Hardware</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-telecoms" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-telecoms" placeholder="Notes — cables, antennas..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(139,144,160,0.12);color:var(--text2)">🍽</div><div class="cost-cat-name" style="color:var(--text2)">Subsistence</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-subsistence" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-subsistence" placeholder="Notes — meals, allowances..." style="font-size:12px;margin-top:6px"/></div>
-        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">📋</div><div class="cost-cat-name" style="color:var(--accent)">Other / Misc</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-other" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-other" placeholder="Notes — permits, printing..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(59,130,246,0.12);color:#60a5fa">&#128666;</div><div class="cost-cat-name" style="color:#60a5fa">Transport</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-transport" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-transport" placeholder="Vehicle types, trips, km..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">&#129521;</div><div class="cost-cat-name" style="color:var(--accent)">Materials</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-materials" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-materials" placeholder="Items, quantities..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(168,85,247,0.12);color:#c084fc">&#127976;</div><div class="cost-cat-name" style="color:#c084fc">Accommodation</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-accommodation" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-accommodation" placeholder="Workers, nights..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(34,197,94,0.12);color:#4ade80">&#128119;</div><div class="cost-cat-name" style="color:#4ade80">Labour</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-labour" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-labour" placeholder="Overtime, subcontractors..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(20,184,166,0.12);color:#2dd4bf">&#127959;</div><div class="cost-cat-name" style="color:#2dd4bf">Plant & Equipment</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-plant" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-plant" placeholder="Hire rates, fuel, repairs..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(239,68,68,0.12);color:#f87171">&#128225;</div><div class="cost-cat-name" style="color:#f87171">Telecoms Hardware</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-telecoms" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-telecoms" placeholder="Cables, antennas..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(139,144,160,0.12);color:var(--text2)">&#127869;</div><div class="cost-cat-name" style="color:var(--text2)">Subsistence</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-subsistence" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-subsistence" placeholder="Meals, allowances..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">&#128203;</div><div class="cost-cat-name" style="color:var(--accent)">Other / Misc</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-other" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-other" placeholder="Permits, printing..." style="font-size:12px;margin-top:6px"/></div>
       </div>
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:1rem 1.25rem;margin-top:1rem;display:flex;align-items:center;justify-content:space-between">
         <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Total Daily Cost</span>
@@ -212,86 +220,193 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(3)">Next: Site Conditions →</button>
+      <button class="btn btn-ghost" onclick="goStep(1)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next: Site Conditions &#8594;</button>
     </div>
   </div>
 
-  <!-- STEP 3 -->
+  <!-- STEP 3: Site Conditions -->
   <div id="step-3" style="display:none">
     <div class="section">
       <div class="section-label"><div class="section-num">4</div>Site Conditions</div>
       <div class="card"><div class="card-inner">
-        <div class="form-group" style="margin-bottom:1rem">
-          <label class="form-label">Weather Conditions</label>
+        <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Weather Conditions</label>
           <div class="weather-grid">
-            <label class="weather-opt"><input type="radio" name="weather" value="Sunny" onchange="selWeather(this)"/><div class="weather-icon">☀️</div><div class="weather-name">Sunny</div></label>
-            <label class="weather-opt"><input type="radio" name="weather" value="Cloudy" onchange="selWeather(this)"/><div class="weather-icon">⛅</div><div class="weather-name">Cloudy</div></label>
-            <label class="weather-opt"><input type="radio" name="weather" value="Rain" onchange="selWeather(this)"/><div class="weather-icon">🌧</div><div class="weather-name">Rain</div></label>
-            <label class="weather-opt"><input type="radio" name="weather" value="Storm" onchange="selWeather(this)"/><div class="weather-icon">⛈</div><div class="weather-name">Storm</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Sunny" onchange="selWeather(this)"/><div class="weather-icon">&#9728;&#65039;</div><div class="weather-name">Sunny</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Cloudy" onchange="selWeather(this)"/><div class="weather-icon">&#9925;</div><div class="weather-name">Cloudy</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Rain" onchange="selWeather(this)"/><div class="weather-icon">&#127783;</div><div class="weather-name">Rain</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Storm" onchange="selWeather(this)"/><div class="weather-icon">&#9928;</div><div class="weather-name">Storm</div></label>
           </div>
         </div>
         <div class="form-grid cols-3" style="margin-top:1rem">
-          <div class="form-group"><label class="form-label">Temperature (°C)</label><input class="form-input" type="number" id="f-temp" placeholder="e.g. 28"/></div>
+          <div class="form-group"><label class="form-label">Temperature (C)</label><input class="form-input" type="number" id="f-temp" placeholder="e.g. 28"/></div>
           <div class="form-group"><label class="form-label">Wind Speed</label><select class="form-select" id="f-wind"><option>Calm</option><option>Light breeze</option><option>Moderate</option><option>Strong</option><option>Very strong</option></select></div>
           <div class="form-group"><label class="form-label">Work Stoppages</label><select class="form-select" id="f-stoppage"><option value="0">None</option><option value="1">1 stoppage</option><option value="2">2 stoppages</option><option value="3">3+ stoppages</option></select></div>
         </div>
-        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Safety Status</label><select class="form-select" id="f-hse"><option value="none">None — all clear</option><option value="near-miss">Near miss reported</option><option value="first-aid">First aid incident</option><option value="medical">Medical treatment required</option><option value="lti">LTI — Lost Time Injury</option></select></div>
-        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Incident Details</label><textarea class="form-textarea" id="f-hse-detail" placeholder="Describe any incidents, near misses, or safety observations..." style="min-height:60px"></textarea></div>
-        <div class="form-group" style="margin-top:1rem"><label class="form-label">Blockers / Issues to Escalate</label><textarea class="form-textarea" id="f-blockers" placeholder="Equipment failures, permit issues, supply delays, access problems..."></textarea></div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Safety Status</label><select class="form-select" id="f-hse"><option value="none">None - all clear</option><option value="near-miss">Near miss reported</option><option value="first-aid">First aid incident</option><option value="medical">Medical treatment required</option><option value="lti">LTI - Lost Time Injury</option></select></div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Incident Details</label><textarea class="form-textarea" id="f-hse-detail" placeholder="Describe any incidents or safety observations..." style="min-height:60px"></textarea></div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">Blockers / Issues to Escalate</label><textarea class="form-textarea" id="f-blockers" placeholder="Equipment failures, permit issues, supply delays..."></textarea></div>
       </div></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
-      <button class="btn btn-primary" onclick="goStep(4)">Review & Submit →</button>
+      <button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Review & Submit &#8594;</button>
     </div>
   </div>
 
-  <!-- STEP 4 -->
+  <!-- STEP 4: Review -->
   <div id="step-4" style="display:none">
     <div class="section">
-      <div class="section-label"><div class="section-num" style="background:var(--green)">✓</div>Review & Submit</div>
+      <div class="section-label"><div class="section-num" style="background:var(--green)">&#10003;</div>Review & Submit</div>
       <div id="review-content"></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
-      <button class="btn btn-success" id="submit-btn" onclick="submitForm()">✓ Submit to Dashboard</button>
+      <button class="btn btn-ghost" onclick="goStep(3)">&#8592; Back</button>
+      <button class="btn btn-success" id="submit-btn" onclick="submitForm()">&#10003; Submit to Dashboard</button>
     </div>
   </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL = 'https://dovdqmzyfgmkxvqdaeyr.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+const CK=['transport','materials','accommodation','labour','plant','telecoms','subsistence','other'];
+const CL={transport:'Transport',materials:'Materials',accommodation:'Accommodation',labour:'Labour',plant:'Plant & Equip',telecoms:'Telecoms HW',subsistence:'Subsistence',other:'Other'};
 
-const COST_KEYS=['transport','materials','accommodation','labour','plant','telecoms','subsistence','other'];
-const COST_LABELS={transport:'Transport',materials:'Materials',accommodation:'Accommodation',labour:'Labour',plant:'Plant & Equip',telecoms:'Telecoms HW',subsistence:'Subsistence',other:'Other'};
+let allProjects=[], projectTasks=[];
 
-let tasks=[]; let taskId=0;
-
-// Init
 const today=new Date();
 document.getElementById('f-date').value=today.toISOString().split('T')[0];
 document.getElementById('today-date').textContent=today.toLocaleDateString('en-ZA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-checkConnection();
 
-async function checkConnection(){
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d,pref='return=minimal'){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':pref},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return pref.includes('representation')?r.json():null;}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+
+async function init(){
   try{
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/daily_reports?limit=1`,{headers:HEADERS});
-    if(r.ok||r.status===406){
-      document.getElementById('conn-dot').classList.add('connected');
-      document.getElementById('conn-label').textContent='Connected';
-      document.getElementById('conn-label').style.color='var(--green)';
-    } else {
-      throw new Error();
-    }
+    allProjects=await sbGet('projects','order=name.asc&active=eq.true');
+    const sel=document.getElementById('f-project');
+    sel.innerHTML='<option value="">- Select project -</option>'+allProjects.map(p=>`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`).join('');
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected';
+    document.getElementById('conn-label').style.color='var(--green)';
   }catch(e){
-    document.getElementById('conn-label').textContent='Offline — check setup';
+    document.getElementById('conn-label').textContent='Connection error';
     document.getElementById('conn-label').style.color='var(--red)';
+    console.error(e);
   }
+}
+
+async function onProjectChange(){
+  updateSummary();
+  const projId=document.getElementById('f-project').value;
+  if(!projId){projectTasks=[];renderTaskQtyRows();return;}
+  try{
+    projectTasks=await sbGet('project_tasks',`project_id=eq.${projId}&active=eq.true&order=created_at.asc`);
+    renderTaskQtyRows();
+  }catch(e){console.error(e);}
+}
+
+function getProjectName(){
+  const sel=document.getElementById('f-project');
+  const opt=sel.options[sel.selectedIndex];
+  return opt?opt.dataset.name||opt.text:'-';
+}
+
+function renderTaskQtyRows(){
+  const container=document.getElementById('task-qty-rows');
+  if(!projectTasks.length){
+    container.innerHTML=`<div class="no-tasks-msg">No tasks found for this project. Add tasks in the Dashboard first, then return here to log daily quantities.</div>`;
+    return;
+  }
+  container.innerHTML=projectTasks.map(t=>{
+    const pct=parseFloat(t.progress||0);
+    const remaining=Math.max(0,(t.qty_total||0)-(t.qty_done||0));
+    const barColor=pct>=100?'var(--green)':pct>=70?'var(--blue)':'var(--accent)';
+    return`<div class="task-qty-row" id="tqr-${t.id}">
+      <div class="tqr-header">
+        <div>
+          <div class="tqr-title">${t.title}</div>
+          <div class="tqr-meta">${t.type} &nbsp;|&nbsp; Total: ${fmtN(t.qty_total)} ${t.unit} &nbsp;|&nbsp; Done so far: ${fmtN(t.qty_done)} ${t.unit} &nbsp;|&nbsp; Remaining: ${fmtN(remaining)} ${t.unit}</div>
+        </div>
+        <span style="font-family:var(--font-d);font-size:18px;font-weight:800;color:${barColor};min-width:56px;text-align:right">${pct}%</span>
+      </div>
+      <div class="tqr-progress-row">
+        <div class="tqr-bar-wrap"><div class="tqr-bar-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
+        <span class="tqr-pct" style="color:${barColor}">${pct}%</span>
+      </div>
+      <div class="tqr-inputs">
+        <div>
+          <div class="tqr-input-label">Qty completed TODAY (${t.unit})</div>
+          <input class="form-input" type="number" id="tqr-qty-${t.id}" min="0" step="any" max="${remaining}" placeholder="0" oninput="onQtyInput(${t.id},${t.qty_total},${t.qty_done},'${t.unit}',${pct})" style="font-size:15px;font-weight:500"/>
+        </div>
+        <div>
+          <div class="tqr-input-label">New % after today</div>
+          <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;font-family:var(--font-d);font-size:18px;font-weight:700;color:${barColor}" id="tqr-newpct-${t.id}">${pct}%</div>
+        </div>
+        <div>
+          <div class="tqr-input-label">Task status update</div>
+          <select class="form-select" id="tqr-status-${t.id}" style="font-size:12px">
+            <option value="in-progress"${t.status==='in-progress'?' selected':''}>In Progress</option>
+            <option value="complete"${t.status==='complete'?' selected':''}>Complete</option>
+            <option value="not-started"${t.status==='not-started'?' selected':''}>Not Started</option>
+            <option value="blocked"${t.status==='blocked'?' selected':''}>Blocked</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="tqr-input-label">Notes for today (optional)</div>
+        <input class="form-input" type="text" id="tqr-notes-${t.id}" placeholder="e.g. delayed by rain, materials arrived..." style="font-size:12px"/>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function fmtN(n){return parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');}
+
+function onQtyInput(taskId,qtyTotal,qtyDone,unit,currentPct){
+  const input=document.getElementById('tqr-qty-'+taskId);
+  const todayQty=parseFloat(input.value)||0;
+  const newDone=qtyDone+todayQty;
+  const newPct=qtyTotal>0?Math.min(100,parseFloat((newDone/qtyTotal*100).toFixed(1))):0;
+  const display=document.getElementById('tqr-newpct-'+taskId);
+  const barColor=newPct>=100?'var(--green)':newPct>=70?'var(--blue)':'var(--accent)';
+  display.textContent=newPct+'%';
+  display.style.color=barColor;
+  // auto-set status to complete if 100%
+  if(newPct>=100){
+    const sel=document.getElementById('tqr-status-'+taskId);
+    if(sel)sel.value='complete';
+  }
+  updateSummary();
+}
+
+function getTaskUpdates(){
+  return projectTasks.map(t=>{
+    const qty=parseFloat((document.getElementById('tqr-qty-'+t.id)||{}).value)||0;
+    const status=(document.getElementById('tqr-status-'+t.id)||{}).value||t.status;
+    const notes=(document.getElementById('tqr-notes-'+t.id)||{}).value||'';
+    return{task_id:t.id,title:t.title,type:t.type,unit:t.unit,qty_done:qty,qty_total:t.qty_total,current_done:t.qty_done,status,notes};
+  }).filter(t=>t.qty_done>0||t.notes); // only include tasks with actual updates
+}
+
+function getCosts(){const c={};let tot=0;CK.forEach(k=>{const v=parseFloat((document.getElementById('c-'+k)||{}).value)||0;c[k]=v;tot+=v;});return{costs:c,total:tot};}
+function selWeather(el){document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));el.closest('.weather-opt').classList.add('selected');}
+function updateSummary(){
+  document.getElementById('sum-project').textContent=getProjectName();
+  const updates=getTaskUpdates();
+  document.getElementById('sum-tasks').textContent=updates.length;
+  const w=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  document.getElementById('sum-workers').textContent=w;
+  const{total}=getCosts();
+  const fmtC='R '+Math.round(total).toLocaleString('en-ZA');
+  document.getElementById('sum-cost').textContent=fmtC;
+  const d=document.getElementById('cost-total-display');if(d)d.textContent=fmtC;
 }
 
 function goStep(n){
@@ -299,54 +414,23 @@ function goStep(n){
     document.getElementById('step-'+i).style.display=i===n?'block':'none';
     const s=document.querySelectorAll('.step')[i];
     s.classList.remove('active','done');
-    if(i<n)s.classList.add('done');
-    else if(i===n)s.classList.add('active');
+    if(i<n)s.classList.add('done');else if(i===n)s.classList.add('active');
   }
   if(n===4)buildReview();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function addTask(){
-  const id=++taskId; tasks.push({id}); renderTasks();
-}
-function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderTasks();updateSummary();}
-function renderTasks(){
-  const log=document.getElementById('task-log');
-  const ST=['Completed','In Progress','Not Started','Blocked','Carried Over'];
-  const TY=['Civil','Structural','Electrical','Telecoms','HSE','Survey','Admin','Plumbing','Concrete','Cabling'];
-  log.innerHTML=tasks.map(t=>`<div class="task-entry"><div class="task-entry-fields">
-    <div class="form-group"><label class="form-label" style="font-size:10px">Description</label><input class="form-input" id="t-desc-${t.id}" placeholder="What was done / updated..." oninput="updateSummary()" style="font-size:12px"/></div>
-    <div class="form-group"><label class="form-label" style="font-size:10px">Type</label><select class="form-select" id="t-type-${t.id}" style="font-size:12px">${TY.map(o=>`<option>${o}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label" style="font-size:10px">Status</label><select class="form-select" id="t-status-${t.id}" style="font-size:12px">${ST.map(o=>`<option>${o}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label" style="font-size:10px">% Complete Today</label><input class="form-input" type="number" id="t-pct-${t.id}" min="0" max="100" placeholder="0" style="font-size:12px"/></div>
-  </div><button class="task-remove" onclick="removeTask(${t.id})">✕</button></div>`).join('');
-}
-function getTaskData(){return tasks.map(t=>({desc:(document.getElementById('t-desc-'+t.id)||{}).value||'',type:(document.getElementById('t-type-'+t.id)||{}).value||'',status:(document.getElementById('t-status-'+t.id)||{}).value||'',pct:(document.getElementById('t-pct-'+t.id)||{}).value||'0'}));}
-function getCosts(){const c={};let t=0;COST_KEYS.forEach(k=>{const v=parseFloat((document.getElementById('c-'+k)||{}).value)||0;c[k]=v;t+=v;});return{costs:c,total:t};}
-function getCostNotes(){const n={};COST_KEYS.forEach(k=>{n[k]=(document.getElementById('cn-'+k)||{}).value||'';});return n;}
-function updateSummary(){
-  document.getElementById('sum-project').textContent=document.getElementById('f-project').value||'—';
-  document.getElementById('sum-tasks').textContent=tasks.length;
-  const w=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
-  document.getElementById('sum-workers').textContent=w;
-  const{total}=getCosts();
-  const fmt='R '+Math.round(total).toLocaleString('en-ZA');
-  document.getElementById('sum-cost').textContent=fmt;
-  const d=document.getElementById('cost-total-display');if(d)d.textContent=fmt;
-}
-function selWeather(el){document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));el.closest('.weather-opt').classList.add('selected');}
 function buildReview(){
   const{costs,total}=getCosts();
-  const proj=document.getElementById('f-project').value||'—';
+  const proj=getProjectName();
   const date=document.getElementById('f-date').value;
-  const reporter=document.getElementById('f-reporter').value||'—';
-  const location=document.getElementById('f-location').value||'—';
-  const taskData=getTaskData();
+  const reporter=document.getElementById('f-reporter').value||'-';
+  const location=document.getElementById('f-location').value||'-';
+  const updates=getTaskUpdates();
   const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
   const weather=document.querySelector('input[name="weather"]:checked');
   const hse=document.getElementById('f-hse').value;
   const blockers=document.getElementById('f-blockers').value;
-  const note=document.getElementById('f-progress-note').value;
   document.getElementById('review-content').innerHTML=`
     <div class="card" style="margin-bottom:12px"><div class="card-inner">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
@@ -357,88 +441,90 @@ function buildReview(){
         <div><div class="form-label">Workers</div><div style="font-weight:500;margin-top:3px">${workers}</div></div>
         <div><div class="form-label">Weather</div><div style="font-weight:500;margin-top:3px">${weather?weather.value:'Not set'}</div></div>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:1rem"><div class="form-label" style="margin-bottom:6px">HSE Status</div><span class="status-pill ${hse==='none'?'sp-green':hse==='near-miss'?'sp-amber':'sp-red'}">${hse==='none'?'All clear':hse}</span></div>
+      <div style="border-top:1px solid var(--border);padding-top:1rem"><div class="form-label" style="margin-bottom:6px">HSE</div><span class="status-pill ${hse==='none'?'sp-green':hse==='near-miss'?'sp-amber':'sp-red'}">${hse==='none'?'All clear':hse}</span></div>
     </div></div>
     <div class="card" style="margin-bottom:12px"><div class="card-inner">
-      <div class="form-label" style="margin-bottom:10px">Tasks (${taskData.length})</div>
-      ${taskData.length===0?`<p style="color:var(--text3);font-size:13px">No tasks logged.</p>`:taskData.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><span class="status-pill ${t.status==='Completed'?'sp-green':t.status==='Blocked'?'sp-red':'sp-amber'}">${t.status}</span><span style="flex:1;font-size:13px">${t.desc||'(no description)'}</span><span style="font-size:11px;color:var(--text3)">${t.type}</span><span style="font-size:12px;color:var(--text2)">${t.pct}%</span></div>`).join('')}
-      ${note?`<div style="margin-top:10px;font-size:13px;color:var(--text2);font-style:italic">${note}</div>`:''}
+      <div class="form-label" style="margin-bottom:10px">Task Quantity Updates (${updates.length})</div>
+      ${updates.length===0?`<p style="color:var(--text3);font-size:13px">No task quantities entered today.</p>`:updates.map(t=>{
+        const newDone=t.current_done+t.qty_done;
+        const newPct=t.qty_total>0?Math.min(100,parseFloat((newDone/t.qty_total*100).toFixed(1))):0;
+        const barColor=newPct>=100?'var(--green)':newPct>=70?'var(--blue)':'var(--accent)';
+        return`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="flex:1">
+              <div style="font-weight:500;font-size:13px">${t.title}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:2px">Today: <strong style="color:var(--teal)">+${fmtN(t.qty_done)} ${t.unit}</strong> &nbsp;|&nbsp; New total: ${fmtN(newDone)} / ${fmtN(t.qty_total)} ${t.unit} &nbsp;|&nbsp; <span class="status-pill sp-${t.status==='complete'?'green':t.status==='blocked'?'red':'amber'}">${t.status}</span></div>
+              ${t.notes?`<div style="font-size:12px;color:var(--text3);margin-top:2px;font-style:italic">${t.notes}</div>`:''}
+            </div>
+            <div style="text-align:right;min-width:60px"><div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${barColor}">${newPct}%</div></div>
+          </div>
+        </div>`;
+      }).join('')}
     </div></div>
     <div class="card"><div class="card-inner">
-      <div class="form-label" style="margin-bottom:10px">Costs — Total: <span style="color:var(--accent)">R ${Math.round(total).toLocaleString('en-ZA')}</span></div>
+      <div class="form-label" style="margin-bottom:10px">Costs - Total: <span style="color:var(--accent)">R ${Math.round(total).toLocaleString('en-ZA')}</span></div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-        ${COST_KEYS.filter(k=>costs[k]>0).map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:var(--r)"><span style="font-size:12px;color:var(--text2)">${COST_LABELS[k]}</span><span style="font-family:var(--font-d);font-weight:700;font-size:14px;color:var(--accent)">R ${Math.round(costs[k]).toLocaleString('en-ZA')}</span></div>`).join('')}
-        ${COST_KEYS.filter(k=>costs[k]>0).length===0?`<p style="color:var(--text3);font-size:13px;grid-column:1/-1">No costs entered.</p>`:''}
+        ${CK.filter(k=>costs[k]>0).map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:var(--r)"><span style="font-size:12px;color:var(--text2)">${CL[k]}</span><span style="font-family:var(--font-d);font-weight:700;font-size:14px;color:var(--accent)">R ${Math.round(costs[k]).toLocaleString('en-ZA')}</span></div>`).join('')}
+        ${CK.filter(k=>costs[k]>0).length===0?`<p style="color:var(--text3);font-size:13px;grid-column:1/-1">No costs entered.</p>`:''}
       </div>
       ${blockers?`<div style="margin-top:10px;padding:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r)"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#f87171;margin-bottom:4px">Blockers</div><div style="font-size:13px;color:var(--text2)">${blockers}</div></div>`:''}
     </div></div>`;
 }
 
 async function submitForm(){
-  const proj=document.getElementById('f-project').value;
-  const reporter=document.getElementById('f-reporter').value;
-  if(!proj){showToast('Please select a project','error');goStep(0);return;}
-  if(!reporter){showToast('Please enter your name','error');goStep(0);return;}
+  const projId=document.getElementById('f-project').value;
+  const reporter=document.getElementById('f-reporter').value.trim();
+  if(!projId){showToast('Please select a project','err');goStep(0);return;}
+  if(!reporter){showToast('Please enter your name','err');goStep(0);return;}
   const btn=document.getElementById('submit-btn');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span> Saving...';
+  btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Saving...';
   const{costs,total}=getCosts();
-  const costNotes=getCostNotes();
   const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
   const weather=document.querySelector('input[name="weather"]:checked');
-  const payload={
-    project:proj,
+  const taskUpdates=getTaskUpdates();
+  const projName=getProjectName();
+  // Step 1: Save daily report
+  const reportPayload={
+    project:projName,
     report_date:document.getElementById('f-date').value,
-    reporter,
-    role:document.getElementById('f-role').value,
-    location:document.getElementById('f-location').value,
+    reporter,role:document.getElementById('f-role').value.trim(),
+    location:document.getElementById('f-location').value.trim(),
     period:document.getElementById('f-period').value,
     workers,
-    worker_breakdown:{
-      civil:parseInt(document.getElementById('w-civil').value)||0,
-      telecoms:parseInt(document.getElementById('w-telecoms').value)||0,
-      elec:parseInt(document.getElementById('w-elec').value)||0,
-      plant:parseInt(document.getElementById('w-plant').value)||0,
-      sup:parseInt(document.getElementById('w-sup').value)||0,
-      sub:parseInt(document.getElementById('w-sub').value)||0,
-    },
-    tasks:getTaskData(),
-    progress_note:document.getElementById('f-progress-note').value,
-    costs:{...costs,notes:costNotes},
-    total_cost:total,
+    worker_breakdown:{civil:parseInt(document.getElementById('w-civil').value)||0,telecoms:parseInt(document.getElementById('w-telecoms').value)||0,elec:parseInt(document.getElementById('w-elec').value)||0,plant:parseInt(document.getElementById('w-plant').value)||0,sup:parseInt(document.getElementById('w-sup').value)||0,sub:parseInt(document.getElementById('w-sub').value)||0},
+    tasks:taskUpdates.map(t=>({task_id:t.task_id,title:t.title,type:t.type,unit:t.unit,qty_done:t.qty_done,status:t.status,notes:t.notes})),
+    progress_note:document.getElementById('f-progress-note').value.trim(),
+    costs,total_cost:total,
     weather:weather?weather.value:'',
     temp:document.getElementById('f-temp').value,
     wind:document.getElementById('f-wind').value,
     stoppages:document.getElementById('f-stoppage').value,
     hse:document.getElementById('f-hse').value,
-    hse_detail:document.getElementById('f-hse-detail').value,
-    blockers:document.getElementById('f-blockers').value,
+    hse_detail:document.getElementById('f-hse-detail').value.trim(),
+    blockers:document.getElementById('f-blockers').value.trim()
   };
   try{
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/daily_reports`,{method:'POST',headers:{...HEADERS,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
-    if(r.ok||r.status===201){
-      showToast('Report submitted successfully!','success');
-      setTimeout(()=>{resetForm();},2500);
-    } else {
-      const err=await r.text();
-      throw new Error(err);
-    }
+    await sbPost('daily_reports',reportPayload);
+    // Step 2: Update each task's qty_done in project_tasks (accumulate)
+    const updatePromises=taskUpdates.filter(t=>t.qty_done>0).map(async t=>{
+      const task=projectTasks.find(pt=>pt.id===t.task_id);
+      if(!task)return;
+      const newQtyDone=parseFloat(task.qty_done||0)+t.qty_done;
+      const newStatus=t.status;
+      await sbPatch('project_tasks',t.task_id,{qty_done:newQtyDone,status:newStatus});
+    });
+    await Promise.all(updatePromises);
+    showToast('Report submitted & task progress updated!','ok');
+    setTimeout(()=>resetForm(),2500);
   }catch(e){
-    showToast('Error saving — check connection','error');
-    console.error(e);
+    showToast('Error: '+e.message,'err');console.error(e);
   }
-  btn.disabled=false;
-  btn.innerHTML='✓ Submit to Dashboard';
+  btn.disabled=false;btn.innerHTML='&#10003; Submit to Dashboard';
 }
 
-function showToast(msg,type){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast '+type;t.style.display='block';
-  setTimeout(()=>{t.style.display='none';},3000);
-}
+function showToast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);}
 
 function resetForm(){
-  tasks=[];taskId=0;
   document.getElementById('f-project').value='';
   document.getElementById('f-reporter').value='';
   document.getElementById('f-role').value='';
@@ -446,14 +532,14 @@ function resetForm(){
   document.getElementById('f-progress-note').value='';
   document.getElementById('f-blockers').value='';
   document.getElementById('f-hse-detail').value='';
-  COST_KEYS.forEach(k=>{document.getElementById('c-'+k).value='';document.getElementById('cn-'+k).value='';});
+  CK.forEach(k=>{document.getElementById('c-'+k).value='';document.getElementById('cn-'+k).value='';});
   ['civil','telecoms','elec','plant','sup','sub'].forEach(k=>{document.getElementById('w-'+k).value=0;});
   document.querySelectorAll('input[name="weather"]').forEach(r=>r.checked=false);
   document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));
-  renderTasks();updateSummary();goStep(0);
+  projectTasks=[];renderTaskQtyRows();updateSummary();goStep(0);
 }
 
-renderTasks();updateSummary();
+init();
 </script>
 </body>
 </html>
