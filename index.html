@@ -201,31 +201,57 @@ tr:hover td{background:var(--bg3)}
           <button class="btn btn-ghost btn-sm" onclick="askAI('dash','Summarise project health, task progress, workforce status and costs. Highlight risks and tasks near completion.')">AI Summary &#8599;</button>
         </div>
       </div>
+
+      <!-- Project filter tabs -->
+      <div class="proj-tabs" id="dash-proj-tabs" style="margin-bottom:1.25rem"></div>
+
       <div class="stats-grid" id="dash-stats"></div>
-      <div class="grid-2" style="margin-bottom:1.5rem">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Project Task Progress</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">View tasks</button></div>
-          <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Tasks</th><th>Avg Progress</th><th>Status</th></tr></thead><tbody id="dash-projects"></tbody></table></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Field-Reported Costs</div><button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">Budget</button></div>
-          <div class="card-body" style="padding:0">
-            <div class="table-wrap"><table><thead><tr><th>Project</th><th>Reports</th><th>Field Spend</th></tr></thead><tbody id="dash-costs"></tbody></table></div>
-            <div id="cost-breakdown-bar" style="padding:0 1.25rem 1rem;margin-top:8px"></div>
+
+      <!-- Per-project detail panel (shown when a project is selected) -->
+      <div id="dash-project-detail" style="display:none;margin-bottom:1.5rem">
+        <div class="grid-2" style="margin-bottom:1rem">
+          <div class="card">
+            <div class="card-header"><div class="card-title" id="dpd-tasks-title">Tasks</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">View all</button></div>
+            <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Task</th><th>Type</th><th>Done / Total</th><th>Progress</th><th>Status</th></tr></thead><tbody id="dpd-tasks"></tbody></table></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title" id="dpd-reports-title">Recent Field Reports</div></div>
+            <div class="card-body" style="padding:0.75rem 1.25rem" id="dpd-reports"></div>
           </div>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Tasks Nearing Completion</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">All tasks</button></div>
-        <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Task</th><th>Project</th><th>Qty Done / Total</th><th>Progress</th></tr></thead><tbody id="dash-near-complete"></tbody></table></div></div>
-      </div>
-      <!-- Budget Alerts Panel -->
-      <div class="card mt1" id="budget-alerts-card" style="display:none">
-        <div class="card-header">
-          <div class="card-title" style="color:var(--red)">&#9888; Budget Alerts</div>
-          <button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">View full budget</button>
+        <div class="card">
+          <div class="card-header"><div class="card-title" id="dpd-budget-title">Budget &amp; Costs</div><button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">Full budget</button></div>
+          <div class="card-body" id="dpd-budget"></div>
         </div>
-        <div class="card-body" id="budget-alerts-body"></div>
+      </div>
+
+      <!-- All-projects view (shown when no filter selected) -->
+      <div id="dash-all-view">
+        <div class="grid-2" style="margin-bottom:1.5rem">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Project Task Progress</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">View tasks</button></div>
+            <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Tasks</th><th>Avg Progress</th><th>Status</th></tr></thead><tbody id="dash-projects"></tbody></table></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Field-Reported Costs</div><button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">Budget</button></div>
+            <div class="card-body" style="padding:0">
+              <div class="table-wrap"><table><thead><tr><th>Project</th><th>Reports</th><th>Field Spend</th></tr></thead><tbody id="dash-costs"></tbody></table></div>
+              <div id="cost-breakdown-bar" style="padding:0 1.25rem 1rem;margin-top:8px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Tasks Nearing Completion</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">All tasks</button></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Task</th><th>Project</th><th>Qty Done / Total</th><th>Progress</th></tr></thead><tbody id="dash-near-complete"></tbody></table></div></div>
+        </div>
+        <!-- Budget Alerts Panel -->
+        <div class="card mt1" id="budget-alerts-card" style="display:none">
+          <div class="card-header">
+            <div class="card-title" style="color:var(--red)">&#9888; Budget Alerts</div>
+            <button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">View full budget</button>
+          </div>
+          <div class="card-body" id="budget-alerts-body"></div>
+        </div>
       </div>
 
       <div class="ai-box">
@@ -362,11 +388,23 @@ tr:hover td{background:var(--bg3)}
     <div class="page" id="page-reports">
       <div class="page-header">
         <div><div class="page-title">Daily Field Reports</div><div class="page-sub">Live from Supabase — quantities auto-update task progress</div></div>
-        <div style="display:flex;gap:8px"><span class="live-badge"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite"></span>Live</span><a href="intake.html" class="btn-intake" style="font-size:12px;padding:5px 12px">&#128203; New Report</a></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="live-badge"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite"></span>Live</span>
+          <a href="intake.html" class="btn-intake" style="font-size:12px;padding:5px 12px">&#128203; New Report</a>
+          <button class="btn btn-ghost btn-sm" onclick="downloadCSV()" title="Download reports as CSV / Excel">&#128229; CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadPDF()" title="Download printable PDF summary">&#128229; PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="downloadJSON()" title="Download full data backup">&#128229; Backup JSON</button>
+        </div>
       </div>
       <div class="stats-grid" id="reports-stats"></div>
       <div class="card mt1">
-        <div class="card-header"><div class="card-title">All Submitted Reports</div><button class="btn btn-ghost btn-sm" onclick="loadAllData()">&#8635; Refresh</button></div>
+        <div class="card-header">
+          <div class="card-title">All Submitted Reports</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="form-select" id="report-filter-project" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderReportsPage()"><option value="">All Projects</option></select>
+            <button class="btn btn-ghost btn-sm" onclick="loadAllData()">&#8635; Refresh</button>
+          </div>
+        </div>
         <div class="card-body" style="padding:0.75rem 1.25rem" id="reports-list"><div style="color:var(--text3);font-size:13px">Loading...</div></div>
       </div>
     </div>
@@ -564,6 +602,13 @@ function bpc(){
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function projTaskStats(n){const pt=allTasks.filter(t=>t.project_name===n);if(!pt.length)return{count:0,avg:0,complete:0};const avg=pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length;return{count:pt.length,avg:Math.round(avg),complete:pt.filter(t=>t.status==='complete').length};}
 
+// ── Dashboard project filter ─────────────────────────────────────────────────
+let dashProjectFilter = 'all';
+function setDashFilter(name){
+  dashProjectFilter = name;
+  renderDashboard();
+}
+
 // ── Budget threshold helper ───────────────────────────────────────────────────
 function budgetColor(pct){
   if(pct>100)return'var(--red)';
@@ -600,14 +645,35 @@ function getBudgetData(){
 }
 
 function renderDashboard(){
-  const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  // Populate project filter tabs
+  const tabsEl=document.getElementById('dash-proj-tabs');
+  if(tabsEl){
+    tabsEl.innerHTML=`<button class="proj-tab ${dashProjectFilter==='all'?'active':''}" onclick="setDashFilter('all')">All Projects</button>`
+      +allProjects.map(p=>`<button class="proj-tab ${dashProjectFilter===p.name?'active':''}" onclick="setDashFilter('${p.name.replace(/'/g,"\\'")}')">${p.name}</button>`).join('');
+  }
+
+  // Filter data based on selected project
+  const isFiltered = dashProjectFilter !== 'all';
+  const filtProjects = isFiltered ? allProjects.filter(p=>p.name===dashProjectFilter) : allProjects;
+  const filtTasks    = isFiltered ? allTasks.filter(t=>t.project_name===dashProjectFilter) : allTasks;
+  const filtReports  = isFiltered ? allReports.filter(r=>r.project===dashProjectFilter) : allReports;
+
+  // Show/hide panels
+  const detailPanel = document.getElementById('dash-project-detail');
+  const allView     = document.getElementById('dash-all-view');
+  if(detailPanel) detailPanel.style.display = isFiltered ? 'block' : 'none';
+  if(allView)     allView.style.display     = isFiltered ? 'none'  : 'block';
+
+  const pc=bpc();
+  const tf=filtReports.reduce((a,r)=>a+(r.total_cost||0),0);
   const td=new Date().toISOString().split('T')[0];
-  const tr=allReports.filter(r=>r.report_date===td).length;
-  const tw=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
-  const avgAll=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
+  const tr=filtReports.filter(r=>r.report_date===td).length;
+  const tw=filtReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
+  const avgAll=filtTasks.length?Math.round(filtTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/filtTasks.length):0;
   const budgetData=getBudgetData();
-  const alertProjects=budgetData.filter(p=>p.pct>=75);
-  const overBudget=budgetData.filter(p=>p.pct>100).length;
+  const filtBudget=isFiltered?budgetData.filter(p=>p.name===dashProjectFilter):budgetData;
+  const alertProjects=filtBudget.filter(p=>p.pct>=75);
+  const overBudget=filtBudget.filter(p=>p.pct>100).length;
 
   document.getElementById('dash-sub').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})+' — '+allReports.length+' reports submitted';
 
@@ -616,28 +682,95 @@ function renderDashboard(){
   const budgetStatVal=overBudget>0?overBudget:alertProjects.length;
   const budgetStatLabel=overBudget>0?'Over Budget':alertProjects.length>0?'Budget Warnings':'Budget OK';
   document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Active Projects</div><div class="stat-sub">${allTasks.length} tasks, ${allWorkers.length} workers</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${filtProjects.length}</div><div class="stat-l">${isFiltered?'Selected Project':'Active Projects'}</div><div class="stat-sub">${filtTasks.length} tasks${isFiltered?'':', '+allWorkers.length+' workers'}</div></div>
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${avgAll}%</div><div class="stat-l">Avg Task Progress</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:${avgAll}%;background:var(--blue)"></div></div></div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today — ${tw} workers on site</div></div>
     <div class="stat-card ${budgetStatColor}" style="cursor:${alertProjects.length?'pointer':'default'}" onclick="${alertProjects.length?"showPage('budget',null)":''}"><div class="stat-n" style="color:${overBudget>0?'var(--red)':alertProjects.length>0?'var(--accent)':'var(--green)'}">${budgetStatVal||'✓'}</div><div class="stat-l">${budgetStatLabel}</div><div class="stat-sub">${alertProjects.length?'click to view budget':fmt(tf)+' field costs'}</div></div>`;
 
-  document.getElementById('dash-projects').innerHTML=allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
-  document.getElementById('dash-costs').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
-  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
+  document.getElementById('dash-projects').innerHTML=filtProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
+  document.getElementById('dash-costs').innerHTML=filtProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
+  const ac={};allCostCats.forEach(cc=>{ac[cc.name]=filtProjects.reduce((a,p)=>{const ppc=pc[p.name]||{cb:{}};return a+(ppc.cb[cc.name]||0);},0);});
   const tot=Object.values(ac).reduce((a,v)=>a+v,0);
   if(tot>0)document.getElementById('cost-breakdown-bar').innerHTML=`<div class="cost-bar">${allCostCats.map(c=>`<div class="cost-seg" style="width:${Math.round((ac[c.name]||0)/tot*100)}%;background:${c.color};opacity:0.85"></div>`).join('')}</div><div class="cost-legend">${allCostCats.filter(c=>(ac[c.name]||0)>0).map(c=>`<div class="cost-legend-item"><div class="cost-dot" style="background:${c.color}"></div>${c.name}: ${fmt(ac[c.name])}</div>`).join('')}</div>`;
   else document.getElementById('cost-breakdown-bar').innerHTML='';
 
-  const near=allTasks.filter(t=>t.status!=='complete'&&parseFloat(t.progress||0)>=70).sort((a,b)=>parseFloat(b.progress||0)-parseFloat(a.progress||0)).slice(0,6);
+  const near=filtTasks.filter(t=>t.status!=='complete'&&parseFloat(t.progress||0)>=70).sort((a,b)=>parseFloat(b.progress||0)-parseFloat(a.progress||0)).slice(0,6);
   document.getElementById('dash-near-complete').innerHTML=near.length===0?`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem">No tasks above 70% yet.</td></tr>`:near.map(t=>`<tr><td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.type}</div></td><td style="color:var(--text2)">${t.project_name}</td><td style="font-size:12px"><span style="font-weight:600">${fmtN(t.qty_done)}</span> / ${fmtN(t.qty_total)} ${t.unit}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${t.progress}%;background:${parseFloat(t.progress)>=90?'var(--green)':'var(--blue)'}"></div></div><span style="font-size:12px;font-weight:700;min-width:42px;text-align:right;color:${parseFloat(t.progress)>=90?'var(--green)':'var(--text)'}">${t.progress}%</span></div></td></tr>`).join('');
 
-  // Budget alerts panel
+  // ── Project detail panel (when a project is selected) ─────────────────────
+  if(isFiltered && filtProjects.length>0){
+    const p=filtProjects[0];
+    const pc2=bpc();
+    const pBudget=filtBudget[0]||{budget:0,contract_spend:0,fieldCost:0,totalSpend:0,remaining:0,pct:0};
+    // Tasks for this project
+    document.getElementById('dpd-tasks-title').textContent=p.name+' — Tasks ('+filtTasks.length+')';
+    document.getElementById('dpd-tasks').innerHTML=filtTasks.length===0
+      ?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">No tasks yet.</td></tr>`
+      :filtTasks.map(t=>{
+        const pct=parseFloat(t.progress||0);
+        const bc=pct>=100?'var(--green)':pct>=70?'var(--blue)':'var(--accent)';
+        return`<tr>
+          <td><div style="font-weight:500">${t.title}</div></td>
+          <td><span class="badge ${TB[t.type]||'badge-gray'}">${t.type}</span></td>
+          <td style="font-size:12px"><strong style="color:var(--teal)">${fmtN(t.qty_done)}</strong> / ${fmtN(t.qty_total)} ${t.unit}</td>
+          <td style="min-width:130px"><div style="display:flex;align-items:center;gap:6px"><div class="progress-lg"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${bc}"></div></div><span style="font-family:var(--font-d);font-size:14px;font-weight:700;color:${bc};min-width:40px;text-align:right">${pct}%</span></div></td>
+          <td><span class="badge ${STAT_B[t.status]||'badge-gray'}">${t.status}</span></td>
+        </tr>`;
+      }).join('');
+    // Recent reports for this project
+    document.getElementById('dpd-reports-title').textContent=p.name+' — Reports ('+filtReports.length+')';
+    const latestR=filtReports.slice(0,5);
+    document.getElementById('dpd-reports').innerHTML=latestR.length===0
+      ?`<p style="color:var(--text3);font-size:13px">No reports yet for this project.</p>`
+      :latestR.map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:500">${r.report_date}</span>
+              <span style="font-size:11px;color:var(--text3)">${r.reporter||'—'}</span>
+              <span style="font-size:11px;padding:1px 6px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${r.workers||0} workers — ${r.weather||'—'}</div>
+            ${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div style="font-size:11px;color:var(--text2)">&#10003; ${t.title}: <strong style="color:var(--teal)">${fmtN(t.qty_done)} ${t.unit||''}</strong></div>`).join('')}
+          </div>
+          <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--accent);flex-shrink:0">${fmt(r.total_cost)}</div>
+        </div>`).join('');
+    // Budget for this project
+    document.getElementById('dpd-budget-title').textContent=p.name+' — Budget & Costs';
+    const fillW=Math.min(pBudget.pct,100);
+    const bc2=budgetColor(pBudget.pct);
+    const ac2={};allCostCats.forEach(cat=>{const ppc2=pc2[p.name]||{cb:{}};ac2[cat.name]=ppc2.cb[cat.name]||0;});
+    const ct2=Object.values(ac2).reduce((a,v)=>a+v,0);
+    document.getElementById('dpd-budget').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem">
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Budget</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent)">${fmt(pBudget.budget)}</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Contracted</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--blue)">${fmt(pBudget.contract_spend)}</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Field Reported</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--teal)">${fmt(pBudget.fieldCost)}</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Remaining</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${pBudget.remaining<0?'var(--red)':'var(--green)'}">${fmt(pBudget.remaining)}</div></div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:12px;color:var(--text2)">Budget used</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="bpct-badge ${budgetBadgeClass(pBudget.pct)}">${budgetLabel(pBudget.pct)}</span>
+            <span style="font-family:var(--font-d);font-size:20px;font-weight:800;color:${bc2}">${pBudget.pct}%</span>
+          </div>
+        </div>
+        <div class="budget-bar-wrap" style="height:12px;border-radius:6px">
+          <div class="budget-bar-fill" style="width:${fillW}%;background:${bc2};border-radius:6px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px"><span>0%</span><span style="color:var(--accent)">75%</span><span style="color:var(--red)">90%</span><span>100%</span></div>
+      </div>
+      ${ct2>0?`<div style="margin-top:1rem"><div style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Cost breakdown</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${allCostCats.filter(cat=>ac2[cat.name]>0).map(cat=>`<div style="background:var(--bg3);border-radius:var(--r);padding:8px"><div style="font-size:10px;color:var(--text2);margin-bottom:3px">${cat.icon||''} ${cat.name}</div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:${cat.color}">${fmt(ac2[cat.name])}</div><div style="font-size:10px;color:var(--text3)">${ct2>0?Math.round(ac2[cat.name]/ct2*100):0}%</div></div>`).join('')}</div></div>`:'<p style="color:var(--text3);font-size:13px;margin-top:0.5rem">No field costs submitted for this project yet.</p>'}
+    `;
+  }
+
+  // Budget alerts panel (only in all-projects view)
   const alertCard=document.getElementById('budget-alerts-card');
   const alertBody=document.getElementById('budget-alerts-body');
   if(alertProjects.length===0){alertCard.style.display='none';}
   else{
     alertCard.style.display='block';
-    alertBody.innerHTML=alertProjects.sort((a,b)=>b.pct-a.pct).map(p=>{
+    alertBody.innerHTML=alertProjects.filter(p=>filtBudget.some(fb=>fb.name===p.name)).sort((a,b)=>b.pct-a.pct).map(p=>{
       const pct=p.pct;const fillW=Math.min(pct,100);const isOver=pct>100;
       const rowClass=isOver?'over':pct>=90?'danger':'warn';
       return`<div class="budget-alert-row ${rowClass}">
@@ -812,11 +945,19 @@ function renderCostCats(){
 
 // ── Reports ───────────────────────────────────────────────────────────────────
 function renderReportsPage(){
-  const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=allReports.reduce((a,r)=>a+(r.workers||0),0);const tt=allReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
+  // Populate project filter dropdown
+  const filterSel=document.getElementById('report-filter-project');
+  if(filterSel){
+    const cur=filterSel.value;
+    filterSel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+  }
+  const projFilter=filterSel?filterSel.value:'';
+  const filteredReports=projFilter?allReports.filter(r=>r.project===projFilter):allReports;
+  const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=filteredReports.reduce((a,r)=>a+(r.workers||0),0);const tt=filteredReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
   document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
   const c=document.getElementById('reports-list');
-  if(allReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit your first report</a></p>`;return;}
-  c.innerHTML=allReports.map(r=>`
+  if(filteredReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">${projFilter?'No reports for '+projFilter+'. ':'No reports yet. '}<a href="intake.html" style="color:var(--teal)">Submit a daily report</a></p>`;return;}
+  c.innerHTML=filteredReports.map(r=>`
     <div style="padding:14px 0;border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">
         <div style="flex:1">
@@ -1100,6 +1241,217 @@ Respond in 3-5 concise sentences with specific recommendations. No markdown.`;
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:ctx,messages:[{role:'user',content:q}]})});
     const data=await res.json();re.innerHTML=(data.content||[]).map(b=>b.text||'').join('')||'No response.';
   }catch(e){re.innerHTML='Could not reach Claude API.';}
+}
+
+
+// ── Download / Export functions ───────────────────────────────────────────────
+function triggerDownload(filename, content, mimeType){
+  const blob = new Blob([content], {type: mimeType});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function getFilteredReports(){
+  const projFilter = (document.getElementById('report-filter-project')||{}).value||'';
+  return projFilter ? allReports.filter(r=>r.project===projFilter) : allReports;
+}
+
+function downloadCSV(){
+  const reports = getFilteredReports();
+  if(!reports.length){showToast('No reports to download','err');return;}
+  // Build header row — fixed columns + dynamic cost categories
+  const costCols = allCostCats.map(c=>c.name);
+  const headers = [
+    'Report ID','Project','Date','Reporter','Role','Location','Period',
+    'Workers','Weather','Temperature (C)','HSE Status',
+    ...costCols,'Total Cost (R)',
+    'Task Updates','Progress Note','Blockers','HSE Detail'
+  ];
+  const esc = v => {
+    const s = String(v===null||v===undefined?'':v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"'+s.replace(/"/g,'""')+'"' : s;
+  };
+  const rows = reports.map(r=>{
+    const costs = r.costs||{};
+    const taskSummary = (r.tasks||[]).filter(t=>t.qty_done>0)
+      .map(t=>t.title+': '+fmtN(t.qty_done)+' '+t.unit).join(' | ');
+    return [
+      r.id, r.project, r.report_date, r.reporter||'', r.role||'', r.location||'', r.period||'',
+      r.workers||0, r.weather||'', r.temp||'', r.hse||'',
+      ...costCols.map(c=>costs[c]||0),
+      r.total_cost||0,
+      taskSummary, r.progress_note||'', r.blockers||'', r.hse_detail||''
+    ].map(esc).join(',');
+  });
+  const csv = [headers.map(esc).join(','), ...rows].join('\r\n');
+  const date = new Date().toISOString().split('T')[0];
+  triggerDownload('SiteCommand_Reports_'+date+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+  showToast('CSV downloaded — open in Excel');
+}
+
+function downloadPDF(){
+  const reports = getFilteredReports();
+  const pc = bpc();
+  const tf = Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const date = new Date().toLocaleDateString('en-ZA',{year:'numeric',month:'long',day:'numeric'});
+  const budgetData = getBudgetData();
+  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>SiteCommand Report</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#1a1a2e;background:#fff;padding:32px}
+    h1{font-size:24px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:#0d0f14;margin-bottom:4px}
+    h2{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;margin:24px 0 10px;border-bottom:2px solid #f5a623;padding-bottom:4px}
+    h3{font-size:12px;font-weight:700;color:#1a1a2e;margin:0 0 4px}
+    .meta{font-size:11px;color:#777;margin-bottom:24px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .stat{background:#f8f9fa;border-radius:6px;padding:12px;text-align:center}
+    .stat-n{font-size:22px;font-weight:800;color:#f5a623}
+    .stat-l{font-size:10px;color:#777;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:11px}
+    th{background:#0d0f14;color:#fff;padding:7px 10px;text-align:left;font-size:10px;letter-spacing:0.06em;text-transform:uppercase}
+    td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:top}
+    tr:nth-child(even) td{background:#fafafa}
+    .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase}
+    .green{background:#d4edda;color:#155724}
+    .amber{background:#fff3cd;color:#856404}
+    .red{background:#f8d7da;color:#721c24}
+    .over{background:#f8d7da;color:#721c24;font-weight:800}
+    .bar-wrap{background:#e9ecef;border-radius:4px;height:8px;overflow:hidden;margin-top:4px}
+    .bar-fill{height:100%;border-radius:4px}
+    .report-card{border:1px solid #e9ecef;border-radius:6px;padding:12px;margin-bottom:10px;page-break-inside:avoid}
+    .report-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+    .cost-pill{display:inline-block;background:#f0f4f8;border-radius:3px;padding:2px 7px;font-size:10px;margin:2px;font-weight:600}
+    .task-line{font-size:11px;color:#333;padding:2px 0}
+    .warn-row{background:#fff8e1!important}
+    .danger-row{background:#ffebee!important}
+    .footer{margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-size:10px;color:#aaa;display:flex;justify-content:space-between}
+    @media print{body{padding:16px}.report-card{page-break-inside:avoid}}
+  </style>
+  </head><body>
+  <h1>SiteCommand</h1>
+  <div class="meta">Field Reports &amp; Project Summary &nbsp;|&nbsp; Generated: ${date} &nbsp;|&nbsp; ${reports.length} reports</div>
+
+  <h2>Portfolio Summary</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">${allProjects.length}</div><div class="stat-l">Projects</div></div>
+    <div class="stat"><div class="stat-n">${allReports.length}</div><div class="stat-l">Reports</div></div>
+    <div class="stat"><div class="stat-n">${allTasks.length}</div><div class="stat-l">Tasks</div></div>
+    <div class="stat"><div class="stat-n">R${Math.round(tf/1000)}k</div><div class="stat-l">Field Costs</div></div>
+  </div>
+
+  <h2>Budget Status by Project</h2>
+  <table>
+    <thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Used %</th><th>Status</th></tr></thead>
+    <tbody>
+      ${budgetData.map(p=>{
+        const pct=p.pct;
+        const rowClass=pct>100?'danger-row':pct>=75?'warn-row':'';
+        const badgeClass=pct>100?'over':pct>=90?'red':pct>=75?'amber':'green';
+        const badgeText=pct>100?'OVER BUDGET':pct>=90?'NEAR LIMIT':pct>=75?'WARNING':'ON TRACK';
+        return`<tr class="${rowClass}">
+          <td><strong>${p.name}</strong>${p.phase?'<br><span style="color:#777;font-size:10px">'+p.phase+'</span>':''}</td>
+          <td>${fmt(p.budget)}</td>
+          <td>${fmt(p.contract_spend)}</td>
+          <td style="color:#0f6e56"><strong>${fmt(p.fieldCost)}</strong></td>
+          <td><strong>${fmt(p.totalSpend)}</strong></td>
+          <td style="color:${p.remaining<0?'#721c24':'#155724'}">${fmt(p.remaining)}</td>
+          <td>
+            <strong style="color:${pct>100?'#721c24':pct>=75?'#856404':'#155724'}">${pct}%</strong>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${pct>100?'#dc3545':pct>=90?'#dc3545':pct>=75?'#f5a623':'#22c55e'}"></div></div>
+          </td>
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <h2>Cost Category Breakdown (Field Reports)</h2>
+  <table>
+    <thead><tr><th>Category</th><th>Total Spent (R)</th><th>% of Field Costs</th></tr></thead>
+    <tbody>
+      ${allCostCats.filter(c=>(ac[c.name]||0)>0).map(c=>`<tr>
+        <td>${c.icon||''} ${c.name}</td>
+        <td>${fmt(ac[c.name]||0)}</td>
+        <td>${tf>0?Math.round((ac[c.name]||0)/tf*100):0}%</td>
+      </tr>`).join('')}
+      <tr style="font-weight:700;background:#f8f9fa"><td>Total</td><td>${fmt(tf)}</td><td>100%</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Project Task Progress</h2>
+  <table>
+    <thead><tr><th>Task</th><th>Project</th><th>Type</th><th>Total Qty</th><th>Done</th><th>Unit</th><th>Progress</th><th>Status</th></tr></thead>
+    <tbody>
+      ${allTasks.map(t=>`<tr>
+        <td><strong>${t.title}</strong></td>
+        <td style="color:#555">${t.project_name}</td>
+        <td>${t.type}</td>
+        <td>${fmtN(t.qty_total)}</td>
+        <td><strong style="color:#0f6e56">${fmtN(t.qty_done)}</strong></td>
+        <td>${t.unit}</td>
+        <td>
+          <strong style="color:${t.progress>=100?'#155724':t.progress>=70?'#004085':'#856404'}">${t.progress}%</strong>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${t.progress}%;background:${t.progress>=100?'#22c55e':t.progress>=70?'#3b82f6':'#f5a623'}"></div></div>
+        </td>
+        <td><span class="badge ${t.status==='complete'?'green':t.status==='blocked'?'red':'amber'}">${t.status}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <h2>Daily Field Reports (${reports.length})</h2>
+  ${reports.map(r=>`
+    <div class="report-card">
+      <div class="report-header">
+        <div>
+          <h3>${r.project} &nbsp; <span style="font-weight:400;color:#777;font-size:11px">${r.report_date}</span></h3>
+          <div style="font-size:11px;color:#555;margin-top:2px">${r.reporter||''}${r.role?' \u2014 '+r.role:''} &nbsp;|&nbsp; ${r.location||''} &nbsp;|&nbsp; ${r.period||''}</div>
+          <div style="font-size:11px;color:#555;margin-top:1px">${r.workers||0} workers &nbsp;|&nbsp; ${r.weather||''} ${r.temp?r.temp+'\u00b0C':''} &nbsp;|&nbsp; <span style="color:${r.hse==='none'?'#155724':'#721c24'};font-weight:700">${r.hse==='none'?'HSE clear':r.hse}</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:800;color:#f5a623">R${Math.round(r.total_cost||0).toLocaleString('en-ZA')}</div>
+          <div style="font-size:10px;color:#aaa">total cost</div>
+        </div>
+      </div>
+      ${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin:6px 0">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div class="task-line">\u2713 <strong>${t.title}</strong>: ${fmtN(t.qty_done)} ${t.unit||''} \u2014 <em>${t.status||''}</em></div>`).join('')}</div>`:''}
+      ${r.costs?`<div style="margin-top:6px">${Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span class="cost-pill">${k}: R${Math.round(v).toLocaleString('en-ZA')}</span>`).join('')}</div>`:''}
+      ${r.progress_note?`<div style="margin-top:6px;font-size:11px;color:#555;font-style:italic">${r.progress_note}</div>`:''}
+      ${r.blockers?`<div style="margin-top:5px;font-size:11px;color:#721c24">\u26a0 ${r.blockers}</div>`:''}
+    </div>`).join('')}
+
+  <div class="footer">
+    <span>SiteCommand &mdash; Construction &amp; Telecoms PM</span>
+    <span>Generated ${date}</span>
+  </div>
+  </body></html>`;
+
+  const reportDate = new Date().toISOString().split('T')[0];
+  triggerDownload('SiteCommand_Report_'+reportDate+'.html', html, 'text/html;charset=utf-8');
+  showToast('PDF report downloaded \u2014 open in browser and print to PDF');
+}
+
+function downloadJSON(){
+  const data = {
+    exported: new Date().toISOString(),
+    projects: allProjects,
+    project_tasks: allTasks,
+    daily_reports: allReports,
+    workers: allWorkers,
+    equipment: allEquipment,
+    cost_categories: allCostCats
+  };
+  const date = new Date().toISOString().split('T')[0];
+  triggerDownload(
+    'SiteCommand_Backup_'+date+'.json',
+    JSON.stringify(data, null, 2),
+    'application/json'
+  );
+  showToast('Full backup downloaded');
 }
 
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
