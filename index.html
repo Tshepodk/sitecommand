@@ -129,6 +129,24 @@ tr:hover td{background:var(--bg3)}
 /* Cost category card in settings */
 .cat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px}
 .cat-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+/* Budget threshold alerts */
+.budget-alert-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--r);margin-bottom:6px}
+.budget-alert-row.warn{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25)}
+.budget-alert-row.danger{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25)}
+.budget-alert-row.over{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4)}
+.budget-alert-icon{font-size:18px;flex-shrink:0}
+.budget-alert-name{font-weight:500;font-size:13px;flex:1}
+.budget-alert-pct{font-family:var(--font-d);font-size:20px;font-weight:800}
+.budget-bar-wrap{height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;position:relative}
+.budget-bar-fill{height:100%;border-radius:5px;transition:width 0.5s;position:relative}
+.budget-bar-fill.over-fill{width:100% !important;animation:pulse-red 1.5s infinite}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:0.6}}
+.threshold-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.4);z-index:2}
+.bpct-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.bpct-ok{background:rgba(34,197,94,0.12);color:#4ade80}
+.bpct-warn{background:rgba(245,166,35,0.15);color:var(--accent)}
+.bpct-danger{background:rgba(239,68,68,0.15);color:#f87171}
+.bpct-over{background:rgba(239,68,68,0.25);color:#f87171;animation:pulse-red 1.5s infinite}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
@@ -201,6 +219,15 @@ tr:hover td{background:var(--bg3)}
         <div class="card-header"><div class="card-title">Tasks Nearing Completion</div><button class="btn btn-ghost btn-sm" onclick="showPage('tasks',null)">All tasks</button></div>
         <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Task</th><th>Project</th><th>Qty Done / Total</th><th>Progress</th></tr></thead><tbody id="dash-near-complete"></tbody></table></div></div>
       </div>
+      <!-- Budget Alerts Panel -->
+      <div class="card mt1" id="budget-alerts-card" style="display:none">
+        <div class="card-header">
+          <div class="card-title" style="color:var(--red)">&#9888; Budget Alerts</div>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">View full budget</button>
+        </div>
+        <div class="card-body" id="budget-alerts-body"></div>
+      </div>
+
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">AI Site Intelligence</div></div>
         <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-dash" placeholder="Ask about task progress, costs, risks, workforce..." onkeydown="if(event.key==='Enter')askAI('dash')"/><button class="btn btn-primary btn-sm" onclick="askAI('dash')">Ask &#8599;</button></div>
@@ -308,7 +335,7 @@ tr:hover td{background:var(--bg3)}
         <button class="btn btn-ghost btn-sm" onclick="askAI('budget','Analyse the budget versus field reported costs. Identify projects at risk of overspend, the highest cost categories, and recommend actions.')">AI Analyse &#8599;</button>
       </div>
       <div class="stats-grid" id="budget-stats"></div>
-      <div class="card mt1"><div class="card-header"><div class="card-title">Budget vs Reported Costs</div></div><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Used</th><th>Status</th></tr></thead><tbody id="budget-table"></tbody></table></div></div></div>
+      <div class="card mt1"><div class="card-header"><div class="card-title">Budget vs Reported Costs</div></div><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Budget Used</th><th>Alert</th></tr></thead><tbody id="budget-table"></tbody></table></div></div></div>
       <div class="card mt1"><div class="card-header"><div class="card-title">Cost Category Breakdown (Field Reports)</div></div><div class="card-body" id="budget-categories"></div></div>
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Budget AI</div></div>
@@ -537,27 +564,108 @@ function bpc(){
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function projTaskStats(n){const pt=allTasks.filter(t=>t.project_name===n);if(!pt.length)return{count:0,avg:0,complete:0};const avg=pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length;return{count:pt.length,avg:Math.round(avg),complete:pt.filter(t=>t.status==='complete').length};}
 
+// ── Budget threshold helper ───────────────────────────────────────────────────
+function budgetColor(pct){
+  if(pct>100)return'var(--red)';
+  if(pct>=90)return'var(--red)';
+  if(pct>=75)return'var(--accent)';
+  return'var(--green)';
+}
+function budgetBadgeClass(pct){
+  if(pct>100)return'bpct-over';
+  if(pct>=90)return'bpct-danger';
+  if(pct>=75)return'bpct-warn';
+  return'bpct-ok';
+}
+function budgetLabel(pct){
+  if(pct>100)return'OVER BUDGET';
+  if(pct>=90)return'NEAR LIMIT';
+  if(pct>=75)return'WARNING';
+  return'ON TRACK';
+}
+function budgetAlertIcon(pct){
+  if(pct>100)return'🚨';
+  if(pct>=90)return'🔴';
+  return'🟡';
+}
+function getBudgetData(){
+  const pc=bpc();
+  return allProjects.map(p=>{
+    const fc=pc[p.name]||{totalCost:0};
+    const total=(p.contract_spend||0)+fc.totalCost;
+    const pct=p.budget>0?Math.round(total/p.budget*100):0;
+    const remaining=(p.budget||0)-total;
+    return{...p,fieldCost:fc.totalCost,totalSpend:total,pct,remaining};
+  });
+}
+
 function renderDashboard(){
   const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
   const td=new Date().toISOString().split('T')[0];
   const tr=allReports.filter(r=>r.report_date===td).length;
   const tw=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
   const avgAll=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
+  const budgetData=getBudgetData();
+  const alertProjects=budgetData.filter(p=>p.pct>=75);
+  const overBudget=budgetData.filter(p=>p.pct>100).length;
+
   document.getElementById('dash-sub').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})+' — '+allReports.length+' reports submitted';
+
+  // Stats — swap last card to show budget alert count if any
+  const budgetStatColor=overBudget>0?'s-red':alertProjects.length>0?'s-amber':'s-green';
+  const budgetStatVal=overBudget>0?overBudget:alertProjects.length;
+  const budgetStatLabel=overBudget>0?'Over Budget':alertProjects.length>0?'Budget Warnings':'Budget OK';
   document.getElementById('dash-stats').innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Active Projects</div><div class="stat-sub">${allTasks.length} tasks, ${allWorkers.length} workers</div></div>
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${avgAll}%</div><div class="stat-l">Avg Task Progress</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:${avgAll}%;background:var(--blue)"></div></div></div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today — ${tw} workers on site</div></div>
-    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${fmt(tf)}</div><div class="stat-l">Field Costs</div><div class="stat-sub">${allTasks.filter(t=>t.status==='complete').length} tasks complete</div></div>`;
+    <div class="stat-card ${budgetStatColor}" style="cursor:${alertProjects.length?'pointer':'default'}" onclick="${alertProjects.length?"showPage('budget',null)":''}"><div class="stat-n" style="color:${overBudget>0?'var(--red)':alertProjects.length>0?'var(--accent)':'var(--green)'}">${budgetStatVal||'✓'}</div><div class="stat-l">${budgetStatLabel}</div><div class="stat-sub">${alertProjects.length?'click to view budget':fmt(tf)+' field costs'}</div></div>`;
+
   document.getElementById('dash-projects').innerHTML=allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
   document.getElementById('dash-costs').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
-  // cost bar using dynamic categories
   const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
   const tot=Object.values(ac).reduce((a,v)=>a+v,0);
   if(tot>0)document.getElementById('cost-breakdown-bar').innerHTML=`<div class="cost-bar">${allCostCats.map(c=>`<div class="cost-seg" style="width:${Math.round((ac[c.name]||0)/tot*100)}%;background:${c.color};opacity:0.85"></div>`).join('')}</div><div class="cost-legend">${allCostCats.filter(c=>(ac[c.name]||0)>0).map(c=>`<div class="cost-legend-item"><div class="cost-dot" style="background:${c.color}"></div>${c.name}: ${fmt(ac[c.name])}</div>`).join('')}</div>`;
   else document.getElementById('cost-breakdown-bar').innerHTML='';
+
   const near=allTasks.filter(t=>t.status!=='complete'&&parseFloat(t.progress||0)>=70).sort((a,b)=>parseFloat(b.progress||0)-parseFloat(a.progress||0)).slice(0,6);
   document.getElementById('dash-near-complete').innerHTML=near.length===0?`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem">No tasks above 70% yet.</td></tr>`:near.map(t=>`<tr><td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.type}</div></td><td style="color:var(--text2)">${t.project_name}</td><td style="font-size:12px"><span style="font-weight:600">${fmtN(t.qty_done)}</span> / ${fmtN(t.qty_total)} ${t.unit}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${t.progress}%;background:${parseFloat(t.progress)>=90?'var(--green)':'var(--blue)'}"></div></div><span style="font-size:12px;font-weight:700;min-width:42px;text-align:right;color:${parseFloat(t.progress)>=90?'var(--green)':'var(--text)'}">${t.progress}%</span></div></td></tr>`).join('');
+
+  // Budget alerts panel
+  const alertCard=document.getElementById('budget-alerts-card');
+  const alertBody=document.getElementById('budget-alerts-body');
+  if(alertProjects.length===0){alertCard.style.display='none';}
+  else{
+    alertCard.style.display='block';
+    alertBody.innerHTML=alertProjects.sort((a,b)=>b.pct-a.pct).map(p=>{
+      const pct=p.pct;const fillW=Math.min(pct,100);const isOver=pct>100;
+      const rowClass=isOver?'over':pct>=90?'danger':'warn';
+      return`<div class="budget-alert-row ${rowClass}">
+        <span class="budget-alert-icon">${budgetAlertIcon(pct)}</span>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+            <span class="budget-alert-name">${p.name}</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span class="bpct-badge ${budgetBadgeClass(pct)}">${budgetLabel(pct)}</span>
+              <span class="budget-alert-pct" style="color:${budgetColor(pct)}">${pct}%</span>
+            </div>
+          </div>
+          <div class="budget-bar-wrap">
+            <div class="budget-bar-fill ${isOver?'over-fill':''}" style="width:${fillW}%;background:${budgetColor(pct)}">
+              ${pct>=75&&pct<100?`<div class="threshold-line" style="left:${Math.round(75/fillW*100)}%"></div>`:''}
+              ${pct>=90&&pct<100?`<div class="threshold-line" style="left:${Math.round(90/fillW*100)}%"></div>`:''}
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--text3)">
+            <span>Budget: ${fmt(p.budget)}</span>
+            <span>Contracted: ${fmt(p.contract_spend)}</span>
+            <span>Field: ${fmt(p.fieldCost)}</span>
+            <span style="color:${p.remaining<0?'var(--red)':'var(--text2)'}"><strong>${p.remaining<0?'Over: '+fmt(Math.abs(p.remaining)):'Remaining: '+fmt(p.remaining)}</strong></span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 
 // ── Projects ──────────────────────────────────────────────────────────────────
@@ -616,11 +724,84 @@ function renderEquipment(){
 
 // ── Budget ────────────────────────────────────────────────────────────────────
 function renderBudget(){
-  const pc=bpc();const tB=allProjects.reduce((a,p)=>a+(p.budget||0),0);const tC=allProjects.reduce((a,p)=>a+(p.contract_spend||0),0);const tF=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const rem=tB-tC-tF;
-  document.getElementById('budget-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tB)}</div><div class="stat-l">Total Budget</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(tC)}</div><div class="stat-l">Contracted</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(tF)}</div><div class="stat-l">Field Reported</div><div class="stat-sub">${allReports.length} reports</div></div><div class="stat-card ${rem<0?'s-red':'s-green'}"><div class="stat-n" style="color:${rem<0?'var(--red)':'var(--green)'}">${fmt(Math.abs(rem))}</div><div class="stat-l">${rem<0?'Over Budget':'Remaining'}</div></div>`;
-  document.getElementById('budget-table').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0};const tot=(p.contract_spend||0)+fc.totalCost;const rm=(p.budget||0)-tot;const pct=p.budget>0?Math.round(tot/p.budget*100):0;return`<tr><td><div style="font-weight:500">${p.name}</div></td><td>${fmt(p.budget)}</td><td>${fmt(p.contract_spend)}</td><td style="color:var(--teal)">${fmt(fc.totalCost)}</td><td style="font-family:var(--font-d);font-weight:700">${fmt(tot)}</td><td style="color:${rm<0?'var(--red)':'var(--green)'}">${rm<0?'- ':''} ${fmt(Math.abs(rm))}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress" style="width:70px"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>100?'var(--red)':pct>90?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${pct}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
-  // dynamic cost categories
-  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});const ct=Object.values(ac).reduce((a,v)=>a+v,0);
+  const budgetData=getBudgetData();
+  const tB=allProjects.reduce((a,p)=>a+(p.budget||0),0);
+  const tC=allProjects.reduce((a,p)=>a+(p.contract_spend||0),0);
+  const tF=budgetData.reduce((a,p)=>a+p.fieldCost,0);
+  const tSpend=tC+tF;const rem=tB-tSpend;
+  const totalPct=tB>0?Math.round(tSpend/tB*100):0;
+  const overCount=budgetData.filter(p=>p.pct>100).length;
+  const warnCount=budgetData.filter(p=>p.pct>=75&&p.pct<=100).length;
+  document.getElementById('budget-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tB)}</div><div class="stat-l">Total Budget</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(tC)}</div><div class="stat-l">Contracted</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(tF)}</div><div class="stat-l">Field Reported</div><div class="stat-sub">${allReports.length} reports</div></div>
+    <div class="stat-card ${rem<0?'s-red':overCount>0?'s-red':warnCount>0?'s-amber':'s-green'}">
+      <div class="stat-n" style="color:${rem<0?'var(--red)':'var(--green)'}">${fmt(Math.abs(rem))}</div>
+      <div class="stat-l">${rem<0?'Over Budget':'Remaining'}</div>
+      <div class="stat-sub">${overCount?overCount+' project(s) over budget':warnCount?warnCount+' approaching limit':'All projects within budget'}</div>
+    </div>`;
+
+  // Overall portfolio bar
+  const portfolioBar=`<div style="margin-bottom:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-family:var(--font-d);font-size:13px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text2)">Portfolio Budget Used</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="bpct-badge ${budgetBadgeClass(totalPct)}">${budgetLabel(totalPct)}</span>
+        <span style="font-family:var(--font-d);font-size:24px;font-weight:800;color:${budgetColor(totalPct)}">${totalPct}%</span>
+      </div>
+    </div>
+    <div class="budget-bar-wrap" style="height:14px;border-radius:7px">
+      <div class="budget-bar-fill ${totalPct>100?'over-fill':''}" style="width:${Math.min(totalPct,100)}%;background:${budgetColor(totalPct)};border-radius:7px;position:relative">
+        <div class="threshold-line" style="left:75%;display:${totalPct>=10?'block':'none'}" title="75% threshold"></div>
+        <div class="threshold-line" style="left:90%;display:${totalPct>=10?'block':'none'}" title="90% threshold"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3)">
+      <span>0%</span>
+      <span style="color:var(--accent)">75% warning</span>
+      <span style="color:var(--red)">90% danger</span>
+      <span>100% limit</span>
+    </div>
+  </div>`;
+
+  // Per-project rows with full threshold bars
+  const rowsHtml=budgetData.map(p=>{
+    const pct=p.pct;const fillW=Math.min(pct,100);const isOver=pct>100;
+    const rowClass=isOver?'over':pct>=90?'danger':pct>=75?'warn':'';
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td>
+      <td style="font-family:var(--font-d);font-weight:700">${fmt(p.budget)}</td>
+      <td style="color:var(--text2)">${fmt(p.contract_spend)}</td>
+      <td style="color:var(--teal)">${fmt(p.fieldCost)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${budgetColor(pct)}">${fmt(p.totalSpend)}</td>
+      <td style="color:${p.remaining<0?'var(--red)':'var(--green)'}"><strong>${p.remaining<0?'- ':''} ${fmt(Math.abs(p.remaining))}</strong></td>
+      <td style="min-width:180px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="budget-bar-wrap" style="flex:1;height:10px;border-radius:5px">
+            <div class="budget-bar-fill ${isOver?'over-fill':''}" style="width:${fillW}%;background:${budgetColor(pct)};border-radius:5px;position:relative">
+              ${fillW>=10?`<div class="threshold-line" style="left:${Math.min(Math.round(75/fillW*100),98)}%"></div>`:''}
+              ${fillW>=10?`<div class="threshold-line" style="left:${Math.min(Math.round(90/fillW*100),98)}%"></div>`:''}
+            </div>
+          </div>
+          <span style="font-family:var(--font-d);font-size:14px;font-weight:800;color:${budgetColor(pct)};min-width:42px;text-align:right">${pct}%</span>
+        </div>
+      </td>
+      <td><span class="bpct-badge ${budgetBadgeClass(pct)}">${budgetLabel(pct)}</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('budget-table').innerHTML=rowsHtml||`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No projects yet.</td></tr>`;
+
+  // Insert portfolio bar above table
+  const tableCard=document.getElementById('budget-table').closest('.card');
+  let existingBar=document.getElementById('portfolio-budget-bar');
+  if(existingBar)existingBar.remove();
+  const barEl=document.createElement('div');barEl.id='portfolio-budget-bar';barEl.innerHTML=portfolioBar;
+  tableCard.parentNode.insertBefore(barEl,tableCard);
+
+  // Cost category breakdown
+  const pc=bpc();const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});const ct=Object.values(ac).reduce((a,v)=>a+v,0);
   document.getElementById('budget-categories').innerHTML=ct===0?`<p style="color:var(--text3);font-size:13px">No field costs yet. <a href="intake.html" style="color:var(--teal)">Submit a daily report</a></p>`:`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${allCostCats.map(c=>`<div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:${c.color}"></div><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">${c.icon} ${c.name}</span></div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${c.color}">${fmt(ac[c.name]||0)}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${ct>0?Math.round((ac[c.name]||0)/ct*100):0}%</div></div>`).join('')}</div>`;
 }
 
@@ -635,7 +816,188 @@ function renderReportsPage(){
   document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
   const c=document.getElementById('reports-list');
   if(allReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit your first report</a></p>`;return;}
-  c.innerHTML=allReports.map(r=>`<div style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-d);font-size:14px;font-weight:700">${r.project}</span><span style="font-size:11px;color:var(--text3)">${r.report_date}</span><span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span></div><div style="font-size:12px;color:var(--text3);margin-top:3px">${r.reporter||'—'}${r.role?' — '+r.role:''} — ${r.location||'—'}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${r.workers||0} workers — ${(r.tasks||[]).length} task updates — ${r.weather||'—'}</div>${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin-top:5px;display:flex;flex-direction:column;gap:2px">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div style="font-size:12px;color:var(--text2)">&#10003; ${t.title}: <strong style="color:var(--teal)">${fmtN(t.qty_done)} ${t.unit||''}</strong></div>`).join('')}</div>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${r.costs?Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span style="font-size:11px;padding:2px 8px;border-radius:3px;background:var(--bg3);color:var(--text2);font-weight:500">${k}: ${fmt(v)}</span>`).join(''):''}</div>${r.blockers?`<div style="margin-top:6px;font-size:12px;color:#f87171">&#9888; ${r.blockers}</div>`:''}</div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost)}</div><div style="font-size:11px;color:var(--text3)">total cost</div></div></div></div>`).join('');
+  c.innerHTML=allReports.map(r=>`
+    <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-family:var(--font-d);font-size:14px;font-weight:700">${r.project}</span>
+            <span style="font-size:11px;color:var(--text3)">${r.report_date}</span>
+            <span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span>
+            <span style="font-size:11px;padding:2px 7px;border-radius:3px;background:var(--bg3);color:var(--text3)">${r.period||'—'}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:3px">${r.reporter||'—'}${r.role?' — '+r.role:''} — ${r.location||'—'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${r.workers||0} workers on site — ${r.weather||'—'}${r.temp?' '+r.temp+'°C':''}</div>
+          ${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div style="font-size:12px;color:var(--text2)">&#10003; ${t.title}: <strong style="color:var(--teal)">${fmtN(t.qty_done)} ${t.unit||''}</strong> — <span style="color:var(--text3)">${t.status||''}</span></div>`).join('')}</div>`:''}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${r.costs?Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span style="font-size:11px;padding:2px 8px;border-radius:3px;background:var(--bg3);color:var(--text2);font-weight:500">${k}: ${fmt(v)}</span>`).join(''):''}</div>
+          ${r.progress_note?`<div style="margin-top:5px;font-size:12px;color:var(--text3);font-style:italic">${r.progress_note}</div>`:''}
+          ${r.blockers?`<div style="margin-top:5px;font-size:12px;color:#f87171">&#9888; ${r.blockers}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+          <div style="text-align:right">
+            <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost)}</div>
+            <div style="font-size:11px;color:var(--text3)">total cost</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openReportEdit(${r.id})">&#9998; Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteReport(${r.id},'${(r.project||'').replace(/'/g,"\\'")}','${r.report_date}')">&#10005;</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Report Edit / Delete ──────────────────────────────────────────────────────
+function openReportEdit(id){
+  const r=allReports.find(x=>x.id===id);
+  if(!r){showToast('Report not found','err');return;}
+  // populate modal
+  document.getElementById('re-id').value=r.id;
+  document.getElementById('re-project').value=r.project||'';
+  document.getElementById('re-date').value=r.report_date||'';
+  document.getElementById('re-reporter').value=r.reporter||'';
+  document.getElementById('re-role').value=r.role||'';
+  document.getElementById('re-location').value=r.location||'';
+  document.getElementById('re-period').value=r.period||'Day shift (06:00–18:00)';
+  document.getElementById('re-workers').value=r.workers||0;
+  document.getElementById('re-weather').value=r.weather||'';
+  document.getElementById('re-temp').value=r.temp||'';
+  document.getElementById('re-hse').value=r.hse||'none';
+  document.getElementById('re-hse-detail').value=r.hse_detail||'';
+  document.getElementById('re-progress-note').value=r.progress_note||'';
+  document.getElementById('re-blockers').value=r.blockers||'';
+  // total cost
+  document.getElementById('re-total-cost').value=r.total_cost||0;
+  // render cost fields dynamically
+  const costsEl=document.getElementById('re-costs-grid');
+  const costs=r.costs||{};
+  costsEl.innerHTML=allCostCats.map(c=>`
+    <div>
+      <label style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:4px">${c.icon||''} ${c.name}</label>
+      <div style="display:flex;gap:4px;align-items:center">
+        <span style="font-size:13px;color:var(--text3)">R</span>
+        <input class="form-input" type="number" id="re-cost-${c.id}" min="0" step="0.01" value="${costs[c.name]||0}" onchange="recalcReportTotal()" style="font-size:13px"/>
+      </div>
+    </div>`).join('');
+  // render task quantity corrections
+  const tasksEl=document.getElementById('re-tasks-grid');
+  const tasks=r.tasks||[];
+  if(!tasks.length){
+    tasksEl.innerHTML='<p style="color:var(--text3);font-size:13px;grid-column:1/-1">No task updates in this report.</p>';
+  } else {
+    tasksEl.innerHTML=tasks.map((t,i)=>`
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px">
+        <div style="font-weight:500;font-size:13px;margin-bottom:2px">${t.title||'Task '+(i+1)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">${t.type||''} — ${t.unit||''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:3px">Qty done (${t.unit||'units'})</label>
+            <input class="form-input" type="number" id="re-task-qty-${i}" min="0" step="any" value="${t.qty_done||0}" style="font-size:13px"/>
+          </div>
+          <div>
+            <label style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:3px">Status</label>
+            <select class="form-select" id="re-task-status-${i}" style="font-size:12px">
+              <option value="in-progress"${t.status==='in-progress'?' selected':''}>In Progress</option>
+              <option value="complete"${t.status==='complete'?' selected':''}>Complete</option>
+              <option value="not-started"${t.status==='not-started'?' selected':''}>Not Started</option>
+              <option value="blocked"${t.status==='blocked'?' selected':''}>Blocked</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:6px">
+          <label style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:3px">Notes</label>
+          <input class="form-input" type="text" id="re-task-notes-${i}" value="${(t.notes||'').replace(/"/g,'&quot;')}" placeholder="Notes..." style="font-size:12px"/>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('modal-report-edit').classList.add('open');
+}
+
+function recalcReportTotal(){
+  const total=allCostCats.reduce((sum,c)=>{
+    const el=document.getElementById('re-cost-'+c.id);
+    return sum+(parseFloat(el?el.value:0)||0);
+  },0);
+  document.getElementById('re-total-cost').value=Math.round(total*100)/100;
+}
+
+async function saveReportEdit(){
+  const id=document.getElementById('re-id').value;
+  const r=allReports.find(x=>x.id==id);
+  if(!r){showToast('Report not found','err');return;}
+  const btn=document.getElementById('re-save-btn');btn.disabled=true;btn.textContent='Saving...';
+  try{
+    // Build updated costs object
+    const newCosts={};
+    allCostCats.forEach(c=>{
+      const el=document.getElementById('re-cost-'+c.id);
+      newCosts[c.name]=parseFloat(el?el.value:0)||0;
+    });
+    const newTotal=Object.values(newCosts).reduce((a,v)=>a+v,0);
+    // Build updated tasks — capture corrected quantities
+    const oldTasks=r.tasks||[];
+    const newTasks=oldTasks.map((t,i)=>({
+      ...t,
+      qty_done:parseFloat((document.getElementById('re-task-qty-'+i)||{}).value)||0,
+      status:(document.getElementById('re-task-status-'+i)||{}).value||t.status,
+      notes:(document.getElementById('re-task-notes-'+i)||{}).value||''
+    }));
+    const payload={
+      project:document.getElementById('re-project').value,
+      report_date:document.getElementById('re-date').value,
+      reporter:document.getElementById('re-reporter').value,
+      role:document.getElementById('re-role').value,
+      location:document.getElementById('re-location').value,
+      period:document.getElementById('re-period').value,
+      workers:parseInt(document.getElementById('re-workers').value)||0,
+      weather:document.getElementById('re-weather').value,
+      temp:document.getElementById('re-temp').value,
+      hse:document.getElementById('re-hse').value,
+      hse_detail:document.getElementById('re-hse-detail').value,
+      progress_note:document.getElementById('re-progress-note').value,
+      blockers:document.getElementById('re-blockers').value,
+      costs:newCosts,
+      total_cost:newTotal,
+      tasks:newTasks
+    };
+    await sbPatch('daily_reports',id,payload);
+    // Recalculate task qty_done totals for affected tasks
+    // For each task in this report: remove old qty, add new qty to project_tasks
+    const taskAdjustments={};
+    oldTasks.forEach((t,i)=>{
+      if(!t.task_id)return;
+      const oldQty=parseFloat(t.qty_done)||0;
+      const newQty=parseFloat((document.getElementById('re-task-qty-'+i)||{}).value)||0;
+      const diff=newQty-oldQty;
+      if(!taskAdjustments[t.task_id])taskAdjustments[t.task_id]={diff:0,status:t.status};
+      taskAdjustments[t.task_id].diff+=diff;
+      taskAdjustments[t.task_id].status=newTasks[i].status;
+    });
+    // Fetch current qty_done for each affected task and apply diff
+    await Promise.all(Object.entries(taskAdjustments).map(async([taskId,adj])=>{
+      if(adj.diff===0)return;
+      const tasks=await sbGet('project_tasks','id=eq.'+taskId);
+      const task=tasks&&tasks[0];
+      if(!task)return;
+      const corrected=Math.max(0,(parseFloat(task.qty_done)||0)+adj.diff);
+      await sbPatch('project_tasks',taskId,{qty_done:corrected,status:adj.status});
+    }));
+    showToast('Report updated successfully');
+    closeModal('report-edit');
+    await loadAllData();
+    renderReportsPage();
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save Changes';
+}
+
+async function deleteReport(id,project,date){
+  if(!confirm(`Delete the report for "${project}" on ${date}?\n\nNote: Task quantities logged in this report will NOT be automatically reversed. Adjust task quantities manually if needed.`))return;
+  try{
+    await sb('DELETE','daily_reports',null,'id=eq.'+id);
+    showToast('Report deleted');
+    await loadAllData();
+    renderReportsPage();
+  }catch(e){showToast('Delete failed','err');console.error(e);}
 }
 
 // ── Generic Modal open/close ──────────────────────────────────────────────────
@@ -744,5 +1106,73 @@ document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',f
 setInterval(loadAllData,30000);
 loadAllData().then(()=>renderDashboard());
 </script>
+
+<!-- Modal: Edit Daily Report -->
+<div class="modal-bg" id="modal-report-edit">
+  <div class="modal" style="width:680px;max-height:92vh">
+    <div class="modal-title">
+      <span>&#9998; Edit Daily Report</span>
+      <button class="modal-close" onclick="closeModal('report-edit')">&#10005;</button>
+    </div>
+    <input type="hidden" id="re-id"/>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Report Details</div>
+    <div class="fg2" style="margin-bottom:1rem">
+      <div class="form-group"><label class="form-label">Project</label><input class="form-input" id="re-project" placeholder="Project name"/></div>
+      <div class="form-group"><label class="form-label">Report Date</label><input class="form-input" type="date" id="re-date"/></div>
+      <div class="form-group"><label class="form-label">Reported By</label><input class="form-input" id="re-reporter" placeholder="Reporter name"/></div>
+      <div class="form-group"><label class="form-label">Role</label><input class="form-input" id="re-role" placeholder="e.g. Site Foreman"/></div>
+      <div class="form-group"><label class="form-label">Location / Zone</label><input class="form-input" id="re-location" placeholder="e.g. Sector 4"/></div>
+      <div class="form-group"><label class="form-label">Report Period</label>
+        <select class="form-select" id="re-period">
+          <option>Day shift (06:00-18:00)</option><option>Night shift (18:00-06:00)</option><option>Full day</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Workers on Site</label><input class="form-input" type="number" id="re-workers" min="0"/></div>
+      <div class="form-group"><label class="form-label">Weather</label>
+        <select class="form-select" id="re-weather">
+          <option value="">Not recorded</option><option value="Sunny">Sunny</option><option value="Cloudy">Cloudy</option><option value="Rain">Rain</option><option value="Storm">Storm</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Temperature (C)</label><input class="form-input" type="number" id="re-temp" placeholder="e.g. 28"/></div>
+      <div class="form-group"><label class="form-label">HSE Status</label>
+        <select class="form-select" id="re-hse">
+          <option value="none">None - all clear</option>
+          <option value="near-miss">Near miss reported</option>
+          <option value="first-aid">First aid incident</option>
+          <option value="medical">Medical treatment required</option>
+          <option value="lti">LTI - Lost Time Injury</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">HSE Details</label><textarea class="form-textarea" id="re-hse-detail" style="min-height:50px" placeholder="Incident details..."></textarea></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Progress Note</label><textarea class="form-textarea" id="re-progress-note" style="min-height:50px" placeholder="Daily progress summary..."></textarea></div>
+    <div class="form-group" style="margin-bottom:1.25rem"><label class="form-label">Blockers / Issues</label><textarea class="form-textarea" id="re-blockers" style="min-height:50px" placeholder="Blockers or issues..."></textarea></div>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Cost Corrections</div>
+    <div class="fg2" id="re-costs-grid" style="margin-bottom:1.25rem"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem">
+      <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text2)">Recalculated Total</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--text3)">R</span>
+        <input class="form-input" type="number" id="re-total-cost" style="width:140px;font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent);text-align:right" readonly/>
+      </div>
+    </div>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">Task Quantity Corrections</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Project task accumulated totals will be adjusted automatically when you save.</p>
+    <div class="fg2" id="re-tasks-grid" style="margin-bottom:1.25rem"></div>
+
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)">
+      &#9888; Correcting task quantities here will automatically adjust the accumulated totals on the Project Tasks page. If you delete this report entirely, task quantities will not be auto-reversed.
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('report-edit')">Cancel</button>
+      <button class="btn btn-primary" id="re-save-btn" onclick="saveReportEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
