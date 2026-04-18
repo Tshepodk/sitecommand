@@ -88,10 +88,9 @@ tr:hover td{background:var(--bg3)}
 .cost-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
 .cost-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
 .cost-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-/* Modal */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
 .modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
 .modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}
 .modal-close:hover{color:var(--text);background:var(--bg3)}
@@ -119,19 +118,17 @@ tr:hover td{background:var(--bg3)}
 .ai-response{margin-top:12px;font-size:13px;color:var(--text2);line-height:1.65}
 .spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* Qty progress pill */
-.qty-pill{display:flex;align-items:center;gap:8px;min-width:180px}
-.qty-pct{font-family:var(--font-d);font-size:15px;font-weight:700;min-width:44px;text-align:right}
-/* Project filter tabs */
 .proj-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
 .proj-tab{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border2);color:var(--text2);background:transparent;transition:all 0.12s;font-family:var(--font-d);letter-spacing:0.04em;text-transform:uppercase}
 .proj-tab:hover{border-color:var(--accent);color:var(--accent)}
 .proj-tab.active{background:var(--accent);color:#000;border-color:var(--accent)}
-/* Summary bar in tasks page */
 .task-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
 .ts-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px}
 .ts-n{font-family:var(--font-d);font-size:22px;font-weight:700;line-height:1}
 .ts-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
+/* Cost category card in settings */
+.cat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.cat-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
@@ -149,7 +146,6 @@ tr:hover td{background:var(--bg3)}
       <button style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px" onclick="loadAllData()" title="Refresh">&#8635;</button>
     </div>
   </div>
-
   <div class="sidebar">
     <div class="nav-section">
       <div class="nav-label">Overview</div>
@@ -159,13 +155,14 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Work</div>
       <div class="nav-item" onclick="showPage('tasks',this)"><span class="nav-icon">&#10003;</span>Project Tasks<span class="nav-badge nb-amber" id="task-badge">0</span></div>
-      <div class="nav-item" onclick="showPage('issues',this)"><span class="nav-icon">&#9888;</span>Issues<span class="nav-badge nb-red">3</span></div>
+      <div class="nav-item" onclick="showPage('issues',this)"><span class="nav-icon">&#9888;</span>Issues</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Resources</div>
-      <div class="nav-item" onclick="showPage('workforce',this)"><span class="nav-icon">&#128119;</span>Workforce</div>
-      <div class="nav-item" onclick="showPage('equipment',this)"><span class="nav-icon">&#127959;</span>Equipment</div>
+      <div class="nav-item" onclick="showPage('workforce',this)"><span class="nav-icon">&#128119;</span>Workforce<span class="nav-badge nb-blue" id="worker-badge">0</span></div>
+      <div class="nav-item" onclick="showPage('equipment',this)"><span class="nav-icon">&#127959;</span>Equipment<span class="nav-badge nb-blue" id="equip-badge">0</span></div>
       <div class="nav-item" onclick="showPage('budget',this)"><span class="nav-icon">&#128176;</span>Budget</div>
+      <div class="nav-item" onclick="showPage('costs',this)"><span class="nav-icon">&#9881;</span>Cost Categories</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Field Data</div>
@@ -183,7 +180,7 @@ tr:hover td{background:var(--bg3)}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <span class="live-badge"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite"></span>Live</span>
           <a href="intake.html" class="btn-intake" style="font-size:12px;padding:5px 12px">&#128203; New Report</a>
-          <button class="btn btn-ghost btn-sm" onclick="askAI('dash','Summarise project health, task progress and costs. Highlight any tasks near completion or blocked.')">AI Summary &#8599;</button>
+          <button class="btn btn-ghost btn-sm" onclick="askAI('dash','Summarise project health, task progress, workforce status and costs. Highlight risks and tasks near completion.')">AI Summary &#8599;</button>
         </div>
       </div>
       <div class="stats-grid" id="dash-stats"></div>
@@ -206,7 +203,7 @@ tr:hover td{background:var(--bg3)}
       </div>
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">AI Site Intelligence</div></div>
-        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-dash" placeholder="Ask about task progress, costs, risks..." onkeydown="if(event.key==='Enter')askAI('dash')"/><button class="btn btn-primary btn-sm" onclick="askAI('dash')">Ask &#8599;</button></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-dash" placeholder="Ask about task progress, costs, risks, workforce..." onkeydown="if(event.key==='Enter')askAI('dash')"/><button class="btn btn-primary btn-sm" onclick="askAI('dash')">Ask &#8599;</button></div>
         <div class="ai-response" id="ai-resp-dash"></div>
       </div>
     </div>
@@ -215,51 +212,32 @@ tr:hover td{background:var(--bg3)}
     <div class="page" id="page-projects">
       <div class="page-header">
         <div><div class="page-title">All Projects</div><div class="page-sub" id="proj-sub">Loading...</div></div>
-        <button class="btn btn-primary" onclick="openProjectModal()">+ New Project</button>
+        <button class="btn btn-primary" onclick="openModal('project')">+ New Project</button>
       </div>
-      <div class="card">
-        <div class="card-body" style="padding:0"><div class="table-wrap">
-          <table><thead><tr><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Budget</th><th>Avg Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
-        </div></div>
-      </div>
+      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap">
+        <table><thead><tr><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Budget</th><th>Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
+      </div></div></div>
     </div>
 
     <!-- PROJECT TASKS -->
     <div class="page" id="page-tasks">
       <div class="page-header">
         <div><div class="page-title">Project Tasks</div><div class="page-sub">Progress calculated automatically from daily intake quantities</div></div>
-        <button class="btn btn-primary" onclick="openTaskModal()">+ New Task</button>
+        <button class="btn btn-primary" onclick="openModal('task')">+ New Task</button>
       </div>
-      <!-- Summary cards -->
       <div class="task-summary" id="task-summary"></div>
-      <!-- Project filter -->
       <div class="proj-tabs" id="proj-tabs"></div>
-      <!-- Tasks table -->
       <div class="card">
         <div class="card-header">
           <div class="card-title" id="tasks-card-title">All Tasks</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <select class="form-select" id="task-filter-status" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderTasksTable()">
-              <option value="">All Statuses</option>
-              <option value="not-started">Not Started</option>
-              <option value="in-progress">In Progress</option>
-              <option value="complete">Complete</option>
-              <option value="blocked">Blocked</option>
-            </select>
-            <select class="form-select" id="task-filter-type" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderTasksTable()">
-              <option value="">All Types</option>
-              <option>Civil</option><option>Structural</option><option>Electrical</option><option>Telecoms</option><option>HSE</option><option>Survey</option><option>Admin</option>
-            </select>
+            <select class="form-select" id="task-filter-status" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderTasksTable()"><option value="">All Statuses</option><option value="not-started">Not Started</option><option value="in-progress">In Progress</option><option value="complete">Complete</option><option value="blocked">Blocked</option></select>
+            <select class="form-select" id="task-filter-type" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderTasksTable()"><option value="">All Types</option><option>Civil</option><option>Structural</option><option>Electrical</option><option>Telecoms</option><option>HSE</option><option>Survey</option><option>Admin</option></select>
           </div>
         </div>
-        <div class="card-body" style="padding:0">
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Task</th><th>Type</th><th>Unit</th><th>Total Qty</th><th>Done</th><th>Remaining</th><th>Progress</th><th>Priority</th><th>Assigned</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="tasks-table"></tbody>
-            </table>
-          </div>
-        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Task</th><th>Type</th><th>Unit</th><th>Total Qty</th><th>Done</th><th>Remaining</th><th>Progress</th><th>Priority</th><th>Assigned</th><th>Status</th><th>Actions</th></tr></thead><tbody id="tasks-table"></tbody></table>
+        </div></div>
       </div>
     </div>
 
@@ -269,38 +247,87 @@ tr:hover td{background:var(--bg3)}
       <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Description</th><th>Category</th><th>Project</th><th>Priority</th><th>Status</th><th>Owner</th></tr></thead><tbody id="issues-table"></tbody></table></div></div></div>
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Risk AI</div></div>
-        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-issues" placeholder="e.g. HSE risks for tower climbing" onkeydown="if(event.key==='Enter')askAI('issues')"/><button class="btn btn-primary btn-sm" onclick="askAI('issues')">Ask &#8599;</button></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-issues" placeholder="e.g. HSE risks for tower climbing, draft mitigation plan" onkeydown="if(event.key==='Enter')askAI('issues')"/><button class="btn btn-primary btn-sm" onclick="askAI('issues')">Ask &#8599;</button></div>
         <div class="ai-response" id="ai-resp-issues"></div>
       </div>
     </div>
 
     <!-- WORKFORCE -->
     <div class="page" id="page-workforce">
-      <div class="page-header"><div><div class="page-title">Workforce</div><div class="page-sub">Crews, subcontractors, certifications</div></div><button class="btn btn-primary btn-sm">+ Add Worker</button></div>
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="stat-card s-amber"><div class="stat-n" id="wf-onsite" style="color:var(--accent)">0</div><div class="stat-l">On Site Today</div><div class="stat-sub" id="wf-sub">from field reports</div></div>
-        <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">38</div><div class="stat-l">Telecoms Certified</div></div>
-        <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">6</div><div class="stat-l">Certs Expiring</div></div>
+      <div class="page-header">
+        <div><div class="page-title">Workforce</div><div class="page-sub">All crew, subcontractors and certifications — stored in Supabase</div></div>
+        <button class="btn btn-primary" onclick="openModal('worker')">+ Add Worker</button>
       </div>
-      <div class="card mt1"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Project</th><th>Certifications</th><th>Status</th></tr></thead><tbody id="workforce-table"></tbody></table></div></div></div>
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)" id="wf-stats"></div>
+      <div class="card mt1">
+        <div class="card-header">
+          <div class="card-title">All Workers</div>
+          <div style="display:flex;gap:8px">
+            <select class="form-select" id="wf-filter-status" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderWorkforce()"><option value="">All Statuses</option><option value="active">Active</option><option value="leave">On Leave</option><option value="cert-expiring">Cert Expiring</option><option value="inactive">Inactive</option></select>
+            <select class="form-select" id="wf-filter-type" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderWorkforce()"><option value="">All Types</option><option>Civil</option><option>Telecoms</option><option>Electrical</option><option>Supervisor</option><option>Subcontractor</option><option>Plant Operator</option></select>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Role</th><th>Type</th><th>Project</th><th>Phone</th><th>Certifications</th><th>Cert Expiry</th><th>Status</th><th>Actions</th></tr></thead><tbody id="workforce-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Workforce AI</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-workforce" placeholder="e.g. which certifications are expiring soon? who is on site today?" onkeydown="if(event.key==='Enter')askAI('workforce')"/><button class="btn btn-primary btn-sm" onclick="askAI('workforce')">Ask &#8599;</button></div>
+        <div class="ai-response" id="ai-resp-workforce"></div>
+      </div>
     </div>
 
     <!-- EQUIPMENT -->
     <div class="page" id="page-equipment">
-      <div class="page-header"><div><div class="page-title">Equipment</div><div class="page-sub">Plant, vehicles, telecoms hardware</div></div><button class="btn btn-primary btn-sm">+ Add Item</button></div>
-      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Item</th><th>Type</th><th>Assigned To</th><th>Next Service</th><th>Status</th></tr></thead><tbody id="equipment-table"></tbody></table></div></div></div>
+      <div class="page-header">
+        <div><div class="page-title">Equipment</div><div class="page-sub">Plant, vehicles and telecoms hardware — stored in Supabase</div></div>
+        <button class="btn btn-primary" onclick="openModal('equipment')">+ Add Item</button>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)" id="equip-stats"></div>
+      <div class="card mt1">
+        <div class="card-header">
+          <div class="card-title">All Equipment</div>
+          <select class="form-select" id="equip-filter-status" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderEquipment()"><option value="">All Statuses</option><option value="operational">Operational</option><option value="due-service">Due Service</option><option value="grounded">Grounded</option><option value="in-repair">In Repair</option></select>
+        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Item</th><th>Type</th><th>Make / Model</th><th>Serial No.</th><th>Assigned To</th><th>Next Service</th><th>Status</th><th>Actions</th></tr></thead><tbody id="equipment-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Equipment AI</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-equipment" placeholder="e.g. what equipment is due for service? what is grounded?" onkeydown="if(event.key==='Enter')askAI('equipment')"/><button class="btn btn-primary btn-sm" onclick="askAI('equipment')">Ask &#8599;</button></div>
+        <div class="ai-response" id="ai-resp-equipment"></div>
+      </div>
     </div>
 
     <!-- BUDGET -->
     <div class="page" id="page-budget">
-      <div class="page-header"><div><div class="page-title">Budget &amp; Costs</div><div class="page-sub">Contracted + field-reported costs</div></div><button class="btn btn-ghost btn-sm" onclick="askAI('budget','Analyse budget vs field costs and flag overspend risks')">AI Analyse &#8599;</button></div>
+      <div class="page-header">
+        <div><div class="page-title">Budget &amp; Costs</div><div class="page-sub">Contracted + field-reported costs combined</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="askAI('budget','Analyse the budget versus field reported costs. Identify projects at risk of overspend, the highest cost categories, and recommend actions.')">AI Analyse &#8599;</button>
+      </div>
       <div class="stats-grid" id="budget-stats"></div>
-      <div class="card mt1"><div class="card-header"><div class="card-title">Budget vs Reported</div></div><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total</th><th>Remaining</th><th>Status</th></tr></thead><tbody id="budget-table"></tbody></table></div></div></div>
-      <div class="card mt1"><div class="card-header"><div class="card-title">Cost Category Breakdown</div></div><div class="card-body" id="budget-categories"></div></div>
+      <div class="card mt1"><div class="card-header"><div class="card-title">Budget vs Reported Costs</div></div><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Used</th><th>Status</th></tr></thead><tbody id="budget-table"></tbody></table></div></div></div>
+      <div class="card mt1"><div class="card-header"><div class="card-title">Cost Category Breakdown (Field Reports)</div></div><div class="card-body" id="budget-categories"></div></div>
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Budget AI</div></div>
-        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-budget" placeholder="e.g. which cost category is highest?" onkeydown="if(event.key==='Enter')askAI('budget')"/><button class="btn btn-primary btn-sm" onclick="askAI('budget')">Ask &#8599;</button></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-budget" placeholder="e.g. which project is closest to overspend? forecast end-of-project cost" onkeydown="if(event.key==='Enter')askAI('budget')"/><button class="btn btn-primary btn-sm" onclick="askAI('budget')">Ask &#8599;</button></div>
         <div class="ai-response" id="ai-resp-budget"></div>
+      </div>
+    </div>
+
+    <!-- COST CATEGORIES -->
+    <div class="page" id="page-costs">
+      <div class="page-header">
+        <div><div class="page-title">Cost Categories</div><div class="page-sub">Customise the cost categories used in the daily intake form</div></div>
+        <button class="btn btn-primary" onclick="openModal('cost-cat')">+ Add Category</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Active Categories</div><div style="font-size:12px;color:var(--text3)">Changes apply immediately to the intake form</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Icon</th><th>Name</th><th>Colour</th><th>Sort Order</th><th>Actions</th></tr></thead><tbody id="costs-table"></tbody></table>
+        </div></div>
       </div>
     </div>
 
@@ -320,50 +347,102 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
-<!-- Modal: New/Edit Project -->
+<!-- ═══ MODALS ════════════════════════════════════════════════════════════════ -->
+
+<!-- Project Modal -->
 <div class="modal-bg" id="modal-project">
   <div class="modal">
-    <div class="modal-title"><span id="proj-modal-title">New Project</span><button class="modal-close" onclick="closeModal('modal-project')">&#10005;</button></div>
-    <input type="hidden" id="proj-edit-id"/>
+    <div class="modal-title"><span id="project-modal-title">New Project</span><button class="modal-close" onclick="closeModal('project')">&#10005;</button></div>
+    <input type="hidden" id="project-id"/>
     <div class="fg2">
-      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Name *</label><input class="form-input" id="proj-name" placeholder="e.g. Cape Town Fibre Rollout"/></div>
-      <div class="form-group"><label class="form-label">Phase / Sub-project</label><input class="form-input" id="proj-phase" placeholder="e.g. Phase 1"/></div>
-      <div class="form-group"><label class="form-label">Type *</label><select class="form-select" id="proj-type"><option>Construction</option><option>Telecoms</option><option>Electrical</option><option>Civil</option><option>Structural</option><option>Roads</option><option>Other</option></select></div>
-      <div class="form-group"><label class="form-label">Client</label><input class="form-input" id="proj-client" placeholder="e.g. SANRAL"/></div>
-      <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" id="proj-pm" placeholder="Full name"/></div>
-      <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="month" id="proj-start"/></div>
-      <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="month" id="proj-end"/></div>
-      <div class="form-group"><label class="form-label">Budget (R)</label><input class="form-input" type="number" id="proj-budget" placeholder="0" min="0"/></div>
-      <div class="form-group"><label class="form-label">Contracted Spend (R)</label><input class="form-input" type="number" id="proj-contract" placeholder="0" min="0"/></div>
-      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="proj-status"><option value="on-track">On Track</option><option value="at-risk">At Risk</option><option value="delayed">Delayed</option><option value="completed">Completed</option><option value="on-hold">On Hold</option></select></div>
-      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description / Notes</label><textarea class="form-textarea" id="proj-desc" placeholder="Scope, milestones, notes..."></textarea></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Name *</label><input class="form-input" id="project-name" placeholder="e.g. Cape Town Fibre Rollout"/></div>
+      <div class="form-group"><label class="form-label">Phase</label><input class="form-input" id="project-phase" placeholder="e.g. Phase 1"/></div>
+      <div class="form-group"><label class="form-label">Type *</label><select class="form-select" id="project-type"><option>Construction</option><option>Telecoms</option><option>Electrical</option><option>Civil</option><option>Structural</option><option>Roads</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Client</label><input class="form-input" id="project-client" placeholder="e.g. SANRAL"/></div>
+      <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" id="project-pm" placeholder="Full name"/></div>
+      <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="month" id="project-start"/></div>
+      <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="month" id="project-end"/></div>
+      <div class="form-group"><label class="form-label">Budget (R)</label><input class="form-input" type="number" id="project-budget" placeholder="0" min="0"/></div>
+      <div class="form-group"><label class="form-label">Contracted Spend (R)</label><input class="form-input" type="number" id="project-contract" placeholder="0" min="0"/></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="project-status"><option value="on-track">On Track</option><option value="at-risk">At Risk</option><option value="delayed">Delayed</option><option value="completed">Completed</option><option value="on-hold">On Hold</option></select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><textarea class="form-textarea" id="project-desc" placeholder="Scope, milestones, notes..."></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-project')">Cancel</button><button class="btn btn-primary" id="proj-save-btn" onclick="saveProject()">Save Project</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('project')">Cancel</button><button class="btn btn-primary" id="project-save-btn" onclick="saveRecord('project')">Save Project</button></div>
   </div>
 </div>
 
-<!-- Modal: New/Edit Project Task -->
+<!-- Task Modal -->
 <div class="modal-bg" id="modal-task">
   <div class="modal">
-    <div class="modal-title"><span id="task-modal-title">New Project Task</span><button class="modal-close" onclick="closeModal('modal-task')">&#10005;</button></div>
-    <input type="hidden" id="task-edit-id"/>
+    <div class="modal-title"><span id="task-modal-title">New Project Task</span><button class="modal-close" onclick="closeModal('task')">&#10005;</button></div>
+    <input type="hidden" id="task-id"/>
     <div class="fg2">
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Task Title *</label><input class="form-input" id="task-title" placeholder="e.g. Concrete pour — piers 1-12"/></div>
-      <div class="form-group"><label class="form-label">Project *</label><select class="form-select" id="task-project-sel"></select></div>
+      <div class="form-group"><label class="form-label">Project *</label><select class="form-select" id="task-project"></select></div>
       <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="task-type"><option>Civil</option><option>Structural</option><option>Electrical</option><option>Telecoms</option><option>HSE</option><option>Survey</option><option>Admin</option><option>Plumbing</option><option>Cabling</option></select></div>
       <div class="form-group"><label class="form-label">Total Quantity *</label><input class="form-input" type="number" id="task-qty-total" placeholder="e.g. 1200" min="0" step="any"/></div>
-      <div class="form-group"><label class="form-label">Unit of Measure *</label><input class="form-input" id="task-unit" placeholder="e.g. m&#178;, m&#179;, km, units, tonnes, poles"/></div>
+      <div class="form-group"><label class="form-label">Unit of Measure *</label><input class="form-input" id="task-unit" placeholder="e.g. m2, m3, km, units, tonnes"/></div>
       <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="task-priority"><option value="high">High</option><option value="med" selected>Medium</option><option value="low">Low</option></select></div>
       <div class="form-group"><label class="form-label">Assigned To</label><input class="form-input" id="task-assigned" placeholder="Name or crew"/></div>
       <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="task-status"><option value="not-started">Not Started</option><option value="in-progress">In Progress</option><option value="complete">Complete</option><option value="blocked">Blocked</option></select></div>
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Initial Qty Done</label>
-        <input class="form-input" type="number" id="task-qty-done" placeholder="0 — leave blank for new tasks" min="0" step="any"/>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">This will be updated automatically as daily intake reports are submitted. Only set this if importing existing progress.</div>
-      </div>
-      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label><textarea class="form-textarea" id="task-notes" placeholder="Scope, location, specifications..."></textarea></div>
+      <div class="form-group"><label class="form-label">Initial Qty Done</label><input class="form-input" type="number" id="task-qty-done" placeholder="0 (for new tasks)" min="0" step="any"/></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label><textarea class="form-textarea" id="task-notes" placeholder="Scope, location, specs..."></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modal-task')">Cancel</button><button class="btn btn-primary" id="task-save-btn" onclick="saveProjectTask()">Save Task</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('task')">Cancel</button><button class="btn btn-primary" id="task-save-btn" onclick="saveRecord('task')">Save Task</button></div>
+  </div>
+</div>
+
+<!-- Worker Modal -->
+<div class="modal-bg" id="modal-worker">
+  <div class="modal">
+    <div class="modal-title"><span id="worker-modal-title">Add Worker</span><button class="modal-close" onclick="closeModal('worker')">&#10005;</button></div>
+    <input type="hidden" id="worker-id"/>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="worker-name" placeholder="e.g. J. Smith"/></div>
+      <div class="form-group"><label class="form-label">Role / Job Title</label><input class="form-input" id="worker-role" placeholder="e.g. Site Foreman"/></div>
+      <div class="form-group"><label class="form-label">Worker Type</label><select class="form-select" id="worker-type"><option>Civil</option><option>Telecoms</option><option>Electrical</option><option>Supervisor</option><option>Subcontractor</option><option>Plant Operator</option><option>Survey</option><option>HSE Officer</option></select></div>
+      <div class="form-group"><label class="form-label">Assigned Project</label><select class="form-select" id="worker-project"><option value="">— None —</option></select></div>
+      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="worker-phone" placeholder="e.g. 082 555 1234"/></div>
+      <div class="form-group"><label class="form-label">ID / Employee No.</label><input class="form-input" id="worker-id-number" placeholder="e.g. 8001015009087"/></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Certifications</label><input class="form-input" id="worker-certs" placeholder="e.g. SACPCMP, OHSA, Work-at-Heights (comma separated)"/></div>
+      <div class="form-group"><label class="form-label">Cert Expiry Date</label><input class="form-input" type="date" id="worker-cert-expiry"/></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="worker-status"><option value="active">Active</option><option value="leave">On Leave</option><option value="cert-expiring">Cert Expiring</option><option value="inactive">Inactive</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('worker')">Cancel</button><button class="btn btn-primary" id="worker-save-btn" onclick="saveRecord('worker')">Save Worker</button></div>
+  </div>
+</div>
+
+<!-- Equipment Modal -->
+<div class="modal-bg" id="modal-equipment">
+  <div class="modal">
+    <div class="modal-title"><span id="equipment-modal-title">Add Equipment</span><button class="modal-close" onclick="closeModal('equipment')">&#10005;</button></div>
+    <input type="hidden" id="equipment-id"/>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Item Name *</label><input class="form-input" id="equipment-name" placeholder="e.g. LTM 1200 Crane"/></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="equipment-type"><option>Plant</option><option>Telecoms</option><option>Safety</option><option>Electrical</option><option>Survey</option><option>Vehicle</option><option>Tools</option></select></div>
+      <div class="form-group"><label class="form-label">Make / Model</label><input class="form-input" id="equipment-make" placeholder="e.g. Liebherr LTM 1200"/></div>
+      <div class="form-group"><label class="form-label">Serial Number</label><input class="form-input" id="equipment-serial" placeholder="e.g. SN-2024-0012"/></div>
+      <div class="form-group"><label class="form-label">Assigned Project</label><select class="form-select" id="equipment-project"><option value="">— None —</option></select></div>
+      <div class="form-group"><label class="form-label">Next Service Date</label><input class="form-input" type="date" id="equipment-service"/></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="equipment-status"><option value="operational">Operational</option><option value="due-service">Due Service</option><option value="grounded">Grounded</option><option value="in-repair">In Repair</option></select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes</label><textarea class="form-textarea" id="equipment-notes" placeholder="Condition notes, hire details, last service info..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('equipment')">Cancel</button><button class="btn btn-primary" id="equipment-save-btn" onclick="saveRecord('equipment')">Save Item</button></div>
+  </div>
+</div>
+
+<!-- Cost Category Modal -->
+<div class="modal-bg" id="modal-cost-cat">
+  <div class="modal" style="width:420px">
+    <div class="modal-title"><span id="cost-cat-modal-title">Add Cost Category</span><button class="modal-close" onclick="closeModal('cost-cat')">&#10005;</button></div>
+    <input type="hidden" id="cost-cat-id"/>
+    <div class="form-group"><label class="form-label">Category Name *</label><input class="form-input" id="cost-cat-name" placeholder="e.g. Fuel, Catering, PPE"/></div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Icon (emoji)</label><input class="form-input" id="cost-cat-icon" placeholder="e.g. ⛽"/></div>
+      <div class="form-group"><label class="form-label">Colour (hex)</label><input class="form-input" id="cost-cat-color" type="color" value="#f5a623" style="height:38px;padding:3px 6px;cursor:pointer"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Sort Order</label><input class="form-input" type="number" id="cost-cat-order" placeholder="e.g. 9" min="1"/></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('cost-cat')">Cancel</button><button class="btn btn-primary" id="cost-cat-save-btn" onclick="saveRecord('cost-cat')">Save Category</button></div>
   </div>
 </div>
 
@@ -373,40 +452,53 @@ tr:hover td{background:var(--bg3)}
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
-const CK=['transport','materials','accommodation','labour','plant','telecoms','subsistence','other'];
-const CL={transport:'Transport',materials:'Materials',accommodation:'Accommodation',labour:'Labour',plant:'Plant & Equip',telecoms:'Telecoms HW',subsistence:'Subsistence',other:'Other'};
-const CC={transport:'#60a5fa',materials:'#f5a623',accommodation:'#c084fc',labour:'#4ade80',plant:'#2dd4bf',telecoms:'#f87171',subsistence:'#8b90a0',other:'#f5a623'};
-const TB={Construction:'badge-amber',Telecoms:'badge-blue',Electrical:'badge-purple',Civil:'badge-amber',Structural:'badge-purple',Roads:'badge-amber'};
+
+const TB={Construction:'badge-amber',Telecoms:'badge-blue',Electrical:'badge-purple',Civil:'badge-amber',Structural:'badge-purple',Roads:'badge-amber',Other:'badge-gray'};
 const SB2={'on-track':'badge-green','at-risk':'badge-amber',delayed:'badge-red',completed:'badge-teal','on-hold':'badge-gray'};
 const PRIO_B={high:'badge-red',med:'badge-amber',low:'badge-green'};
 const STAT_B={'not-started':'badge-gray','in-progress':'badge-blue',complete:'badge-green',blocked:'badge-red'};
-const ID_DATA=[{id:'ISS-001',desc:'Cable tray blocked - permit pending',cat:'Regulatory',project:'5G Rollout',prio:'high',status:'open',owner:'T. Dlamini'},{id:'ISS-002',desc:'HSE non-compliance PPE sector 4',cat:'HSE',project:'N3 Highway',prio:'high',status:'open',owner:'S. Nkosi'},{id:'ISS-003',desc:'Crane operator shortage',cat:'Resource',project:'MTN Towers',prio:'med',status:'investigating',owner:'J. van Wyk'}];
-const WD=[{name:'S. Nkosi',role:'Site Foreman',project:'N3 Highway',certs:['SACPCMP','OHSA'],status:'active'},{name:'T. Dlamini',role:'Telecoms Engineer',project:'5G Rollout',certs:['RCDD','WaH'],status:'active'},{name:'J. van Wyk',role:'Crane Operator',project:'MTN Towers',certs:['Mobile Crane','Rigger II'],status:'active'},{name:'P. Mbatha',role:'Electrical Engineer',project:'Substation',certs:['PrEng','HV'],status:'active'},{name:'A. Mokoena',role:'Tower Climber',project:'MTN Towers',certs:['SAQCC WaH'],status:'cert-expiring'}];
-const ED=[{name:'LTM 1200 Crane',type:'Plant',assigned:'N3 Highway',service:'2025-06-15',status:'operational'},{name:'Fibre Splicer FS-88',type:'Telecoms',assigned:'5G Rollout',service:'2025-07-01',status:'operational'},{name:'Tower Harness Set',type:'Safety',assigned:'MTN Towers',service:'2025-05-01',status:'due-service'},{name:'HV Test Set',type:'Electrical',assigned:'Substation',service:'2025-06-30',status:'operational'},{name:'Survey Drone M30T',type:'Survey',assigned:'N3 Highway',service:'2025-09-01',status:'grounded'}];
+const WF_B={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
+const EQ_B={operational:'badge-green','due-service':'badge-amber',grounded:'badge-red','in-repair':'badge-purple'};
+const EQ_TB={Plant:'badge-amber',Telecoms:'badge-blue',Safety:'badge-red',Electrical:'badge-purple',Survey:'badge-teal',Vehicle:'badge-blue',Tools:'badge-gray'};
+const ISSUES_DATA=[{id:'ISS-001',desc:'Cable tray blocked — permit pending',cat:'Regulatory',project:'5G Rollout',prio:'high',status:'open',owner:'T. Dlamini'},{id:'ISS-002',desc:'HSE non-compliance — PPE sector 4',cat:'HSE',project:'N3 Highway',prio:'high',status:'open',owner:'S. Nkosi'},{id:'ISS-003',desc:'Crane operator shortage',cat:'Resource',project:'MTN Towers',prio:'med',status:'investigating',owner:'J. van Wyk'}];
 
-let allProjects=[],allTasks=[],allReports=[];
-let activeProjectFilter='all';
+let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allEquipment=[],allCostCats=[];
+let activeTaskFilter='all';
 const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
 const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
-const closeModal=id=>document.getElementById(id).classList.remove('open');
+const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open');};
 
-async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sb(method,table,data=null,query=''){
+  const opts={method,headers:{...H}};
+  if(data){opts.body=JSON.stringify(data);opts.headers['Prefer']='return=representation';}
+  const r=await fetch(`${SB}/rest/v1/${table}?${query}`,opts);
+  if(!r.ok)throw new Error(await r.text());
+  if(r.status===204)return null;
+  const txt=await r.text();
+  return txt?JSON.parse(txt):null;
+}
+const sbGet=(t,q)=>sb('GET',t,null,q);
+const sbPost=(t,d)=>sb('POST',t,d,'');
+const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
 async function loadAllData(){
   try{
-    [allProjects,allTasks,allReports]=await Promise.all([
+    [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats]=await Promise.all([
       sbGet('projects','order=created_at.asc&active=eq.true'),
       sbGet('project_tasks','order=created_at.asc&active=eq.true'),
-      sbGet('daily_reports','order=created_at.desc')
+      sbGet('daily_reports','order=created_at.desc'),
+      sbGet('workers','order=name.asc&active=eq.true'),
+      sbGet('equipment','order=name.asc&active=eq.true'),
+      sbGet('cost_categories','order=sort_order.asc&active=eq.true')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
-    document.getElementById('conn-label').textContent='Connected - Supabase';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
     document.getElementById('proj-badge').textContent=allProjects.length;
     document.getElementById('task-badge').textContent=allTasks.filter(t=>t.status!=='complete').length;
+    document.getElementById('worker-badge').textContent=allWorkers.length;
+    document.getElementById('equip-badge').textContent=allEquipment.length;
     document.getElementById('report-badge').textContent=allReports.length;
   }catch(e){
     document.getElementById('conn-dot').className='conn-dot err';
@@ -415,49 +507,11 @@ async function loadAllData(){
     console.error(e);
   }
   const ap=document.querySelector('.page.active');
-  if(ap){const id=ap.id.replace('page-','');({dashboard:renderDashboard,projects:renderProjects,tasks:renderTasksPage,budget:renderBudget,reports:renderReportsPage,workforce:renderWorkforce}[id]||Function())();}
+  if(ap){const id=ap.id.replace('page-','');renderPage(id);}
 }
 
-function bpc(){
-  const pc={};
-  allProjects.forEach(p=>{pc[p.name]={totalCost:0,reports:0,cb:{}};CK.forEach(k=>{pc[p.name].cb[k]=0;});});
-  allReports.forEach(r=>{
-    if(!pc[r.project])pc[r.project]={totalCost:0,reports:0,cb:{}};
-    pc[r.project].totalCost+=r.total_cost||0;pc[r.project].reports+=1;
-    if(r.costs)CK.forEach(k=>{if(!pc[r.project].cb[k])pc[r.project].cb[k]=0;pc[r.project].cb[k]+=(r.costs[k]||0);});
-  });
-  return pc;
-}
-
-function projTaskStats(projName){
-  const pt=allTasks.filter(t=>t.project_name===projName);
-  if(!pt.length)return{count:0,avg:0,complete:0};
-  const avg=pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length;
-  return{count:pt.length,avg:Math.round(avg),complete:pt.filter(t=>t.status==='complete').length};
-}
-
-function renderDashboard(){
-  const pc=bpc();
-  const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
-  const td=new Date().toISOString().split('T')[0];
-  const tr=allReports.filter(r=>r.report_date===td).length;
-  const tw=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
-  const totalComplete=allTasks.filter(t=>t.status==='complete').length;
-  const avgAll=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
-  document.getElementById('dash-sub').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})+' - '+allReports.length+' reports submitted';
-  document.getElementById('dash-stats').innerHTML=`
-    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Active Projects</div><div class="stat-sub">${allTasks.length} tasks total</div></div>
-    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${avgAll}%</div><div class="stat-l">Avg Task Progress</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:${avgAll}%;background:var(--blue)"></div></div></div></div>
-    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today - ${tw} workers</div></div>
-    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${fmt(tf)}</div><div class="stat-l">Field Costs</div><div class="stat-sub">${totalComplete} tasks complete</div></div>`;
-  document.getElementById('dash-projects').innerHTML=allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
-  document.getElementById('dash-costs').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="color:var(--accent);font-family:var(--font-d);font-weight:700">${fmt(fc.totalCost)}</td></tr>`;}).join('');
-  const ac={};CK.forEach(k=>{ac[k]=Object.values(pc).reduce((a,p)=>a+(p.cb[k]||0),0);});
-  const tot=Object.values(ac).reduce((a,v)=>a+v,0);
-  if(tot>0)document.getElementById('cost-breakdown-bar').innerHTML=`<div class="cost-bar">${CK.map(k=>`<div class="cost-seg" style="width:${Math.round(ac[k]/tot*100)}%;background:${CC[k]};opacity:0.8"></div>`).join('')}</div><div class="cost-legend">${CK.filter(k=>ac[k]>0).map(k=>`<div class="cost-legend-item"><div class="cost-dot" style="background:${CC[k]}"></div>${CL[k]}: ${fmt(ac[k])}</div>`).join('')}</div>`;
-  else document.getElementById('cost-breakdown-bar').innerHTML='';
-  const near=allTasks.filter(t=>t.status!=='complete'&&parseFloat(t.progress||0)>=70).sort((a,b)=>parseFloat(b.progress||0)-parseFloat(a.progress||0)).slice(0,6);
-  document.getElementById('dash-near-complete').innerHTML=near.length===0?`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem">No tasks above 70% yet. Submit daily intake reports to update progress.</td></tr>`:near.map(t=>`<tr><td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.type}</div></td><td style="color:var(--text2)">${t.project_name}</td><td style="font-size:12px"><span style="font-weight:600">${fmtN(t.qty_done)}</span> / ${fmtN(t.qty_total)} ${t.unit}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${t.progress}%;background:${parseFloat(t.progress)>=90?'var(--green)':'var(--blue)'}"></div></div><span style="font-size:12px;font-weight:700;min-width:42px;text-align:right;color:${parseFloat(t.progress)>=90?'var(--green)':'var(--text)'}">${t.progress}%</span></div></td></tr>`).join('');
+function renderPage(id){
+  ({dashboard:renderDashboard,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,costs:renderCostCats,reports:renderReportsPage}[id]||Function())();
 }
 
 function showPage(id,el){
@@ -465,195 +519,221 @@ function showPage(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(el)el.classList.add('active');
-  ({dashboard:renderDashboard,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,reports:renderReportsPage}[id]||Function())();
+  renderPage(id);
 }
 
+// ── Cost helpers ──────────────────────────────────────────────────────────────
+function bpc(){
+  const pc={};
+  allProjects.forEach(p=>{pc[p.name]={totalCost:0,reports:0,cb:{}};allCostCats.forEach(c=>{pc[p.name].cb[c.name]=0;});});
+  allReports.forEach(r=>{
+    if(!pc[r.project])pc[r.project]={totalCost:0,reports:0,cb:{}};
+    pc[r.project].totalCost+=r.total_cost||0;pc[r.project].reports+=1;
+    if(r.costs)Object.keys(r.costs).forEach(k=>{if(k==='notes')return;if(!pc[r.project].cb[k])pc[r.project].cb[k]=0;pc[r.project].cb[k]+=(r.costs[k]||0);});
+  });
+  return pc;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function projTaskStats(n){const pt=allTasks.filter(t=>t.project_name===n);if(!pt.length)return{count:0,avg:0,complete:0};const avg=pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length;return{count:pt.length,avg:Math.round(avg),complete:pt.filter(t=>t.status==='complete').length};}
+
+function renderDashboard(){
+  const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const td=new Date().toISOString().split('T')[0];
+  const tr=allReports.filter(r=>r.report_date===td).length;
+  const tw=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
+  const avgAll=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
+  document.getElementById('dash-sub').textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})+' — '+allReports.length+' reports submitted';
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Active Projects</div><div class="stat-sub">${allTasks.length} tasks, ${allWorkers.length} workers</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${avgAll}%</div><div class="stat-l">Avg Task Progress</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:${avgAll}%;background:var(--blue)"></div></div></div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today — ${tw} workers on site</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${fmt(tf)}</div><div class="stat-l">Field Costs</div><div class="stat-sub">${allTasks.filter(t=>t.status==='complete').length} tasks complete</div></div>`;
+  document.getElementById('dash-projects').innerHTML=allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
+  document.getElementById('dash-costs').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
+  // cost bar using dynamic categories
+  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
+  const tot=Object.values(ac).reduce((a,v)=>a+v,0);
+  if(tot>0)document.getElementById('cost-breakdown-bar').innerHTML=`<div class="cost-bar">${allCostCats.map(c=>`<div class="cost-seg" style="width:${Math.round((ac[c.name]||0)/tot*100)}%;background:${c.color};opacity:0.85"></div>`).join('')}</div><div class="cost-legend">${allCostCats.filter(c=>(ac[c.name]||0)>0).map(c=>`<div class="cost-legend-item"><div class="cost-dot" style="background:${c.color}"></div>${c.name}: ${fmt(ac[c.name])}</div>`).join('')}</div>`;
+  else document.getElementById('cost-breakdown-bar').innerHTML='';
+  const near=allTasks.filter(t=>t.status!=='complete'&&parseFloat(t.progress||0)>=70).sort((a,b)=>parseFloat(b.progress||0)-parseFloat(a.progress||0)).slice(0,6);
+  document.getElementById('dash-near-complete').innerHTML=near.length===0?`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem">No tasks above 70% yet.</td></tr>`:near.map(t=>`<tr><td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.type}</div></td><td style="color:var(--text2)">${t.project_name}</td><td style="font-size:12px"><span style="font-weight:600">${fmtN(t.qty_done)}</span> / ${fmtN(t.qty_total)} ${t.unit}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${t.progress}%;background:${parseFloat(t.progress)>=90?'var(--green)':'var(--blue)'}"></div></div><span style="font-size:12px;font-weight:700;min-width:42px;text-align:right;color:${parseFloat(t.progress)>=90?'var(--green)':'var(--text)'}">${t.progress}%</span></div></td></tr>`).join('');
+}
+
+// ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects(){
-  document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' - stored in Supabase';
-  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong> to add one.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'-'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'-'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'-'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'-'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'-'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openProjectModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id},decodeURIComponent('${encodeURIComponent(p.name)}'))">Del</button></div></td></tr>`;}).join('');
+  document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' — Supabase';
+  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
 }
 
-// ── Project Tasks page ────────────────────────────────────────────────────────
+// ── Project Tasks ─────────────────────────────────────────────────────────────
 function renderTasksPage(){
-  // Summary cards
-  const open=allTasks.filter(t=>t.status!=='complete');
-  const blocked=allTasks.filter(t=>t.status==='blocked');
-  const complete=allTasks.filter(t=>t.status==='complete');
-  const avg=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
-  document.getElementById('task-summary').innerHTML=`
-    <div class="ts-card"><div class="ts-n" style="color:var(--blue)">${allTasks.length}</div><div class="ts-l">Total Tasks</div></div>
-    <div class="ts-card"><div class="ts-n" style="color:var(--amber,var(--accent))">${open.length}</div><div class="ts-l">In Progress / Open</div></div>
-    <div class="ts-card"><div class="ts-n" style="color:var(--green)">${complete.length}</div><div class="ts-l">Complete</div></div>
-    <div class="ts-card"><div class="ts-n" style="color:var(--red)">${blocked.length}</div><div class="ts-l">Blocked</div></div>`;
-  // Project filter tabs
+  const open=allTasks.filter(t=>t.status!=='complete');const blocked=allTasks.filter(t=>t.status==='blocked');const complete=allTasks.filter(t=>t.status==='complete');const avg=allTasks.length?Math.round(allTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/allTasks.length):0;
+  document.getElementById('task-summary').innerHTML=`<div class="ts-card"><div class="ts-n" style="color:var(--blue)">${allTasks.length}</div><div class="ts-l">Total Tasks</div></div><div class="ts-card"><div class="ts-n" style="color:var(--accent)">${open.length}</div><div class="ts-l">Open</div></div><div class="ts-card"><div class="ts-n" style="color:var(--green)">${complete.length}</div><div class="ts-l">Complete</div></div><div class="ts-card"><div class="ts-n" style="color:var(--red)">${blocked.length}</div><div class="ts-l">Blocked</div></div>`;
   const tabs=document.getElementById('proj-tabs');
-  tabs.innerHTML=`<button class="proj-tab ${activeProjectFilter==='all'?'active':''}" onclick="setTaskFilter('all')">All Projects</button>`+allProjects.map(p=>`<button class="proj-tab ${activeProjectFilter===p.name?'active':''}" onclick="setTaskFilter('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>`).join('');
+  tabs.innerHTML=`<button class="proj-tab ${activeTaskFilter==='all'?'active':''}" onclick="setTaskFilter('all')">All Projects</button>`+allProjects.map(p=>`<button class="proj-tab ${activeTaskFilter===p.name?'active':''}" onclick="setTaskFilter('${p.name.replace(/'/g,"\\'")}')"> ${p.name}</button>`).join('');
   renderTasksTable();
 }
-function setTaskFilter(name){activeProjectFilter=name;renderTasksPage();}
+function setTaskFilter(n){activeTaskFilter=n;renderTasksPage();}
 function renderTasksTable(){
-  const statusF=document.getElementById('task-filter-status')?.value||'';
-  const typeF=document.getElementById('task-filter-type')?.value||'';
-  let filtered=allTasks;
-  if(activeProjectFilter!=='all')filtered=filtered.filter(t=>t.project_name===activeProjectFilter);
-  if(statusF)filtered=filtered.filter(t=>t.status===statusF);
-  if(typeF)filtered=filtered.filter(t=>t.type===typeF);
-  document.getElementById('tasks-card-title').textContent=(activeProjectFilter==='all'?'All Tasks':activeProjectFilter)+' ('+filtered.length+')';
-  document.getElementById('tasks-table').innerHTML=filtered.length===0?`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No tasks found. Click <strong style="color:var(--accent)">+ New Task</strong> to add one.</td></tr>`:filtered.map(t=>{
-    const pct=parseFloat(t.progress||0);
-    const remaining=Math.max(0,(t.qty_total||0)-(t.qty_done||0));
-    const barColor=pct>=100?'var(--green)':pct>=70?'var(--blue)':pct>=30?'var(--accent)':'var(--text3)';
-    return`<tr>
-      <td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.project_name}</div>${t.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:2px">${t.notes}</div>`:''}</td>
-      <td><span class="badge ${TB[t.type]||'badge-gray'}">${t.type}</span></td>
-      <td style="color:var(--text2);font-weight:500">${t.unit}</td>
-      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text)">${fmtN(t.qty_total)}</td>
-      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtN(t.qty_done)}</td>
-      <td style="font-family:var(--font-d);font-size:14px;color:${remaining===0?'var(--green)':'var(--text2)'}">${fmtN(remaining)}</td>
-      <td style="min-width:160px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="progress-lg"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
-          <span style="font-family:var(--font-d);font-size:15px;font-weight:700;min-width:46px;text-align:right;color:${barColor}">${pct}%</span>
-        </div>
-      </td>
-      <td><span class="badge ${PRIO_B[t.priority]||'badge-gray'}">${t.priority}</span></td>
-      <td style="color:var(--text2);font-size:12px">${t.assigned_to||'-'}</td>
-      <td><span class="badge ${STAT_B[t.status]||'badge-gray'}">${t.status}</span></td>
-      <td><div class="tbl-actions">
-        <button class="btn btn-ghost btn-sm" onclick='openTaskModal(${JSON.stringify(t).replace(/'/g,"&#39;")})'>Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id},'${t.title.replace(/'/g,"\\'")}')">Del</button>
-      </div></td>
-    </tr>`;
-  }).join('');
+  const sf=document.getElementById('task-filter-status')?.value||'';const tf=document.getElementById('task-filter-type')?.value||'';
+  let f=allTasks;
+  if(activeTaskFilter!=='all')f=f.filter(t=>t.project_name===activeTaskFilter);
+  if(sf)f=f.filter(t=>t.status===sf);if(tf)f=f.filter(t=>t.type===tf);
+  document.getElementById('tasks-card-title').textContent=(activeTaskFilter==='all'?'All Tasks':activeTaskFilter)+' ('+f.length+')';
+  document.getElementById('tasks-table').innerHTML=f.length===0?`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No tasks found. Click <strong style="color:var(--accent)">+ New Task</strong>.</td></tr>`:f.map(t=>{const pct=parseFloat(t.progress||0);const remaining=Math.max(0,(t.qty_total||0)-(t.qty_done||0));const bc=pct>=100?'var(--green)':pct>=70?'var(--blue)':pct>=30?'var(--accent)':'var(--text3)';return`<tr><td><div style="font-weight:500">${t.title}</div><div style="font-size:11px;color:var(--text3)">${t.project_name}</div></td><td><span class="badge ${TB[t.type]||'badge-gray'}">${t.type}</span></td><td style="color:var(--text2);font-weight:500">${t.unit}</td><td style="font-family:var(--font-d);font-size:15px;font-weight:700">${fmtN(t.qty_total)}</td><td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtN(t.qty_done)}</td><td style="font-family:var(--font-d);font-size:14px;color:${remaining===0?'var(--green)':'var(--text2)'}">${fmtN(remaining)}</td><td style="min-width:160px"><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${bc}"></div></div><span style="font-family:var(--font-d);font-size:15px;font-weight:700;min-width:46px;text-align:right;color:${bc}">${pct}%</span></div></td><td><span class="badge ${PRIO_B[t.priority]||'badge-gray'}">${t.priority}</span></td><td style="color:var(--text2);font-size:12px">${t.assigned_to||'—'}</td><td><span class="badge ${STAT_B[t.status]||'badge-gray'}">${t.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("task",${JSON.stringify(t)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('project_tasks',${t.id},'${t.title.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
 }
 
-function openTaskModal(task=null){
-  // populate project dropdown
-  const sel=document.getElementById('task-project-sel');
-  sel.innerHTML=allProjects.map(p=>`<option value="${p.name}"${task&&task.project_name===p.name?' selected':''}>${p.name}</option>`).join('');
-  document.getElementById('task-edit-id').value=task?task.id:'';
-  document.getElementById('task-modal-title').textContent=task?'Edit Task':'New Project Task';
-  document.getElementById('task-title').value=task?task.title:'';
-  document.getElementById('task-type').value=task?task.type:'Civil';
-  document.getElementById('task-qty-total').value=task?task.qty_total:'';
-  document.getElementById('task-unit').value=task?task.unit:'';
-  document.getElementById('task-priority').value=task?task.priority:'med';
-  document.getElementById('task-assigned').value=task?task.assigned_to||'':'';
-  document.getElementById('task-status').value=task?task.status:'not-started';
-  document.getElementById('task-qty-done').value=task?task.qty_done:'';
-  document.getElementById('task-notes').value=task?task.notes||'':'';
-  document.getElementById('modal-task').classList.add('open');
-  setTimeout(()=>document.getElementById('task-title').focus(),100);
+// ── Issues ────────────────────────────────────────────────────────────────────
+function renderIssues(){const cC={Regulatory:'badge-blue',HSE:'badge-red',Resource:'badge-amber','Supply Chain':'badge-purple',Technical:'badge-teal'};const sC={open:'badge-red',investigating:'badge-amber',monitoring:'badge-blue',resolved:'badge-green'};document.getElementById('issues-table').innerHTML=ISSUES_DATA.map(i=>`<tr><td style="font-family:var(--font-d);font-size:12px;color:var(--text3)">${i.id}</td><td>${i.desc}</td><td><span class="badge ${cC[i.cat]||'badge-gray'}">${i.cat}</span></td><td style="color:var(--text2)">${i.project}</td><td><span class="badge badge-${i.prio==='high'?'red':i.prio==='med'?'amber':'green'}">${i.prio}</span></td><td><span class="badge ${sC[i.status]}">${i.status}</span></td><td style="color:var(--text2)">${i.owner}</td></tr>`).join('');}
+
+// ── Workforce ─────────────────────────────────────────────────────────────────
+function renderWorkforce(){
+  const sf=(document.getElementById('wf-filter-status')||{}).value||'';
+  const tf=(document.getElementById('wf-filter-type')||{}).value||'';
+  let f=allWorkers;
+  if(sf)f=f.filter(w=>w.status===sf);
+  if(tf)f=f.filter(w=>w.type===tf);
+  const active=allWorkers.filter(w=>w.status==='active').length;
+  const expiring=allWorkers.filter(w=>w.status==='cert-expiring').length;
+  const onLeave=allWorkers.filter(w=>w.status==='leave').length;
+  const td=new Date().toISOString().split('T')[0];
+  const todayW=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
+  document.getElementById('wf-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Total Workers</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${active}</div><div class="stat-l">Active</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${expiring}</div><div class="stat-l">Cert Expiring</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayW}</div><div class="stat-l">On Site Today</div><div class="stat-sub">from field reports</div></div>`;
+  document.getElementById('workforce-table').innerHTML=f.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Click <strong style="color:var(--accent)">+ Add Worker</strong>.</td></tr>`:f.map(w=>`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role||'—'}</td><td><span class="badge ${TB[w.type]||'badge-gray'}">${w.type}</span></td><td style="color:var(--text2);font-size:12px">${w.project_name||'—'}</td><td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td><td style="font-size:12px;color:var(--text2)">${w.certifications||'—'}</td><td style="font-size:12px;color:${w.cert_expiry?'var(--text2)':'var(--text3)'}">${w.cert_expiry||'—'}</td><td><span class="badge ${WF_B[w.status]||'badge-gray'}">${w.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('workers',${w.id},'${w.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`).join('');
 }
 
-async function saveProjectTask(){
-  const title=document.getElementById('task-title').value.trim();
-  const projName=document.getElementById('task-project-sel').value;
-  const qtyTotal=parseFloat(document.getElementById('task-qty-total').value)||0;
-  const unit=document.getElementById('task-unit').value.trim();
-  if(!title){showToast('Task title required','err');return;}
-  if(!projName){showToast('Select a project','err');return;}
-  if(!qtyTotal||qtyTotal<=0){showToast('Total quantity must be greater than 0','err');return;}
-  if(!unit){showToast('Unit of measure required','err');return;}
-  const btn=document.getElementById('task-save-btn');
-  btn.disabled=true;btn.textContent='Saving...';
-  const proj=allProjects.find(p=>p.name===projName);
-  const qtyDone=parseFloat(document.getElementById('task-qty-done').value)||0;
-  const payload={
-    project_name:projName,
-    project_id:proj?proj.id:null,
-    title,type:document.getElementById('task-type').value,
-    qty_total:qtyTotal,unit,
-    qty_done:qtyDone,
-    priority:document.getElementById('task-priority').value,
-    assigned_to:document.getElementById('task-assigned').value.trim(),
-    status:document.getElementById('task-status').value,
-    notes:document.getElementById('task-notes').value.trim(),
-    active:true
-  };
-  try{
-    const eid=document.getElementById('task-edit-id').value;
-    if(eid){await sbPatch('project_tasks',eid,payload);showToast('Task updated');}
-    else{await sbPost('project_tasks',payload);showToast('Task created');}
-    closeModal('modal-task');await loadAllData();renderTasksPage();
-  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
-  btn.disabled=false;btn.textContent='Save Task';
+// ── Equipment ─────────────────────────────────────────────────────────────────
+function renderEquipment(){
+  const sf=(document.getElementById('equip-filter-status')||{}).value||'';
+  let f=allEquipment;if(sf)f=f.filter(e=>e.status===sf);
+  const op=allEquipment.filter(e=>e.status==='operational').length;
+  const ds=allEquipment.filter(e=>e.status==='due-service').length;
+  const gr=allEquipment.filter(e=>e.status==='grounded'||e.status==='in-repair').length;
+  document.getElementById('equip-stats').innerHTML=`<div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${op}</div><div class="stat-l">Operational</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${ds}</div><div class="stat-l">Due Service</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${gr}</div><div class="stat-l">Grounded / Repair</div></div>`;
+  document.getElementById('equipment-table').innerHTML=f.length===0?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No equipment found. Click <strong style="color:var(--accent)">+ Add Item</strong>.</td></tr>`:f.map(e=>`<tr><td><div style="font-weight:500">${e.name}</div>${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}</td><td><span class="badge ${EQ_TB[e.type]||'badge-gray'}">${e.type}</span></td><td style="color:var(--text2);font-size:12px">${e.make_model||'—'}</td><td style="color:var(--text2);font-size:12px">${e.serial_number||'—'}</td><td style="color:var(--text2);font-size:12px">${e.assigned_project||'—'}</td><td style="color:${e.next_service?'var(--text2)':'var(--text3)'};font-size:12px">${e.next_service||'—'}</td><td><span class="badge ${EQ_B[e.status]||'badge-gray'}">${e.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("equipment",${JSON.stringify(e)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('equipment',${e.id},'${e.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`).join('');
 }
 
-async function deleteTask(id,name){
-  if(!confirm('Delete task "'+name+'"?'))return;
-  try{await sbPatch('project_tasks',id,{active:false});showToast('Task removed');await loadAllData();renderTasksPage();}
-  catch(e){showToast('Delete failed','err');}
-}
-
-// ── Project CRUD ─────────────────────────────────────────────────────────────
-function openProjectModal(proj=null){
-  document.getElementById('proj-edit-id').value=proj?proj.id:'';
-  document.getElementById('proj-modal-title').textContent=proj?'Edit Project':'New Project';
-  document.getElementById('proj-name').value=proj?proj.name:'';
-  document.getElementById('proj-phase').value=proj?proj.phase||'':'';
-  document.getElementById('proj-type').value=proj?proj.type||'Construction':'Construction';
-  document.getElementById('proj-client').value=proj?proj.client||'':'';
-  document.getElementById('proj-pm').value=proj?proj.pm||'':'';
-  document.getElementById('proj-start').value=proj?proj.start_date||'':'';
-  document.getElementById('proj-end').value=proj?proj.end_date||'':'';
-  document.getElementById('proj-budget').value=proj?proj.budget||'':'';
-  document.getElementById('proj-contract').value=proj?proj.contract_spend||'':'';
-  document.getElementById('proj-status').value=proj?proj.status||'on-track':'on-track';
-  document.getElementById('proj-desc').value=proj?proj.description||'':'';
-  document.getElementById('modal-project').classList.add('open');
-  setTimeout(()=>document.getElementById('proj-name').focus(),100);
-}
-async function saveProject(){
-  const name=document.getElementById('proj-name').value.trim();
-  if(!name){showToast('Project name required','err');return;}
-  const btn=document.getElementById('proj-save-btn');btn.disabled=true;btn.textContent='Saving...';
-  const payload={name,phase:document.getElementById('proj-phase').value.trim(),type:document.getElementById('proj-type').value,client:document.getElementById('proj-client').value.trim(),pm:document.getElementById('proj-pm').value.trim(),start_date:document.getElementById('proj-start').value,end_date:document.getElementById('proj-end').value,budget:parseFloat(document.getElementById('proj-budget').value)||0,contract_spend:parseFloat(document.getElementById('proj-contract').value)||0,status:document.getElementById('proj-status').value,description:document.getElementById('proj-desc').value.trim(),active:true};
-  try{
-    const eid=document.getElementById('proj-edit-id').value;
-    if(eid){await sbPatch('projects',eid,payload);showToast('Project updated');}
-    else{await sbPost('projects',payload);showToast('Project created');}
-    closeModal('modal-project');await loadAllData();renderProjects();
-  }catch(e){showToast('Save failed: '+e.message,'err');}
-  btn.disabled=false;btn.textContent='Save Project';
-}
-async function deleteProject(id,name){
-  if(!confirm('Delete "'+name+'"?'))return;
-  try{await sbPatch('projects',id,{active:false});showToast('Project removed');await loadAllData();renderProjects();}
-  catch(e){showToast('Delete failed','err');}
-}
-
-// ── Other pages ───────────────────────────────────────────────────────────────
-function renderIssues(){const catC={Regulatory:'badge-blue',HSE:'badge-red',Resource:'badge-amber','Supply Chain':'badge-purple',Technical:'badge-teal'};const stC={open:'badge-red',investigating:'badge-amber',monitoring:'badge-blue',resolved:'badge-green'};document.getElementById('issues-table').innerHTML=ID_DATA.map(i=>`<tr><td style="font-family:var(--font-d);font-size:12px;color:var(--text3)">${i.id}</td><td>${i.desc}</td><td><span class="badge ${catC[i.cat]||'badge-gray'}">${i.cat}</span></td><td style="color:var(--text2)">${i.project}</td><td><span class="badge badge-${i.prio==='high'?'red':i.prio==='med'?'amber':'green'}">${i.prio}</span></td><td><span class="badge ${stC[i.status]}">${i.status}</span></td><td style="color:var(--text2)">${i.owner}</td></tr>`).join('');}
-function renderWorkforce(){const td=new Date().toISOString().split('T')[0];const tw=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);const tc=allReports.filter(r=>r.report_date===td).length;document.getElementById('wf-onsite').textContent=tw||'0';document.getElementById('wf-sub').textContent=tc?tc+' report'+(tc>1?'s':'')+' today':'no reports today';const stC={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red'};document.getElementById('workforce-table').innerHTML=WD.map(w=>`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role}</td><td style="color:var(--text2)">${w.project}</td><td>${w.certs.map(c=>`<span class="badge badge-blue" style="margin-right:3px;font-size:10px">${c}</span>`).join('')}</td><td><span class="badge ${stC[w.status]}">${w.status}</span></td></tr>`).join('');}
-function renderEquipment(){const stC={operational:'badge-green','due-service':'badge-amber',grounded:'badge-red'};const tC={Plant:'badge-amber',Telecoms:'badge-blue',Safety:'badge-red',Electrical:'badge-purple',Survey:'badge-teal'};document.getElementById('equipment-table').innerHTML=ED.map(e=>`<tr><td><div style="font-weight:500">${e.name}</div></td><td><span class="badge ${tC[e.type]||'badge-gray'}">${e.type}</span></td><td style="color:var(--text2)">${e.assigned}</td><td style="color:var(--text2);font-size:12px">${e.service}</td><td><span class="badge ${stC[e.status]}">${e.status}</span></td></tr>`).join('');}
+// ── Budget ────────────────────────────────────────────────────────────────────
 function renderBudget(){
   const pc=bpc();const tB=allProjects.reduce((a,p)=>a+(p.budget||0),0);const tC=allProjects.reduce((a,p)=>a+(p.contract_spend||0),0);const tF=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const rem=tB-tC-tF;
   document.getElementById('budget-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tB)}</div><div class="stat-l">Total Budget</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(tC)}</div><div class="stat-l">Contracted</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(tF)}</div><div class="stat-l">Field Reported</div><div class="stat-sub">${allReports.length} reports</div></div><div class="stat-card ${rem<0?'s-red':'s-green'}"><div class="stat-n" style="color:${rem<0?'var(--red)':'var(--green)'}">${fmt(Math.abs(rem))}</div><div class="stat-l">${rem<0?'Over Budget':'Remaining'}</div></div>`;
-  document.getElementById('budget-table').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0};const tot=(p.contract_spend||0)+fc.totalCost;const rm=(p.budget||0)-tot;const pct=p.budget>0?Math.round(tot/p.budget*100):0;return`<tr><td><div style="font-weight:500">${p.name}</div></td><td>${fmt(p.budget)}</td><td>${fmt(p.contract_spend)}</td><td style="color:var(--teal)">${fmt(fc.totalCost)}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:70px"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>100?'var(--red)':pct>90?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${pct}%</span></div></td><td style="color:${rm<0?'var(--red)':'var(--green)'}">${rm<0?'-':''} ${fmt(Math.abs(rm))}</td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
-  const ac={};CK.forEach(k=>{ac[k]=Object.values(pc).reduce((a,p)=>a+(p.cb[k]||0),0);});const ct=Object.values(ac).reduce((a,v)=>a+v,0);
-  document.getElementById('budget-categories').innerHTML=ct===0?`<p style="color:var(--text3);font-size:13px">No field costs yet. <a href="intake.html" style="color:var(--teal)">Submit a daily report</a></p>`:`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${CK.map(k=>`<div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:${CC[k]}"></div><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">${CL[k]}</span></div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${CC[k]}">${fmt(ac[k])}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${ct>0?Math.round(ac[k]/ct*100):0}%</div></div>`).join('')}</div>`;
-}
-function renderReportsPage(){
-  const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=allReports.reduce((a,r)=>a+(r.workers||0),0);const tt=allReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
-  document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Tasks Logged</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
-  const c=document.getElementById('reports-list');
-  if(allReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit your first report</a></p>`;return;}
-  c.innerHTML=allReports.map(r=>`<div style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-d);font-size:14px;font-weight:700">${r.project}</span><span style="font-size:11px;color:var(--text3)">${r.report_date}</span><span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span></div><div style="font-size:12px;color:var(--text3);margin-top:3px">${r.reporter||'-'}${r.role?' - '+r.role:''} - ${r.location||'-'}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${r.workers||0} workers - ${(r.tasks||[]).length} task updates - ${r.weather||'-'}</div>${(r.tasks||[]).length?`<div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div style="font-size:12px;color:var(--text2)">&#10003; ${t.title}: <strong style="color:var(--teal)">${fmtN(t.qty_done)} ${t.unit||''}</strong> completed</div>`).join('')}</div>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${r.costs?CK.filter(k=>r.costs[k]>0).map(k=>`<span style="font-size:11px;padding:2px 8px;border-radius:3px;background:var(--bg3);color:var(--text2);font-weight:500">${CL[k]}: ${fmt(r.costs[k])}</span>`).join(''):''}</div>${r.blockers?`<div style="margin-top:6px;font-size:12px;color:#f87171">&#9888; ${r.blockers}</div>`:''}</div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost)}</div><div style="font-size:11px;color:var(--text3)">total cost</div></div></div></div>`).join('');
+  document.getElementById('budget-table').innerHTML=allProjects.map(p=>{const fc=pc[p.name]||{totalCost:0};const tot=(p.contract_spend||0)+fc.totalCost;const rm=(p.budget||0)-tot;const pct=p.budget>0?Math.round(tot/p.budget*100):0;return`<tr><td><div style="font-weight:500">${p.name}</div></td><td>${fmt(p.budget)}</td><td>${fmt(p.contract_spend)}</td><td style="color:var(--teal)">${fmt(fc.totalCost)}</td><td style="font-family:var(--font-d);font-weight:700">${fmt(tot)}</td><td style="color:${rm<0?'var(--red)':'var(--green)'}">${rm<0?'- ':''} ${fmt(Math.abs(rm))}</td><td><div style="display:flex;align-items:center;gap:6px"><div class="progress" style="width:70px"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>100?'var(--red)':pct>90?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${pct}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
+  // dynamic cost categories
+  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});const ct=Object.values(ac).reduce((a,v)=>a+v,0);
+  document.getElementById('budget-categories').innerHTML=ct===0?`<p style="color:var(--text3);font-size:13px">No field costs yet. <a href="intake.html" style="color:var(--teal)">Submit a daily report</a></p>`:`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${allCostCats.map(c=>`<div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:${c.color}"></div><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">${c.icon} ${c.name}</span></div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${c.color}">${fmt(ac[c.name]||0)}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${ct>0?Math.round((ac[c.name]||0)/ct*100):0}%</div></div>`).join('')}</div>`;
 }
 
+// ── Cost Categories page ──────────────────────────────────────────────────────
+function renderCostCats(){
+  document.getElementById('costs-table').innerHTML=allCostCats.length===0?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:2rem">No categories yet. Click <strong style="color:var(--accent)">+ Add Category</strong>.</td></tr>`:allCostCats.map(c=>`<tr><td style="font-size:20px">${c.icon}</td><td style="font-weight:500">${c.name}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;background:${c.color}"></div><span style="font-size:12px;color:var(--text2)">${c.color}</span></div></td><td style="color:var(--text2)">${c.sort_order}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("cost-cat",${JSON.stringify(c)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('cost_categories',${c.id},'${c.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`).join('');
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────────
+function renderReportsPage(){
+  const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=allReports.reduce((a,r)=>a+(r.workers||0),0);const tt=allReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
+  document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
+  const c=document.getElementById('reports-list');
+  if(allReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit your first report</a></p>`;return;}
+  c.innerHTML=allReports.map(r=>`<div style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-d);font-size:14px;font-weight:700">${r.project}</span><span style="font-size:11px;color:var(--text3)">${r.report_date}</span><span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span></div><div style="font-size:12px;color:var(--text3);margin-top:3px">${r.reporter||'—'}${r.role?' — '+r.role:''} — ${r.location||'—'}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${r.workers||0} workers — ${(r.tasks||[]).length} task updates — ${r.weather||'—'}</div>${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin-top:5px;display:flex;flex-direction:column;gap:2px">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div style="font-size:12px;color:var(--text2)">&#10003; ${t.title}: <strong style="color:var(--teal)">${fmtN(t.qty_done)} ${t.unit||''}</strong></div>`).join('')}</div>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${r.costs?Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span style="font-size:11px;padding:2px 8px;border-radius:3px;background:var(--bg3);color:var(--text2);font-weight:500">${k}: ${fmt(v)}</span>`).join(''):''}</div>${r.blockers?`<div style="margin-top:6px;font-size:12px;color:#f87171">&#9888; ${r.blockers}</div>`:''}</div><div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost)}</div><div style="font-size:11px;color:var(--text3)">total cost</div></div></div></div>`).join('');
+}
+
+// ── Generic Modal open/close ──────────────────────────────────────────────────
+function openModal(type, rec=null){
+  const mid='modal-'+type;
+  document.getElementById(mid).classList.add('open');
+  // reset all inputs in modal
+  document.getElementById(mid).querySelectorAll('input:not([type=hidden]),select,textarea').forEach(el=>{
+    if(el.type==='color')el.value='#f5a623';
+    else if(el.type==='number')el.value='';
+    else if(el.tagName==='SELECT')el.selectedIndex=0;
+    else el.value='';
+  });
+  document.getElementById(mid).querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
+  // populate project dropdowns in worker/equipment modals
+  if(type==='worker'||type==='equipment'){
+    const sel=document.getElementById(type+'-project');
+    if(sel){sel.innerHTML='<option value="">— None —</option>'+allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');}
+  }
+  if(type==='task'){
+    const sel=document.getElementById('task-project');
+    if(sel){sel.innerHTML=allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');}
+  }
+  // populate with record data if editing
+  if(rec){
+    document.getElementById(type+'-modal-title').textContent='Edit '+({project:'Project',task:'Task',worker:'Worker',equipment:'Equipment','cost-cat':'Category'}[type]||'');
+    const mapping={
+      project:{id:'id',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend',status:'status',desc:'description'},
+      task:{id:'id',title:'title',type:'type','qty-total':'qty_total',unit:'unit',priority:'priority',assigned:'assigned_to',status:'status','qty-done':'qty_done',notes:'notes'},
+      worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status'},
+      equipment:{id:'id',name:'name',type:'type',make:'make_model',serial:'serial_number',service:'next_service',status:'status',notes:'notes'},
+      'cost-cat':{id:'id',name:'name',icon:'icon',color:'color',order:'sort_order'}
+    };
+    const map=mapping[type]||{};
+    Object.entries(map).forEach(([fieldSuffix,recKey])=>{
+      const el=document.getElementById(type+'-'+fieldSuffix);
+      if(el&&rec[recKey]!==undefined&&rec[recKey]!==null)el.value=rec[recKey];
+    });
+    // handle project fields that set select values
+    if(type==='task'){const tsel=document.getElementById('task-project');if(tsel&&rec.project_name)tsel.value=rec.project_name;}
+    if(type==='worker'){const wsel=document.getElementById('worker-project');if(wsel&&rec.project_name)wsel.value=rec.project_name;}
+    if(type==='equipment'){const esel=document.getElementById('equipment-project');if(esel&&rec.assigned_project)esel.value=rec.assigned_project;}
+  } else {
+    document.getElementById(type+'-modal-title').textContent=({project:'New Project',task:'New Project Task',worker:'Add Worker',equipment:'Add Equipment','cost-cat':'Add Cost Category'}[type]||'New');
+  }
+  setTimeout(()=>{const f=document.getElementById(mid).querySelector('input:not([type=hidden])');if(f)f.focus();},100);
+}
+
+async function saveRecord(type){
+  const btn=document.getElementById(type+'-save-btn');btn.disabled=true;btn.textContent='Saving...';
+  try{
+    let payload={};let table='';let id=document.getElementById(type+'-id')?.value;
+    if(type==='project'){
+      const name=document.getElementById('project-name').value.trim();if(!name){showToast('Project name required','err');btn.disabled=false;btn.textContent='Save Project';return;}
+      payload={name,phase:document.getElementById('project-phase').value.trim(),type:document.getElementById('project-type').value,client:document.getElementById('project-client').value.trim(),pm:document.getElementById('project-pm').value.trim(),start_date:document.getElementById('project-start').value,end_date:document.getElementById('project-end').value,budget:parseFloat(document.getElementById('project-budget').value)||0,contract_spend:parseFloat(document.getElementById('project-contract').value)||0,status:document.getElementById('project-status').value,description:document.getElementById('project-desc').value.trim(),active:true};table='projects';
+    } else if(type==='task'){
+      const title=document.getElementById('task-title').value.trim();const proj=document.getElementById('task-project').value;const qt=parseFloat(document.getElementById('task-qty-total').value)||0;const unit=document.getElementById('task-unit').value.trim();
+      if(!title||!proj||!qt||!unit){showToast('Title, project, quantity and unit are required','err');btn.disabled=false;btn.textContent='Save Task';return;}
+      const projObj=allProjects.find(p=>p.name===proj);
+      payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
+    } else if(type==='worker'){
+      const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
+      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
+    } else if(type==='equipment'){
+      const name=document.getElementById('equipment-name').value.trim();if(!name){showToast('Item name required','err');btn.disabled=false;btn.textContent='Save Item';return;}
+      payload={name,type:document.getElementById('equipment-type').value,make_model:document.getElementById('equipment-make').value.trim(),serial_number:document.getElementById('equipment-serial').value.trim(),assigned_project:document.getElementById('equipment-project').value||null,next_service:document.getElementById('equipment-service').value||null,status:document.getElementById('equipment-status').value,notes:document.getElementById('equipment-notes').value.trim(),active:true};table='equipment';
+    } else if(type==='cost-cat'){
+      const name=document.getElementById('cost-cat-name').value.trim();if(!name){showToast('Category name required','err');btn.disabled=false;btn.textContent='Save Category';return;}
+      payload={name,icon:document.getElementById('cost-cat-icon').value.trim()||'💰',color:document.getElementById('cost-cat-color').value,sort_order:parseInt(document.getElementById('cost-cat-order').value)||99,active:true};table='cost_categories';
+    }
+    if(id){await sbPatch(table,id,payload);showToast(type+' updated');}
+    else{await sbPost(table,payload);showToast(type+' created');}
+    closeModal(type);await loadAllData();renderPage(document.querySelector('.page.active').id.replace('page-',''));
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save';
+}
+
+async function deleteRecord(table,id,name){
+  if(!confirm('Delete "'+name+'"? This cannot be undone.'))return;
+  try{await sbPatch(table,id,{active:false});showToast('Deleted');await loadAllData();renderPage(document.querySelector('.page.active').id.replace('page-',''));}
+  catch(e){showToast('Delete failed','err');}
+}
+
+// ── AI ────────────────────────────────────────────────────────────────────────
 async function askAI(page,preq){
   const ie=document.getElementById('ai-input-'+page),re=document.getElementById('ai-resp-'+page);
   const q=preq||(ie?ie.value.trim():'');if(!q)return;if(ie)ie.value='';
-  re.innerHTML='<span class="spinner"></span> Analysing live data...';
+  re.innerHTML='<span class="spinner"></span> Analysing...';
   const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
-  const taskSummary=allTasks.slice(0,10).map(t=>t.title+' ('+t.progress+'% - '+fmtN(t.qty_done)+'/'+fmtN(t.qty_total)+' '+t.unit+')').join('; ');
-  const ctx=`You are an AI assistant for SiteCommand, construction and telecoms PM in South Africa.
+  const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
+  const ctx=`You are an AI assistant for SiteCommand, a construction and telecoms PM platform in South Africa.
 Projects: ${allProjects.map(p=>p.name+' ('+p.status+', budget '+fmt(p.budget)+')').join('; ')}.
-Task progress (top tasks): ${taskSummary||'none yet'}.
-Total tasks: ${allTasks.length}, complete: ${allTasks.filter(t=>t.status==='complete').length}, blocked: ${allTasks.filter(t=>t.status==='blocked').length}.
-Field reports: ${allReports.length}, total field costs: ${fmt(tf)}.
-Respond in 2-4 concise sentences. No markdown.`;
+Task progress: ${allTasks.slice(0,8).map(t=>t.title+' '+t.progress+'%').join('; ')}.
+Workforce: ${allWorkers.length} workers, ${allWorkers.filter(w=>w.status==='cert-expiring').length} cert expiring, ${allWorkers.filter(w=>w.status==='leave').length} on leave.
+Equipment: ${allEquipment.length} items, ${allEquipment.filter(e=>e.status==='due-service').length} due service, ${allEquipment.filter(e=>e.status==='grounded').length} grounded.
+Field reports: ${allReports.length} total, ${fmt(tf)} total field costs.
+Cost breakdown: ${Object.entries(ac).map(([k,v])=>k+': '+fmt(v)).join(', ')}.
+Respond in 3-5 concise sentences with specific recommendations. No markdown.`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:ctx,messages:[{role:'user',content:q}]})});
     const data=await res.json();re.innerHTML=(data.content||[]).map(b=>b.text||'').join('')||'No response.';
