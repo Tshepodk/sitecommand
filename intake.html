@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Daily Site Intake</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:10}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.header-badge{background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:3px 12px;font-size:11px;font-family:var(--font-d);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal)}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s}
+.conn-dot.connected{background:var(--green);animation:pulse 2s infinite}
+.conn-label{font-size:11px;color:var(--text3)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.shell{max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.section{margin-bottom:2rem}
+.section-label{font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.form-grid{display:grid;gap:1rem}
+.form-grid.cols-2{grid-template-columns:1fr 1fr}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.form-label .req{color:var(--accent)}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 12px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-select option{background:var(--bg2)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-inner{padding:1.25rem}
+.cost-cats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cost-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;transition:border-color 0.15s}
+.cost-cat:hover{border-color:var(--border2)}
+.cost-cat-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cost-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.cost-cat-name{font-family:var(--font-d);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.cost-input-row{display:flex;gap:6px;align-items:center}
+.cost-prefix{font-size:13px;color:var(--text3);font-weight:500;flex-shrink:0}
+.task-log{display:flex;flex-direction:column;gap:8px}
+.task-entry{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start}
+.task-entry-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.task-remove{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:14px;border-radius:4px;transition:color 0.12s}
+.task-remove:hover{color:var(--red)}
+.add-row-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border2);border-radius:var(--r);padding:8px 14px;color:var(--text3);cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;width:100%;justify-content:center;margin-top:6px}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent)}
+.summary-bar{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1rem 1.25rem;display:flex;gap:2rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;position:sticky;top:56px;z-index:9}
+.sum-item{display:flex;flex-direction:column;gap:2px}
+.sum-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.sum-val{font-family:var(--font-d);font-size:20px;font-weight:700;line-height:1}
+.sum-total{margin-left:auto;text-align:right}
+.sum-total .sum-val{color:var(--accent);font-size:26px}
+.steps{display:flex;gap:0;margin-bottom:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden}
+.step{flex:1;padding:10px 14px;display:flex;align-items:center;gap:7px;font-family:var(--font-d);font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3);border-right:1px solid var(--border);cursor:pointer;transition:all 0.15s}
+.step:last-child{border-right:none}
+.step.active{background:var(--bg3);color:var(--accent)}
+.step.done{color:var(--green)}
+.step-num{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.step.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-success{background:var(--green);color:#000}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.sp-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.sp-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.sp-red{background:rgba(239,68,68,0.12);color:#f87171}
+.weather-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.weather-opt{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all 0.15s}
+.weather-opt.selected{border-color:var(--accent);background:rgba(245,166,35,0.08)}
+.weather-opt input{display:none}
+.weather-icon{font-size:20px}
+.weather-name{font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text2)}
+.toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;z-index:100;display:none;animation:slideup 0.3s ease}
+.toast.success{background:var(--green);color:#000}
+.toast.error{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.workers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.worker-cat{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px}
+.worker-cat-name{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.form-grid.cols-2,.form-grid.cols-3{grid-template-columns:1fr}.cost-cats{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(2,1fr)}.workers-grid{grid-template-columns:1fr 1fr}.steps{flex-wrap:wrap}.step{min-width:45%}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div class="header-badge">Daily Intake</div>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+    <div class="conn-dot" id="conn-dot"></div>
+    <span class="conn-label" id="conn-label">Connecting...</span>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <span id="today-date" style="font-size:12px;color:var(--text3)"></span>
+    <a href="index.html" style="font-size:12px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);text-decoration:none">← Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase;line-height:1.1">Daily Site Report</h1>
+    <p style="color:var(--text2);font-size:13px;margin-top:4px">All entries are saved to the cloud and update the project dashboard in real time.</p>
+  </div>
+
+  <div class="steps" id="steps-bar">
+    <div class="step active" onclick="goStep(0)"><div class="step-num">1</div>Project Info</div>
+    <div class="step" onclick="goStep(1)"><div class="step-num">2</div>Daily Tasks</div>
+    <div class="step" onclick="goStep(2)"><div class="step-num">3</div>Costs</div>
+    <div class="step" onclick="goStep(3)"><div class="step-num">4</div>Site Conditions</div>
+    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Review</div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="sum-item"><div class="sum-label">Project</div><div class="sum-val" id="sum-project" style="font-size:15px;color:var(--text)">—</div></div>
+    <div class="sum-item"><div class="sum-label">Tasks logged</div><div class="sum-val" id="sum-tasks" style="color:var(--blue)">0</div></div>
+    <div class="sum-item"><div class="sum-label">Workers on site</div><div class="sum-val" id="sum-workers" style="color:var(--teal)">0</div></div>
+    <div class="sum-total"><div class="sum-label">Today's total cost</div><div class="sum-val" id="sum-cost">R 0</div></div>
+  </div>
+
+  <!-- STEP 0 -->
+  <div id="step-0">
+    <div class="section">
+      <div class="section-label"><div class="section-num">1</div>Project Information</div>
+      <div class="card"><div class="card-inner">
+        <div class="form-grid cols-2">
+          <div class="form-group"><label class="form-label">Project <span class="req">*</span></label>
+            <select class="form-select" id="f-project" onchange="updateSummary()">
+              <option value="">— Select project —</option>
+              <option>N3 Highway Expansion</option>
+              <option>Vodacom 5G Rollout</option>
+              <option>Sandton Substation</option>
+              <option>MTN Tower Upgrade</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Report Date <span class="req">*</span></label><input class="form-input" type="date" id="f-date"/></div>
+          <div class="form-group"><label class="form-label">Site Location / Zone</label><input class="form-input" type="text" id="f-location" placeholder="e.g. Sector 4, km 47–52"/></div>
+          <div class="form-group"><label class="form-label">Reported By <span class="req">*</span></label><input class="form-input" type="text" id="f-reporter" placeholder="Full name"/></div>
+          <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" type="text" id="f-role" placeholder="e.g. Site Foreman"/></div>
+          <div class="form-group"><label class="form-label">Report Period</label>
+            <select class="form-select" id="f-period">
+              <option>Day shift (06:00–18:00)</option><option>Night shift (18:00–06:00)</option><option>Full day</option>
+            </select>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label"><div class="section-num" style="background:var(--teal)">W</div>Workers on Site</div>
+      <div class="card"><div class="card-inner">
+        <div class="workers-grid">
+          <div class="worker-cat"><div class="worker-cat-name">Civil / Labour</div><input class="form-input" type="number" id="w-civil" min="0" value="0" onchange="updateSummary()"/></div>
+          <div class="worker-cat"><div class="worker-cat-name">Telecoms Techs</div><input class="form-input" type="number" id="w-telecoms" min="0" value="0" onchange="updateSummary()"/></div>
+          <div class="worker-cat"><div class="worker-cat-name">Electrical</div><input class="form-input" type="number" id="w-elec" min="0" value="0" onchange="updateSummary()"/></div>
+          <div class="worker-cat"><div class="worker-cat-name">Plant Operators</div><input class="form-input" type="number" id="w-plant" min="0" value="0" onchange="updateSummary()"/></div>
+          <div class="worker-cat"><div class="worker-cat-name">Supervisors</div><input class="form-input" type="number" id="w-sup" min="0" value="0" onchange="updateSummary()"/></div>
+          <div class="worker-cat"><div class="worker-cat-name">Subcontractors</div><input class="form-input" type="number" id="w-sub" min="0" value="0" onchange="updateSummary()"/></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goStep(1)">Next: Daily Tasks →</button></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step-1" style="display:none">
+    <div class="section">
+      <div class="section-label"><div class="section-num">2</div>Daily Task Updates</div>
+      <div class="card"><div class="card-inner">
+        <div class="task-log" id="task-log"></div>
+        <button class="add-row-btn" onclick="addTask()">+ Add Task Update</button>
+      </div></div>
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem">
+      <label class="form-label">Overall Daily Progress Note</label>
+      <textarea class="form-textarea" id="f-progress-note" placeholder="Describe what was achieved today, blockers encountered, carry-over work..."></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(0)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(2)">Next: Costs →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step-2" style="display:none">
+    <div class="section">
+      <div class="section-label"><div class="section-num">3</div>Cost Categories</div>
+      <div class="cost-cats">
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(59,130,246,0.12);color:#60a5fa">🚛</div><div class="cost-cat-name" style="color:#60a5fa">Transport</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-transport" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-transport" placeholder="Notes — vehicle types, trips, km..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">🧱</div><div class="cost-cat-name" style="color:var(--accent)">Materials</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-materials" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-materials" placeholder="Notes — items, quantities..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(168,85,247,0.12);color:#c084fc">🏨</div><div class="cost-cat-name" style="color:#c084fc">Accommodation</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-accommodation" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-accommodation" placeholder="Notes — workers, nights..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(34,197,94,0.12);color:#4ade80">👷</div><div class="cost-cat-name" style="color:#4ade80">Labour</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-labour" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-labour" placeholder="Notes — overtime, subcontractors..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(20,184,166,0.12);color:#2dd4bf">🏗</div><div class="cost-cat-name" style="color:#2dd4bf">Plant & Equipment</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-plant" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-plant" placeholder="Notes — hire rates, fuel..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(239,68,68,0.12);color:#f87171">📡</div><div class="cost-cat-name" style="color:#f87171">Telecoms Hardware</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-telecoms" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-telecoms" placeholder="Notes — cables, antennas..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(139,144,160,0.12);color:var(--text2)">🍽</div><div class="cost-cat-name" style="color:var(--text2)">Subsistence</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-subsistence" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-subsistence" placeholder="Notes — meals, allowances..." style="font-size:12px;margin-top:6px"/></div>
+        <div class="cost-cat"><div class="cost-cat-header"><div class="cost-icon" style="background:rgba(245,166,35,0.12);color:var(--accent)">📋</div><div class="cost-cat-name" style="color:var(--accent)">Other / Misc</div></div><div class="cost-input-row"><span class="cost-prefix">R</span><input class="form-input" type="number" id="c-other" min="0" placeholder="0.00" onchange="updateSummary()"/></div><input class="form-input" type="text" id="cn-other" placeholder="Notes — permits, printing..." style="font-size:12px;margin-top:6px"/></div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:1rem 1.25rem;margin-top:1rem;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Total Daily Cost</span>
+        <span style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="cost-total-display">R 0</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Next: Site Conditions →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step-3" style="display:none">
+    <div class="section">
+      <div class="section-label"><div class="section-num">4</div>Site Conditions</div>
+      <div class="card"><div class="card-inner">
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Weather Conditions</label>
+          <div class="weather-grid">
+            <label class="weather-opt"><input type="radio" name="weather" value="Sunny" onchange="selWeather(this)"/><div class="weather-icon">☀️</div><div class="weather-name">Sunny</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Cloudy" onchange="selWeather(this)"/><div class="weather-icon">⛅</div><div class="weather-name">Cloudy</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Rain" onchange="selWeather(this)"/><div class="weather-icon">🌧</div><div class="weather-name">Rain</div></label>
+            <label class="weather-opt"><input type="radio" name="weather" value="Storm" onchange="selWeather(this)"/><div class="weather-icon">⛈</div><div class="weather-name">Storm</div></label>
+          </div>
+        </div>
+        <div class="form-grid cols-3" style="margin-top:1rem">
+          <div class="form-group"><label class="form-label">Temperature (°C)</label><input class="form-input" type="number" id="f-temp" placeholder="e.g. 28"/></div>
+          <div class="form-group"><label class="form-label">Wind Speed</label><select class="form-select" id="f-wind"><option>Calm</option><option>Light breeze</option><option>Moderate</option><option>Strong</option><option>Very strong</option></select></div>
+          <div class="form-group"><label class="form-label">Work Stoppages</label><select class="form-select" id="f-stoppage"><option value="0">None</option><option value="1">1 stoppage</option><option value="2">2 stoppages</option><option value="3">3+ stoppages</option></select></div>
+        </div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Safety Status</label><select class="form-select" id="f-hse"><option value="none">None — all clear</option><option value="near-miss">Near miss reported</option><option value="first-aid">First aid incident</option><option value="medical">Medical treatment required</option><option value="lti">LTI — Lost Time Injury</option></select></div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">HSE / Incident Details</label><textarea class="form-textarea" id="f-hse-detail" placeholder="Describe any incidents, near misses, or safety observations..." style="min-height:60px"></textarea></div>
+        <div class="form-group" style="margin-top:1rem"><label class="form-label">Blockers / Issues to Escalate</label><textarea class="form-textarea" id="f-blockers" placeholder="Equipment failures, permit issues, supply delays, access problems..."></textarea></div>
+      </div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Review & Submit →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div id="step-4" style="display:none">
+    <div class="section">
+      <div class="section-label"><div class="section-num" style="background:var(--green)">✓</div>Review & Submit</div>
+      <div id="review-content"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(3)">← Back</button>
+      <button class="btn btn-success" id="submit-btn" onclick="submitForm()">✓ Submit to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const HEADERS = {'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+
+const COST_KEYS=['transport','materials','accommodation','labour','plant','telecoms','subsistence','other'];
+const COST_LABELS={transport:'Transport',materials:'Materials',accommodation:'Accommodation',labour:'Labour',plant:'Plant & Equip',telecoms:'Telecoms HW',subsistence:'Subsistence',other:'Other'};
+
+let tasks=[]; let taskId=0;
+
+// Init
+const today=new Date();
+document.getElementById('f-date').value=today.toISOString().split('T')[0];
+document.getElementById('today-date').textContent=today.toLocaleDateString('en-ZA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+checkConnection();
+
+async function checkConnection(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/daily_reports?limit=1`,{headers:HEADERS});
+    if(r.ok||r.status===406){
+      document.getElementById('conn-dot').classList.add('connected');
+      document.getElementById('conn-label').textContent='Connected';
+      document.getElementById('conn-label').style.color='var(--green)';
+    } else {
+      throw new Error();
+    }
+  }catch(e){
+    document.getElementById('conn-label').textContent='Offline — check setup';
+    document.getElementById('conn-label').style.color='var(--red)';
+  }
+}
+
+function goStep(n){
+  for(let i=0;i<5;i++){
+    document.getElementById('step-'+i).style.display=i===n?'block':'none';
+    const s=document.querySelectorAll('.step')[i];
+    s.classList.remove('active','done');
+    if(i<n)s.classList.add('done');
+    else if(i===n)s.classList.add('active');
+  }
+  if(n===4)buildReview();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function addTask(){
+  const id=++taskId; tasks.push({id}); renderTasks();
+}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderTasks();updateSummary();}
+function renderTasks(){
+  const log=document.getElementById('task-log');
+  const ST=['Completed','In Progress','Not Started','Blocked','Carried Over'];
+  const TY=['Civil','Structural','Electrical','Telecoms','HSE','Survey','Admin','Plumbing','Concrete','Cabling'];
+  log.innerHTML=tasks.map(t=>`<div class="task-entry"><div class="task-entry-fields">
+    <div class="form-group"><label class="form-label" style="font-size:10px">Description</label><input class="form-input" id="t-desc-${t.id}" placeholder="What was done / updated..." oninput="updateSummary()" style="font-size:12px"/></div>
+    <div class="form-group"><label class="form-label" style="font-size:10px">Type</label><select class="form-select" id="t-type-${t.id}" style="font-size:12px">${TY.map(o=>`<option>${o}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label" style="font-size:10px">Status</label><select class="form-select" id="t-status-${t.id}" style="font-size:12px">${ST.map(o=>`<option>${o}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label" style="font-size:10px">% Complete Today</label><input class="form-input" type="number" id="t-pct-${t.id}" min="0" max="100" placeholder="0" style="font-size:12px"/></div>
+  </div><button class="task-remove" onclick="removeTask(${t.id})">✕</button></div>`).join('');
+}
+function getTaskData(){return tasks.map(t=>({desc:(document.getElementById('t-desc-'+t.id)||{}).value||'',type:(document.getElementById('t-type-'+t.id)||{}).value||'',status:(document.getElementById('t-status-'+t.id)||{}).value||'',pct:(document.getElementById('t-pct-'+t.id)||{}).value||'0'}));}
+function getCosts(){const c={};let t=0;COST_KEYS.forEach(k=>{const v=parseFloat((document.getElementById('c-'+k)||{}).value)||0;c[k]=v;t+=v;});return{costs:c,total:t};}
+function getCostNotes(){const n={};COST_KEYS.forEach(k=>{n[k]=(document.getElementById('cn-'+k)||{}).value||'';});return n;}
+function updateSummary(){
+  document.getElementById('sum-project').textContent=document.getElementById('f-project').value||'—';
+  document.getElementById('sum-tasks').textContent=tasks.length;
+  const w=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  document.getElementById('sum-workers').textContent=w;
+  const{total}=getCosts();
+  const fmt='R '+Math.round(total).toLocaleString('en-ZA');
+  document.getElementById('sum-cost').textContent=fmt;
+  const d=document.getElementById('cost-total-display');if(d)d.textContent=fmt;
+}
+function selWeather(el){document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));el.closest('.weather-opt').classList.add('selected');}
+function buildReview(){
+  const{costs,total}=getCosts();
+  const proj=document.getElementById('f-project').value||'—';
+  const date=document.getElementById('f-date').value;
+  const reporter=document.getElementById('f-reporter').value||'—';
+  const location=document.getElementById('f-location').value||'—';
+  const taskData=getTaskData();
+  const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  const weather=document.querySelector('input[name="weather"]:checked');
+  const hse=document.getElementById('f-hse').value;
+  const blockers=document.getElementById('f-blockers').value;
+  const note=document.getElementById('f-progress-note').value;
+  document.getElementById('review-content').innerHTML=`
+    <div class="card" style="margin-bottom:12px"><div class="card-inner">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
+        <div><div class="form-label">Project</div><div style="font-weight:500;margin-top:3px">${proj}</div></div>
+        <div><div class="form-label">Date</div><div style="font-weight:500;margin-top:3px">${date}</div></div>
+        <div><div class="form-label">Reported by</div><div style="font-weight:500;margin-top:3px">${reporter}</div></div>
+        <div><div class="form-label">Location</div><div style="font-weight:500;margin-top:3px">${location}</div></div>
+        <div><div class="form-label">Workers</div><div style="font-weight:500;margin-top:3px">${workers}</div></div>
+        <div><div class="form-label">Weather</div><div style="font-weight:500;margin-top:3px">${weather?weather.value:'Not set'}</div></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:1rem"><div class="form-label" style="margin-bottom:6px">HSE Status</div><span class="status-pill ${hse==='none'?'sp-green':hse==='near-miss'?'sp-amber':'sp-red'}">${hse==='none'?'All clear':hse}</span></div>
+    </div></div>
+    <div class="card" style="margin-bottom:12px"><div class="card-inner">
+      <div class="form-label" style="margin-bottom:10px">Tasks (${taskData.length})</div>
+      ${taskData.length===0?`<p style="color:var(--text3);font-size:13px">No tasks logged.</p>`:taskData.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><span class="status-pill ${t.status==='Completed'?'sp-green':t.status==='Blocked'?'sp-red':'sp-amber'}">${t.status}</span><span style="flex:1;font-size:13px">${t.desc||'(no description)'}</span><span style="font-size:11px;color:var(--text3)">${t.type}</span><span style="font-size:12px;color:var(--text2)">${t.pct}%</span></div>`).join('')}
+      ${note?`<div style="margin-top:10px;font-size:13px;color:var(--text2);font-style:italic">${note}</div>`:''}
+    </div></div>
+    <div class="card"><div class="card-inner">
+      <div class="form-label" style="margin-bottom:10px">Costs — Total: <span style="color:var(--accent)">R ${Math.round(total).toLocaleString('en-ZA')}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        ${COST_KEYS.filter(k=>costs[k]>0).map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--bg3);border-radius:var(--r)"><span style="font-size:12px;color:var(--text2)">${COST_LABELS[k]}</span><span style="font-family:var(--font-d);font-weight:700;font-size:14px;color:var(--accent)">R ${Math.round(costs[k]).toLocaleString('en-ZA')}</span></div>`).join('')}
+        ${COST_KEYS.filter(k=>costs[k]>0).length===0?`<p style="color:var(--text3);font-size:13px;grid-column:1/-1">No costs entered.</p>`:''}
+      </div>
+      ${blockers?`<div style="margin-top:10px;padding:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r)"><div style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#f87171;margin-bottom:4px">Blockers</div><div style="font-size:13px;color:var(--text2)">${blockers}</div></div>`:''}
+    </div></div>`;
+}
+
+async function submitForm(){
+  const proj=document.getElementById('f-project').value;
+  const reporter=document.getElementById('f-reporter').value;
+  if(!proj){showToast('Please select a project','error');goStep(0);return;}
+  if(!reporter){showToast('Please enter your name','error');goStep(0);return;}
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Saving...';
+  const{costs,total}=getCosts();
+  const costNotes=getCostNotes();
+  const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  const weather=document.querySelector('input[name="weather"]:checked');
+  const payload={
+    project:proj,
+    report_date:document.getElementById('f-date').value,
+    reporter,
+    role:document.getElementById('f-role').value,
+    location:document.getElementById('f-location').value,
+    period:document.getElementById('f-period').value,
+    workers,
+    worker_breakdown:{
+      civil:parseInt(document.getElementById('w-civil').value)||0,
+      telecoms:parseInt(document.getElementById('w-telecoms').value)||0,
+      elec:parseInt(document.getElementById('w-elec').value)||0,
+      plant:parseInt(document.getElementById('w-plant').value)||0,
+      sup:parseInt(document.getElementById('w-sup').value)||0,
+      sub:parseInt(document.getElementById('w-sub').value)||0,
+    },
+    tasks:getTaskData(),
+    progress_note:document.getElementById('f-progress-note').value,
+    costs:{...costs,notes:costNotes},
+    total_cost:total,
+    weather:weather?weather.value:'',
+    temp:document.getElementById('f-temp').value,
+    wind:document.getElementById('f-wind').value,
+    stoppages:document.getElementById('f-stoppage').value,
+    hse:document.getElementById('f-hse').value,
+    hse_detail:document.getElementById('f-hse-detail').value,
+    blockers:document.getElementById('f-blockers').value,
+  };
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/daily_reports`,{method:'POST',headers:{...HEADERS,'Prefer':'return=minimal'},body:JSON.stringify(payload)});
+    if(r.ok||r.status===201){
+      showToast('Report submitted successfully!','success');
+      setTimeout(()=>{resetForm();},2500);
+    } else {
+      const err=await r.text();
+      throw new Error(err);
+    }
+  }catch(e){
+    showToast('Error saving — check connection','error');
+    console.error(e);
+  }
+  btn.disabled=false;
+  btn.innerHTML='✓ Submit to Dashboard';
+}
+
+function showToast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type;t.style.display='block';
+  setTimeout(()=>{t.style.display='none';},3000);
+}
+
+function resetForm(){
+  tasks=[];taskId=0;
+  document.getElementById('f-project').value='';
+  document.getElementById('f-reporter').value='';
+  document.getElementById('f-role').value='';
+  document.getElementById('f-location').value='';
+  document.getElementById('f-progress-note').value='';
+  document.getElementById('f-blockers').value='';
+  document.getElementById('f-hse-detail').value='';
+  COST_KEYS.forEach(k=>{document.getElementById('c-'+k).value='';document.getElementById('cn-'+k).value='';});
+  ['civil','telecoms','elec','plant','sup','sub'].forEach(k=>{document.getElementById('w-'+k).value=0;});
+  document.querySelectorAll('input[name="weather"]').forEach(r=>r.checked=false);
+  document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));
+  renderTasks();updateSummary();goStep(0);
+}
+
+renderTasks();updateSummary();
+</script>
+</body>
+</html>

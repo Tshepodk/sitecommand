@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Construction & Telecoms PM</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto}
+.main{background:var(--bg);overflow:auto}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s;flex-shrink:0}
+.conn-dot.connected{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px}
+.nb-amber{background:var(--accent);color:#000}
+.nb-red{background:var(--red);color:#fff}
+.nb-teal{background:var(--teal);color:#000}
+.sidebar-footer{margin-top:auto;padding:0.75rem;border-top:1px solid var(--border)}
+.page{padding:1.5rem;display:none}
+.page.active{display:block}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:14px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-intake{background:rgba(20,184,166,0.12);border:1px solid rgba(20,184,166,0.3);color:var(--teal);padding:7px 14px;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;text-decoration:none}
+.btn-intake:hover{background:rgba(20,184,166,0.2)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-amber::before{background:var(--accent)}
+.stat-card.s-blue::before{background:var(--blue)}
+.stat-card.s-green::before{background:var(--green)}
+.stat-card.s-red::before{background:var(--red)}
+.stat-card.s-teal::before{background:var(--teal)}
+.stat-n{font-family:var(--font-d);font-size:32px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-l{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.progress{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.5s}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.badge-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.badge-red{background:rgba(239,68,68,0.12);color:#f87171}
+.badge-blue{background:rgba(59,130,246,0.12);color:#60a5fa}
+.badge-purple{background:rgba(168,85,247,0.12);color:#c084fc}
+.badge-teal{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.badge-gray{background:rgba(139,144,160,0.12);color:var(--text2)}
+.prio{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.prio-high{background:var(--red)}
+.prio-med{background:var(--accent)}
+.prio-low{background:var(--green)}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.mt1{margin-top:1rem}
+.mt15{margin-top:1.5rem}
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
+.kol{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.kol-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.kol-name{font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}
+.kol-count{background:var(--bg4);color:var(--text3);font-size:11px;font-weight:600;border-radius:10px;padding:1px 7px}
+.kol-body{padding:10px 8px;display:flex;flex-direction:column;gap:7px}
+.kcard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px;transition:border-color 0.15s}
+.kcard:hover{border-color:var(--border2)}
+.kcard-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:7px;line-height:1.4}
+.mini-btn{font-size:10px;padding:3px 7px;background:var(--bg4);border:1px solid var(--border);border-radius:4px;color:var(--text2);cursor:pointer;font-family:var(--font-d);font-weight:600;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.12s}
+.mini-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ai-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.25rem;margin-top:1.5rem}
+.ai-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.ai-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent)}
+.ai-input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none}
+.ai-input:focus{border-color:var(--accent)}
+.ai-input::placeholder{color:var(--text3)}
+.ai-response{margin-top:12px;font-size:13px;color:var(--text2);line-height:1.65}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.site-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.site-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1rem;transition:border-color 0.15s}
+.site-card:hover{border-color:var(--border2)}
+.cost-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;gap:1px}
+.cost-seg{height:100%;transition:width 0.4s;min-width:2px}
+.cost-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.cost-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.cost-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:520px;max-width:95vw}
+.modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block}
+.form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
+.gantt-row{display:grid;align-items:center;border-bottom:1px solid var(--border);min-height:44px}
+.gantt-row:last-child{border-bottom:none}
+.live-badge{background:rgba(20,184,166,0.12);border:1px solid rgba(20,184,166,0.25);color:var(--teal);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px auto 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.kanban{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">Site<span>Command</span></div>
+    <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span style="font-size:11px;color:var(--text3)" id="conn-label">Connecting...</span>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <a href="intake.html" class="btn-intake">📋 Daily Intake Form</a>
+      <div style="display:flex;gap:8px">
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:14px" onclick="loadAllData()">↻</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">▦</span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('projects',this)"><span class="nav-icon">📁</span>Projects</div>
+      <div class="nav-item" onclick="showPage('sites',this)"><span class="nav-icon">📡</span>Sites & Towers</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Work</div>
+      <div class="nav-item" onclick="showPage('tasks',this)"><span class="nav-icon">✓</span>Tasks<span class="nav-badge nb-amber" id="task-badge">7</span></div>
+      <div class="nav-item" onclick="showPage('schedule',this)"><span class="nav-icon">📅</span>Schedule</div>
+      <div class="nav-item" onclick="showPage('issues',this)"><span class="nav-icon">⚠</span>Issues<span class="nav-badge nb-red">3</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Resources</div>
+      <div class="nav-item" onclick="showPage('workforce',this)"><span class="nav-icon">👷</span>Workforce</div>
+      <div class="nav-item" onclick="showPage('equipment',this)"><span class="nav-icon">🏗</span>Equipment</div>
+      <div class="nav-item" onclick="showPage('budget',this)"><span class="nav-icon">💰</span>Budget</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Field Data</div>
+      <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">📋</span>Daily Reports<span class="nav-badge nb-teal" id="report-badge">0</span></div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="nav-item" style="font-size:12px"><span class="nav-icon">🤖</span>AI Assistant</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><div class="page-title">Project Dashboard</div><div class="page-sub" id="dash-sub">Loading live data...</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="live-badge"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite"></span>Live</span>
+          <a href="intake.html" class="btn-intake" style="font-size:12px;padding:5px 12px">📋 New Report</a>
+          <button class="btn btn-ghost btn-sm" onclick="askAI('dash','Summarise overall project health and flag any risks based on the field reports and budget data')">AI Summary ↗</button>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-task').classList.add('open')">+ Task</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="dash-stats">
+        <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">—</div><div class="stat-l">Loading...</div></div>
+        <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">—</div><div class="stat-l">Loading...</div></div>
+        <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">—</div><div class="stat-l">Loading...</div></div>
+        <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">—</div><div class="stat-l">Loading...</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Project Progress</div><button class="btn btn-ghost btn-sm" onclick="showPage('projects',null)">View all</button></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Type</th><th>Progress</th><th>Status</th></tr></thead><tbody id="dash-projects"></tbody></table></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Field-Reported Costs</div><button class="btn btn-ghost btn-sm" onclick="showPage('budget',null)">Full budget</button></div>
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap"><table><thead><tr><th>Project</th><th>Reports</th><th>Field Spend</th></tr></thead><tbody id="dash-costs"></tbody></table></div>
+            <div id="cost-breakdown-bar" style="padding:0 1.25rem 1rem;margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Latest Field Reports</div><button class="btn btn-ghost btn-sm" onclick="showPage('reports',null)">View all</button></div>
+        <div class="card-body" style="padding:0.75rem 1.25rem" id="dash-reports"><div style="color:var(--text3);font-size:13px;padding:8px 0">Loading reports...</div></div>
+      </div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">AI Site Intelligence</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-dash" placeholder="Ask about costs, risks, schedules... e.g. 'What's driving the most field cost?'" onkeydown="if(event.key==='Enter')askAI('dash')"/><button class="btn btn-primary btn-sm" onclick="askAI('dash')">Ask ↗</button></div>
+        <div class="ai-response" id="ai-resp-dash"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="page-tasks">
+      <div class="page-header">
+        <div><div class="page-title">Task Board</div><div class="page-sub">All active work items</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="askAI('tasks','Generate 5 critical path tasks for telecoms tower installation. Return JSON: {tasks:[{title,col,priority,project,type}]}')">AI Generate ↗</button>
+          <button class="btn btn-primary btn-sm" onclick="document.getElementById('modal-task').classList.add('open')">+ Task</button>
+        </div>
+      </div>
+      <div class="kanban" id="kanban-board"></div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Task AI</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-tasks" placeholder="e.g. 'generate fibre installation tasks' or 'what should I prioritise?'" onkeydown="if(event.key==='Enter')askAI('tasks')"/><button class="btn btn-primary btn-sm" onclick="askAI('tasks')">Ask ↗</button></div>
+        <div class="ai-response" id="ai-resp-tasks"></div>
+      </div>
+    </div>
+
+    <!-- SITES -->
+    <div class="page" id="page-sites">
+      <div class="page-header"><div><div class="page-title">Sites & Towers</div><div class="page-sub">Telecoms infrastructure</div></div><button class="btn btn-primary btn-sm">+ Add Site</button></div>
+      <div class="site-grid" id="site-grid"></div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="page" id="page-schedule">
+      <div class="page-header"><div><div class="page-title">Schedule</div><div class="page-sub">Gantt — current quarter</div></div></div>
+      <div class="card"><div class="card-header"><div class="card-title">Q2 2025 — Work Packages</div></div><div class="card-body" style="padding:0"><div id="gantt"></div></div></div>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="page" id="page-issues">
+      <div class="page-header"><div><div class="page-title">Issues & Risks</div><div class="page-sub">HSE, delays, blockers</div></div><button class="btn btn-primary btn-sm">+ Log Issue</button></div>
+      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Description</th><th>Category</th><th>Project</th><th>Priority</th><th>Status</th><th>Owner</th></tr></thead><tbody id="issues-table"></tbody></table></div></div></div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Risk AI</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-issues" placeholder="e.g. 'HSE risks for tower climbing' or 'draft risk mitigation plan'" onkeydown="if(event.key==='Enter')askAI('issues')"/><button class="btn btn-primary btn-sm" onclick="askAI('issues')">Ask ↗</button></div>
+        <div class="ai-response" id="ai-resp-issues"></div>
+      </div>
+    </div>
+
+    <!-- WORKFORCE -->
+    <div class="page" id="page-workforce">
+      <div class="page-header"><div><div class="page-title">Workforce</div><div class="page-sub">Crews, subcontractors, certifications</div></div><button class="btn btn-primary btn-sm">+ Add Worker</button></div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card s-amber"><div class="stat-n" id="wf-onsite" style="color:var(--accent)">—</div><div class="stat-l">On Site Today</div><div class="stat-sub" id="wf-sub">from field reports</div></div>
+        <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">38</div><div class="stat-l">Telecoms Certified</div></div>
+        <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">6</div><div class="stat-l">Certs Expiring</div></div>
+      </div>
+      <div class="card mt1"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Project</th><th>Certifications</th><th>Status</th></tr></thead><tbody id="workforce-table"></tbody></table></div></div></div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div class="page" id="page-equipment">
+      <div class="page-header"><div><div class="page-title">Equipment</div><div class="page-sub">Plant, vehicles, telecoms hardware</div></div><button class="btn btn-primary btn-sm">+ Add Item</button></div>
+      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Item</th><th>Type</th><th>Assigned To</th><th>Next Service</th><th>Status</th></tr></thead><tbody id="equipment-table"></tbody></table></div></div></div>
+    </div>
+
+    <!-- BUDGET -->
+    <div class="page" id="page-budget">
+      <div class="page-header"><div><div class="page-title">Budget & Costs</div><div class="page-sub">Contracted + field-reported costs combined</div></div><button class="btn btn-ghost btn-sm" onclick="askAI('budget','Analyse the budget vs field reported costs and flag any overspend risks')">AI Analyse ↗</button></div>
+      <div class="stats-grid" id="budget-stats"></div>
+      <div class="card mt1">
+        <div class="card-header"><div class="card-title">Budget vs Reported Costs</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Status</th></tr></thead><tbody id="budget-table"></tbody></table></div></div>
+      </div>
+      <div class="card mt1">
+        <div class="card-header"><div class="card-title">Cost Category Breakdown</div></div>
+        <div class="card-body" id="budget-categories"><div style="color:var(--text3);font-size:13px">Loading...</div></div>
+      </div>
+      <div class="ai-box">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Budget AI</div></div>
+        <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-budget" placeholder="e.g. 'which cost category is highest?' or 'forecast end of project spend'" onkeydown="if(event.key==='Enter')askAI('budget')"/><button class="btn btn-primary btn-sm" onclick="askAI('budget')">Ask ↗</button></div>
+        <div class="ai-response" id="ai-resp-budget"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="page" id="page-projects">
+      <div class="page-header"><div><div class="page-title">All Projects</div><div class="page-sub">Construction & telecoms portfolio</div></div><button class="btn btn-primary btn-sm">+ New Project</button></div>
+      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Progress</th><th>Status</th><th>PM</th></tr></thead><tbody id="projects-table"></tbody></table></div></div></div>
+    </div>
+
+    <!-- DAILY REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div><div class="page-title">Daily Field Reports</div><div class="page-sub">Submitted from site — live from Supabase</div></div>
+        <div style="display:flex;gap:8px">
+          <span class="live-badge"><span style="width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 1.5s infinite"></span>Live</span>
+          <a href="intake.html" class="btn-intake" style="font-size:12px;padding:5px 12px">📋 New Report</a>
+        </div>
+      </div>
+      <div class="stats-grid" id="reports-stats"></div>
+      <div class="card mt1">
+        <div class="card-header"><div class="card-title">All Submitted Reports</div><button class="btn btn-ghost btn-sm" onclick="loadAllData()">↻ Refresh</button></div>
+        <div class="card-body" style="padding:0.75rem 1.25rem" id="reports-list"><div style="color:var(--text3);font-size:13px">Loading...</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-task">
+  <div class="modal">
+    <div class="modal-title">New Task</div>
+    <div class="form-group"><label class="form-label">Task Title</label><input class="form-input" id="modal-task-title" placeholder="Describe the task..."/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="modal-task-project"><option>N3 Highway Expansion</option><option>Vodacom 5G Rollout</option><option>Sandton Substation</option><option>MTN Tower Upgrade</option></select></div>
+      <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="modal-task-prio"><option value="high">High</option><option value="med" selected>Medium</option><option value="low">Low</option></select></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="modal-task-type"><option>Civil</option><option>Structural</option><option>Electrical</option><option>Telecoms</option><option>HSE</option><option>Survey</option><option>Admin</option></select></div>
+      <div class="form-group"><label class="form-label">Assigned To</label><input class="form-input" id="modal-task-assign" placeholder="Name or team"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-task').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SUPABASE_KEY='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const HEADERS={'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
+const COST_KEYS=['transport','materials','accommodation','labour','plant','telecoms','subsistence','other'];
+const COST_LABELS={transport:'Transport',materials:'Materials',accommodation:'Accommodation',labour:'Labour',plant:'Plant & Equip',telecoms:'Telecoms HW',subsistence:'Subsistence',other:'Other'};
+const COST_COLORS={transport:'#60a5fa',materials:'#f5a623',accommodation:'#c084fc',labour:'#4ade80',plant:'#2dd4bf',telecoms:'#f87171',subsistence:'#8b90a0',other:'#f5a623'};
+
+const PROJECTS=[
+  {name:'N3 Highway Expansion',phase:'Phase 2',type:'Construction',client:'SANRAL',start:'2024-10',end:'2026-03',prog:72,status:'on-track',pm:'J. van der Merwe',budget:42000000,contractSpend:30240000},
+  {name:'Vodacom 5G Rollout',phase:'Gauteng',type:'Telecoms',client:'Vodacom',start:'2024-11',end:'2025-11',prog:58,status:'at-risk',pm:'T. Dlamini',budget:18500000,contractSpend:11100000},
+  {name:'Sandton Substation',phase:'Final',type:'Electrical',client:'City of Joburg',start:'2024-06',end:'2025-06',prog:89,status:'on-track',pm:'P. Mbatha',budget:14200000,contractSpend:12638000},
+  {name:'MTN Tower Upgrade',phase:'KZN',type:'Telecoms',client:'MTN SA',start:'2025-01',end:'2025-12',prog:41,status:'delayed',pm:'A. Mokoena',budget:9500000,contractSpend:3895000},
+];
+const SITES=[{id:'VD-JHB-001',name:'Johannesburg North',type:'Macro 5G',status:'active',completion:82,signal:'Excellent',issues:0},{id:'VD-JHB-002',name:'Sandton CBD',type:'Small Cell',status:'active',completion:61,signal:'Good',issues:1},{id:'VD-SOW-003',name:'Soweto Hub',type:'Macro 5G',status:'delayed',completion:35,signal:'Poor',issues:2},{id:'MT-DBN-001',name:'Durban North Tower',type:'4G/5G Combo',status:'active',completion:90,signal:'Excellent',issues:0},{id:'MT-PMB-002',name:'Pietermaritzburg',type:'Macro 4G',status:'delayed',completion:22,signal:'N/A',issues:3},{id:'MT-RCB-003',name:'Richards Bay',type:'Macro 5G',status:'planned',completion:5,signal:'N/A',issues:0}];
+const ISSUES_DATA=[{id:'ISS-001',desc:'Cable tray installation blocked — permit pending',cat:'Regulatory',project:'5G Rollout',prio:'high',status:'open',owner:'T. Dlamini'},{id:'ISS-002',desc:'HSE non-compliance — improper PPE sector 4',cat:'HSE',project:'N3 Highway',prio:'high',status:'open',owner:'S. Nkosi'},{id:'ISS-003',desc:'Crane operator shortage delaying lift ops',cat:'Resource',project:'MTN Towers',prio:'med',status:'investigating',owner:'J. van Wyk'},{id:'ISS-004',desc:'Concrete delivery rescheduled — 5 day delay',cat:'Supply Chain',project:'Substation',prio:'low',status:'monitoring',owner:'P. Mbatha'}];
+const WORKFORCE_DATA=[{name:'S. Nkosi',role:'Site Foreman',project:'N3 Highway',certs:['SACPCMP','OHSA'],status:'active'},{name:'T. Dlamini',role:'Telecoms Engineer',project:'5G Rollout',certs:['RCDD','Work-at-Heights'],status:'active'},{name:'J. van Wyk',role:'Crane Operator',project:'MTN Towers',certs:['Mobile Crane','Rigger II'],status:'active'},{name:'P. Mbatha',role:'Electrical Engineer',project:'Substation',certs:['PrEng','HV Switching'],status:'active'},{name:'R. Singh',role:'Survey Technician',project:'N3 Highway',certs:['GeoSurv'],status:'leave'},{name:'A. Mokoena',role:'Tower Climber',project:'MTN Towers',certs:['SAQCC Work-at-Heights'],status:'cert-expiring'}];
+const EQUIP_DATA=[{name:'LTM 1200 Crane',type:'Plant',assigned:'N3 Highway',service:'2025-06-15',status:'operational'},{name:'Drill Rig DR-4',type:'Plant',assigned:'N3 Highway',service:'2025-05-20',status:'operational'},{name:'Fibre Splicer FS-88',type:'Telecoms',assigned:'5G Rollout',service:'2025-07-01',status:'operational'},{name:'Tower Climb Harness Set',type:'Safety',assigned:'MTN Towers',service:'2025-05-01',status:'due-service'},{name:'HV Test Set HVT-3',type:'Electrical',assigned:'Substation',service:'2025-06-30',status:'operational'},{name:'Survey Drone DJI M30T',type:'Survey',assigned:'N3 Highway',service:'2025-09-01',status:'grounded'}];
+const GANTT=[{label:'N3 Foundation',start:0,dur:8,color:'var(--accent)',pct:100},{label:'N3 Structural Steel',start:6,dur:12,color:'var(--accent)',pct:75},{label:'N3 Road Surface',start:14,dur:10,color:'var(--accent)',pct:20},{label:'5G Site Acquisition',start:0,dur:6,color:'var(--blue)',pct:100},{label:'5G Civil Works',start:5,dur:9,color:'var(--blue)',pct:65},{label:'5G Equipment Install',start:12,dur:8,color:'var(--blue)',pct:30},{label:'Substation HV',start:2,dur:14,color:'var(--purple)',pct:90},{label:'MTN Steelwork',start:1,dur:10,color:'var(--teal)',pct:45},{label:'MTN Antenna Install',start:9,dur:8,color:'var(--teal)',pct:10}];
+
+const COLS_K=['backlog','planned','inprogress','review','complete'];
+const COL_LABELS_K={backlog:'Backlog',planned:'Planned',inprogress:'In Progress',review:'Review',complete:'Complete'};
+const COL_COLORS_K={backlog:'var(--text3)',planned:'var(--blue)',inprogress:'var(--accent)',review:'var(--purple)',complete:'var(--green)'};
+let tasks=[{id:1,title:'Site survey — km 47 to km 52',col:'complete',priority:'high',project:'N3 Highway',type:'Survey'},{id:2,title:'Install cable trays — sector A',col:'inprogress',priority:'high',project:'5G Rollout',type:'Telecoms'},{id:3,title:'Concrete pour — pier 3',col:'inprogress',priority:'high',project:'N3 Highway',type:'Civil'},{id:4,title:'Tower climbing certification audit',col:'review',priority:'med',project:'MTN Towers',type:'HSE'},{id:5,title:'Equipment mobilisation — crane 2',col:'planned',priority:'med',project:'N3 Highway',type:'Civil'},{id:6,title:'Fibre splicing — Node B12',col:'backlog',priority:'low',project:'5G Rollout',type:'Telecoms'},{id:7,title:'Earthing system installation',col:'inprogress',priority:'high',project:'Substation',type:'Electrical'},{id:8,title:'Permit renewal — work at heights',col:'backlog',priority:'high',project:'MTN Towers',type:'HSE'}];
+let nextId=9; let allReports=[];
+
+const fmt=n=>'R '+Math.round(n).toLocaleString('en-ZA');
+
+async function fetchReports(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/daily_reports?order=created_at.desc`,{headers:HEADERS});
+    if(r.ok){allReports=await r.json();document.getElementById('conn-dot').classList.add('connected');document.getElementById('conn-label').textContent='Connected · Supabase';document.getElementById('conn-label').style.color='var(--green)';}
+    else{throw new Error(await r.text());}
+  }catch(e){console.error(e);document.getElementById('conn-label').textContent='Connection error';document.getElementById('conn-label').style.color='var(--red)';allReports=[];}
+  return allReports;
+}
+
+function buildProjCosts(reports){
+  const pc={};
+  PROJECTS.forEach(p=>{pc[p.name]={totalCost:0,reports:0,costsBreakdown:{}};COST_KEYS.forEach(k=>{pc[p.name].costsBreakdown[k]=0;});});
+  reports.forEach(r=>{
+    if(!pc[r.project])pc[r.project]={totalCost:0,reports:0,costsBreakdown:{}};
+    pc[r.project].totalCost+=r.total_cost||0;
+    pc[r.project].reports+=1;
+    if(r.costs)COST_KEYS.forEach(k=>{if(!pc[r.project].costsBreakdown[k])pc[r.project].costsBreakdown[k]=0;pc[r.project].costsBreakdown[k]+=(r.costs[k]||0);});
+  });
+  return pc;
+}
+
+async function loadAllData(){
+  await fetchReports();
+  const active=document.querySelector('.page.active');
+  if(active){
+    const id=active.id.replace('page-','');
+    const renders={dashboard:renderDashboard,budget:renderBudget,reports:renderReportsPage};
+    if(renders[id])renders[id]();
+  }
+}
+
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  const renders={dashboard:renderDashboard,tasks:renderKanban,sites:renderSites,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,projects:renderProjects,schedule:renderGantt,reports:renderReportsPage};
+  if(renders[id])renders[id]();
+}
+
+function renderDashboard(){
+  const pc=buildProjCosts(allReports);
+  const totalField=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const todayStr=new Date().toISOString().split('T')[0];
+  const todayReports=allReports.filter(r=>r.report_date===todayStr).length;
+  const todayWorkers=allReports.filter(r=>r.report_date===todayStr).reduce((a,r)=>a+(r.workers||0),0);
+  document.getElementById('dash-sub').textContent=`${new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'})} · ${allReports.length} reports total`;
+  document.getElementById('report-badge').textContent=allReports.length;
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">4</div><div class="stat-l">Active Projects</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">67%</div><div class="stat-l">Avg Completion</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:67%;background:var(--blue)"></div></div></div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${todayReports} today · ${todayWorkers} workers</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${fmt(totalField)}</div><div class="stat-l">Field Costs</div><div class="stat-sub">accumulated from reports</div></div>
+  `;
+  const typeC={Construction:'badge-amber',Telecoms:'badge-blue',Electrical:'badge-purple'};
+  const stC={'on-track':'badge-green','at-risk':'badge-amber','delayed':'badge-red'};
+  document.getElementById('dash-projects').innerHTML=PROJECTS.map(p=>`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase}</div></td><td><span class="badge ${typeC[p.type]||'badge-gray'}">${p.type}</span></td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="flex:1"><div class="progress-fill" style="width:${p.prog}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2);min-width:28px">${p.prog}%</span></div></td><td><span class="badge ${stC[p.status]}">${p.status}</span></td></tr>`).join('');
+  document.getElementById('dash-costs').innerHTML=PROJECTS.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="color:var(--accent);font-family:var(--font-d);font-weight:700">${fmt(fc.totalCost)}</td></tr>`;}).join('');
+  const allC={};COST_KEYS.forEach(k=>{allC[k]=Object.values(pc).reduce((a,p)=>a+(p.costsBreakdown[k]||0),0);});
+  const total=Object.values(allC).reduce((a,v)=>a+v,0);
+  if(total>0)document.getElementById('cost-breakdown-bar').innerHTML=`<div class="cost-bar">${COST_KEYS.map(k=>`<div class="cost-seg" style="width:${Math.round(allC[k]/total*100)}%;background:${COST_COLORS[k]};opacity:0.8"></div>`).join('')}</div><div class="cost-legend">${COST_KEYS.filter(k=>allC[k]>0).map(k=>`<div class="cost-legend-item"><div class="cost-dot" style="background:${COST_COLORS[k]}"></div>${COST_LABELS[k]}: ${fmt(allC[k])}</div>`).join('')}</div>`;
+  const latest=allReports.slice(0,3);
+  document.getElementById('dash-reports').innerHTML=latest.length===0?`<p style="color:var(--text3);font-size:13px;padding:8px 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit the first daily report →</a></p>`:latest.map(r=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:500;font-size:13px">${r.project}</span><span style="font-size:11px;color:var(--text3)">${r.report_date}</span><span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span></div><div style="font-size:12px;color:var(--text3);margin-top:2px">${r.reporter||'—'} · ${r.location||'—'} · ${r.workers||0} workers · ${(r.tasks||[]).length} tasks</div></div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent);flex-shrink:0">${fmt(r.total_cost||0)}</div></div>`).join('');
+}
+
+function renderKanban(){
+  const board=document.getElementById('kanban-board');board.innerHTML='';
+  document.getElementById('task-badge').textContent=tasks.filter(t=>t.col!=='complete').length;
+  const typeC={Civil:'badge-amber',Structural:'badge-purple',Electrical:'badge-purple',Telecoms:'badge-blue',HSE:'badge-red',Survey:'badge-teal',Admin:'badge-gray'};
+  COLS_K.forEach(col=>{
+    const ct=tasks.filter(t=>t.col===col);const div=document.createElement('div');div.className='kol';
+    div.innerHTML=`<div class="kol-head"><span class="kol-name" style="color:${COL_COLORS_K[col]}">${COL_LABELS_K[col]}</span><span class="kol-count">${ct.length}</span></div>
+    <div class="kol-body">${ct.map(t=>{const ci=COLS_K.indexOf(t.col);const prev=ci>0?COLS_K[ci-1]:null;const next=ci<COLS_K.length-1?COLS_K[ci+1]:null;return`<div class="kcard"><div class="kcard-title">${t.title}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:5px"><span class="badge ${typeC[t.type]||'badge-gray'}" style="font-size:10px">${t.type||''}</span><span class="badge badge-${t.priority==='high'?'red':t.priority==='med'?'amber':'green'}" style="font-size:10px">${t.priority}</span></div><div style="font-size:10px;color:var(--text3)">${t.project||''}</div><div style="display:flex;gap:4px;margin-top:7px">${prev?`<button class="mini-btn" onclick="moveTask(${t.id},'${prev}')">← back</button>`:''} ${next?`<button class="mini-btn" onclick="moveTask(${t.id},'${next}')">${next==='complete'?'✓ done':'→ next'}</button>`:''}<button class="mini-btn" onclick="removeTask(${t.id})">✕</button></div></div>`;}).join('')}
+    <button class="mini-btn" style="width:100%;margin-top:4px;text-align:center" onclick="addQuickTask('${col}')">+ add</button></div>`;
+    board.appendChild(div);
+  });
+}
+
+function moveTask(id,col){tasks=tasks.map(t=>t.id===id?{...t,col}:t);renderKanban();}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderKanban();}
+function addQuickTask(col){const t=prompt('Task title:');if(t&&t.trim()){tasks.push({id:nextId++,title:t.trim(),col,priority:'med',project:'N3 Highway',type:'Civil'});renderKanban();}}
+function saveTask(){const title=document.getElementById('modal-task-title').value.trim();if(!title)return;tasks.push({id:nextId++,title,col:'backlog',priority:document.getElementById('modal-task-prio').value,project:document.getElementById('modal-task-project').value,type:document.getElementById('modal-task-type').value});document.getElementById('modal-task').classList.remove('open');document.getElementById('modal-task-title').value='';if(document.getElementById('page-tasks').classList.contains('active'))renderKanban();}
+
+function renderSites(){const g=document.getElementById('site-grid');g.innerHTML='';SITES.forEach(s=>{const sc=s.status==='active'?'badge-green':s.status==='delayed'?'badge-red':'badge-gray';g.innerHTML+=`<div class="site-card"><div style="font-family:var(--font-d);font-size:15px;font-weight:700;margin-bottom:4px">${s.name}</div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">${s.id} · ${s.type}</div><div style="display:flex;flex-direction:column;gap:5px"><div style="display:flex;justify-content:space-between;align-items:center;font-size:12px"><span style="color:var(--text2)">Status</span><span class="badge ${sc}">${s.status}</span></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Completion</span><span style="font-weight:500">${s.completion}%</span></div><div class="progress"><div class="progress-fill" style="width:${s.completion}%;background:${s.status==='delayed'?'var(--red)':s.status==='active'?'var(--teal)':'var(--text3)'}"></div></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Signal</span><span style="color:var(--text2)">${s.signal}</span></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Issues</span><span style="color:${s.issues>0?'var(--red)':'var(--green)'}">${s.issues}</span></div></div></div>`;});}
+
+function renderIssues(){const catC={Regulatory:'badge-blue',HSE:'badge-red',Resource:'badge-amber','Supply Chain':'badge-purple',Technical:'badge-teal'};const stC={open:'badge-red',investigating:'badge-amber',monitoring:'badge-blue',resolved:'badge-green'};document.getElementById('issues-table').innerHTML=ISSUES_DATA.map(i=>`<tr><td style="font-family:var(--font-d);font-size:12px;color:var(--text3)">${i.id}</td><td><div style="display:flex;align-items:center;gap:7px"><div class="prio prio-${i.prio}"></div>${i.desc}</div></td><td><span class="badge ${catC[i.cat]||'badge-gray'}">${i.cat}</span></td><td style="color:var(--text2)">${i.project}</td><td><span class="badge badge-${i.prio==='high'?'red':i.prio==='med'?'amber':'green'}">${i.prio}</span></td><td><span class="badge ${stC[i.status]}">${i.status}</span></td><td style="color:var(--text2)">${i.owner}</td></tr>`).join('');}
+
+function renderWorkforce(){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const todayW=allReports.filter(r=>r.report_date===todayStr).reduce((a,r)=>a+(r.workers||0),0);
+  document.getElementById('wf-onsite').textContent=todayW||'—';
+  document.getElementById('wf-sub').textContent=todayW?`across ${allReports.filter(r=>r.report_date===todayStr).length} site reports today`:'no reports today';
+  const stC={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red'};
+  document.getElementById('workforce-table').innerHTML=WORKFORCE_DATA.map(w=>`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role}</td><td style="color:var(--text2)">${w.project}</td><td>${w.certs.map(c=>`<span class="badge badge-blue" style="margin-right:3px">${c}</span>`).join('')}</td><td><span class="badge ${stC[w.status]}">${w.status}</span></td></tr>`).join('');
+}
+
+function renderEquipment(){const stC={operational:'badge-green','due-service':'badge-amber',grounded:'badge-red'};const tC={Plant:'badge-amber',Telecoms:'badge-blue',Safety:'badge-red',Electrical:'badge-purple',Survey:'badge-teal'};document.getElementById('equipment-table').innerHTML=EQUIP_DATA.map(e=>`<tr><td><div style="font-weight:500">${e.name}</div></td><td><span class="badge ${tC[e.type]||'badge-gray'}">${e.type}</span></td><td style="color:var(--text2)">${e.assigned}</td><td style="color:var(--text2);font-size:12px">${e.service}</td><td><span class="badge ${stC[e.status]}">${e.status}</span></td></tr>`).join('');}
+
+function renderBudget(){
+  const pc=buildProjCosts(allReports);
+  const totalBudget=PROJECTS.reduce((a,p)=>a+p.budget,0);
+  const totalContract=PROJECTS.reduce((a,p)=>a+p.contractSpend,0);
+  const totalField=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const totalSpend=totalContract+totalField;
+  const remaining=totalBudget-totalSpend;
+  document.getElementById('budget-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(totalBudget)}</div><div class="stat-l">Total Budget</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(totalContract)}</div><div class="stat-l">Contracted Spend</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(totalField)}</div><div class="stat-l">Field Reported</div><div class="stat-sub">${allReports.length} reports</div></div><div class="stat-card ${remaining<0?'s-red':'s-green'}"><div class="stat-n" style="color:${remaining<0?'var(--red)':'var(--green)'}">${fmt(Math.abs(remaining))}</div><div class="stat-l">${remaining<0?'Over Budget':'Remaining'}</div></div>`;
+  const stC={'on-track':'badge-green','at-risk':'badge-amber','delayed':'badge-red'};
+  document.getElementById('budget-table').innerHTML=PROJECTS.map(p=>{const fc=pc[p.name]||{totalCost:0};const total=p.contractSpend+fc.totalCost;const rem=p.budget-total;const pct=Math.round(total/p.budget*100);return`<tr><td><div style="font-weight:500">${p.name}</div></td><td>${fmt(p.budget)}</td><td>${fmt(p.contractSpend)}</td><td style="color:var(--teal)">${fmt(fc.totalCost)}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>100?'var(--red)':pct>90?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${pct}%</span></div></td><td style="color:${rem<0?'var(--red)':'var(--green)'}">${rem<0?'- ':''} ${fmt(Math.abs(rem))}</td><td><span class="badge ${stC[p.status]}">${p.status}</span></td></tr>`;}).join('');
+  const allC={};COST_KEYS.forEach(k=>{allC[k]=Object.values(pc).reduce((a,p)=>a+(p.costsBreakdown[k]||0),0);});
+  const catTotal=Object.values(allC).reduce((a,v)=>a+v,0);
+  document.getElementById('budget-categories').innerHTML=catTotal===0?`<p style="color:var(--text3);font-size:13px">No field costs yet. <a href="intake.html" style="color:var(--teal)">Submit a daily report →</a></p>`:`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${COST_KEYS.map(k=>`<div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><div style="width:8px;height:8px;border-radius:50%;background:${COST_COLORS[k]}"></div><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">${COST_LABELS[k]}</span></div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${COST_COLORS[k]}">${fmt(allC[k])}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${catTotal>0?Math.round(allC[k]/catTotal*100):0}%</div></div>`).join('')}</div>`;
+}
+
+function renderProjects(){const typeC={Construction:'badge-amber',Telecoms:'badge-blue',Electrical:'badge-purple'};const stC={'on-track':'badge-green','at-risk':'badge-amber','delayed':'badge-red'};document.getElementById('projects-table').innerHTML=PROJECTS.map(p=>`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase}</div></td><td><span class="badge ${typeC[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client}</td><td style="color:var(--text2);font-size:12px">${p.start}</td><td style="color:var(--text2);font-size:12px">${p.end}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-fill" style="width:${p.prog}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${p.prog}%</span></div></td><td><span class="badge ${stC[p.status]}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm}</td></tr>`).join('');}
+
+function renderGantt(){const g=document.getElementById('gantt');g.innerHTML='';const total=26;GANTT.forEach(item=>{const row=document.createElement('div');row.className='gantt-row';row.style.gridTemplateColumns='180px 1fr';row.style.padding='0 12px';row.innerHTML=`<div style="font-size:12px;color:var(--text2);padding-right:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.label}</div><div style="position:relative;padding:12px 0"><div style="position:absolute;left:${(item.start/total)*100}%;width:${(item.dur/total)*100}%;background:${item.color}22;border:1px solid ${item.color};border-radius:3px;height:20px;top:50%;transform:translateY(-50%);overflow:hidden"><div style="height:100%;width:${item.pct}%;background:${item.color};opacity:0.7;border-radius:2px 0 0 2px"></div><span style="position:absolute;left:6px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,0.9)">${item.pct}%</span></div></div>`;g.appendChild(row);});}
+
+function renderReportsPage(){
+  const pc=buildProjCosts(allReports);
+  const totalField=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const totalWorkers=allReports.reduce((a,r)=>a+(r.workers||0),0);
+  const totalTasks=allReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
+  document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(totalField)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${totalTasks}</div><div class="stat-l">Tasks Logged</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${totalWorkers}</div><div class="stat-l">Worker Days</div></div>`;
+  document.getElementById('report-badge').textContent=allReports.length;
+  const container=document.getElementById('reports-list');
+  if(allReports.length===0){container.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">No reports yet. <a href="intake.html" style="color:var(--teal)">Submit your first daily report →</a></p>`;return;}
+  container.innerHTML=allReports.map(r=>`<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:var(--font-d);font-size:14px;font-weight:700;letter-spacing:0.03em">${r.project}</span><span style="font-size:11px;color:var(--text3)">${r.report_date}</span><span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${r.hse==='none'?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${r.hse==='none'?'#4ade80':'#f87171'}">${r.hse==='none'?'HSE clear':r.hse}</span></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">${r.reporter||'—'}${r.role?' · '+r.role:''} · ${r.location||'—'} · ${r.period||''}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">${r.workers||0} workers · ${(r.tasks||[]).length} tasks · ${r.weather||'—'} ${r.temp?r.temp+'°C':''}</div>
+        ${r.progress_note?`<div style="font-size:12px;color:var(--text3);margin-top:4px;font-style:italic">${r.progress_note}</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${r.costs?COST_KEYS.filter(k=>r.costs[k]>0).map(k=>`<span style="font-size:11px;padding:2px 8px;border-radius:3px;background:var(--bg3);color:var(--text2);font-weight:500">${COST_LABELS[k]}: ${fmt(r.costs[k])}</span>`).join(''):''}</div>
+        ${r.blockers?`<div style="margin-top:6px;font-size:12px;color:#f87171">⚠ ${r.blockers}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost||0)}</div><div style="font-size:11px;color:var(--text3)">total cost</div></div>
+    </div>
+  </div>`).join('');
+}
+
+async function askAI(page,preq){
+  const inputEl=document.getElementById('ai-input-'+page);
+  const respEl=document.getElementById('ai-resp-'+page);
+  const q=preq||(inputEl?inputEl.value.trim():'');
+  if(!q)return;if(inputEl)inputEl.value='';
+  respEl.innerHTML='<span class="spinner"></span> Analysing live data...';
+  const pc=buildProjCosts(allReports);
+  const totalField=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
+  const allC={};COST_KEYS.forEach(k=>{allC[k]=Object.values(pc).reduce((a,p)=>a+(p.costsBreakdown[k]||0),0);});
+  const topCat=COST_KEYS.sort((a,b)=>(allC[b]||0)-(allC[a]||0))[0];
+  const hseIssues=allReports.filter(r=>r.hse&&r.hse!=='none').length;
+  const context=`You are an AI assistant for SiteCommand, a construction and telecoms PM platform in South Africa.
+
+LIVE DATA from Supabase:
+- Total field reports submitted: ${allReports.length}
+- Total field-reported costs: R${Math.round(totalField).toLocaleString()}
+- Top cost category: ${topCat} (R${Math.round(allC[topCat]||0).toLocaleString()})
+- HSE incidents reported: ${hseIssues}
+- Cost breakdown: ${COST_KEYS.map(k=>`${COST_LABELS[k]}: R${Math.round(allC[k]||0).toLocaleString()}`).join(', ')}
+
+Projects: N3 Highway (72%, on track, SANRAL, budget R42M, contracted R30.2M + field R${Math.round(pc['N3 Highway Expansion']?.totalCost||0).toLocaleString()}), Vodacom 5G (58%, at risk, budget R18.5M + field R${Math.round(pc['Vodacom 5G Rollout']?.totalCost||0).toLocaleString()}), Substation (89%, on track, budget R14.2M), MTN Towers (41%, delayed, budget R9.5M).
+
+Open issues: Cable tray permit (High), HSE non-compliance sector 4 (High), Crane shortage (Med).
+
+If asked to generate tasks, respond ONLY with JSON: {"tasks":[{"title":"...","col":"backlog","priority":"high|med|low","project":"...","type":"Civil|Telecoms|Electrical|HSE|Survey|Admin"}]}
+Otherwise respond in 2-4 concise sentences. Be specific, practical, South Africa construction/telecoms context. No markdown.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:context,messages:[{role:'user',content:q}]})});
+    const data=await res.json();
+    const text=(data.content||[]).map(b=>b.text||'').join('');
+    const jm=text.match(/\{[\s\S]*"tasks"[\s\S]*\}/);
+    if(jm){try{const p=JSON.parse(jm[0]);if(p.tasks){p.tasks.forEach(t=>tasks.push({id:nextId++,title:t.title,col:t.col||'backlog',priority:t.priority||'med',project:t.project||'',type:t.type||'Civil'}));if(document.getElementById('page-tasks').classList.contains('active'))renderKanban();respEl.innerHTML=`Added ${p.tasks.length} tasks to the board.`;return;}}catch(e){}}
+    respEl.innerHTML=text||'No response.';
+  }catch(e){respEl.innerHTML='Could not reach Claude API.';}
+}
+
+document.getElementById('modal-task').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+
+// Auto-refresh every 30 seconds
+setInterval(loadAllData,30000);
+
+// Init
+loadAllData().then(()=>renderDashboard());
+</script>
+</body>
+</html>
