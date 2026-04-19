@@ -709,8 +709,8 @@ function renderProfitability(){
     const revReceived=revP.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
     const actualProfit=revReceived-totalCostP;
     const actualMargin=revReceived>0?Math.round(actualProfit/revReceived*100):0;
-    const health=margP>=20&&totalCostP<p.budget*0.9?'On Budget':'bg':margP>=10&&totalCostP<p.budget?'Watch':'ba':'At Risk':'br';
-    const hParts=health.split(':');
+    const healthLabel=margP>=20&&totalCostP<p.budget*0.9?'On Budget':margP>=10&&totalCostP<p.budget?'Watch':'At Risk';
+    const healthBadge=margP>=20&&totalCostP<p.budget*0.9?'bg':margP>=10&&totalCostP<p.budget?'ba':'br';
     return`<tr>
       <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
       <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(cv)}</td>
@@ -722,7 +722,7 @@ function renderProfitability(){
       <td style="color:var(--green);font-weight:500">${fmt(revReceived)}</td>
       <td style="color:${grossP>=0?'var(--green)':'var(--red)'};font-family:var(--font-d);font-weight:700">${fmt(grossP)}</td>
       <td style="font-family:var(--font-d);font-weight:800;color:${margP>=20?'var(--green)':margP>=10?'var(--accent)':'var(--red)'}">${margP}%</td>
-      <td><span class="badge ${hParts[1]||'bgr'}">${hParts[0]}</span></td>
+      <td><span class="badge ${healthBadge}">${healthLabel}</span></td>
     </tr>`;
   }).join('');
 
