@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;height:52px;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:10;flex-wrap:wrap}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 52px)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1rem 0}
+.nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.main{padding:1.5rem;overflow:auto}
+.page{display:none}
+.page.active{display:block}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1rem}
+.card-header{padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:13px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.stats-grid{display:grid;gap:10px;margin-bottom:1.25rem}
+.stats-4{grid-template-columns:repeat(4,1fr)}
+.stats-3{grid-template-columns:repeat(3,1fr)}
+.stats-5{grid-template-columns:repeat(5,1fr)}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1.1rem;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.s-amber::before{background:var(--accent)}
+.s-blue::before{background:var(--blue)}
+.s-green::before{background:var(--green)}
+.s-red::before{background:var(--red)}
+.s-teal::before{background:var(--teal)}
+.s-purple::before{background:var(--purple)}
+.stat-n{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.progress{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.5s}
+.progress-lg{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;flex:1}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 10px;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.bg{background:rgba(34,197,94,0.12);color:#4ade80}
+.ba{background:rgba(245,166,35,0.12);color:var(--accent)}
+.br{background:rgba(239,68,68,0.12);color:#f87171}
+.bb{background:rgba(59,130,246,0.12);color:#60a5fa}
+.bt{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.bp{background:rgba(168,85,247,0.12);color:#c084fc}
+.bgr{background:rgba(139,144,160,0.12);color:var(--text2)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.budget-bar-wrap{height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;position:relative}
+.budget-bar-fill{height:100%;border-radius:5px}
+.budget-bar-fill.flash{animation:pulse-r 1.5s infinite}
+@keyframes pulse-r{0%,100%{opacity:1}50%{opacity:0.6}}
+/* Profitability gauge */
+.profit-gauge{display:flex;align-items:center;gap:10px}
+.profit-bar-wrap{flex:1;height:12px;background:var(--bg4);border-radius:6px;overflow:hidden}
+.profit-bar{height:100%;border-radius:6px;transition:width 0.5s}
+/* Risk matrix */
+.risk-matrix{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.risk-cell{padding:8px;border-radius:var(--r);text-align:center;font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.rc-low{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.2)}
+.rc-med{background:rgba(245,166,35,0.12);color:var(--accent);border:1px solid rgba(245,166,35,0.2)}
+.rc-high{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+.rc-crit{background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.2)}
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:10px 14px}
+.filter-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)}
+.form-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;color:var(--text);font-family:var(--font-b);font-size:12px;outline:none}
+.form-select:focus{border-color:var(--accent)}
+/* Spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{color:var(--text3);font-size:13px;padding:2rem;text-align:center}
+/* Score badge */
+.score-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-family:var(--font-d);font-size:14px;font-weight:800}
+.score-1,.score-2{background:rgba(34,197,94,0.15);color:#4ade80}
+.score-3,.score-4{background:rgba(245,166,35,0.15);color:var(--accent)}
+.score-6,.score-9{background:rgba(239,68,68,0.15);color:#f87171}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+@media(max-width:768px){.shell{grid-template-columns:1fr}.sidebar{display:none}.stats-4,.stats-5{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+  <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Reports</span>
+  <div style="display:flex;align-items:center;gap:6px"><div class="conn-dot" id="conn-dot"></div><span style="font-size:11px;color:var(--text3)" id="conn-label">Loading...</span></div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-ghost" onclick="loadAll()" title="Refresh data">&#8635; Refresh</button>
+    <button class="btn btn-ghost" onclick="printReport()" title="Print current report">&#128438; Print</button>
+    <a href="index.html" class="btn btn-ghost">&#8592; Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Reports</div>
+      <div class="nav-item active" onclick="showRpt('status',this)">&#128202; Project Status</div>
+      <div class="nav-item" onclick="showRpt('progress',this)">&#9989; Progress Report</div>
+      <div class="nav-item" onclick="showRpt('risk',this)">&#9888; Risk Report</div>
+      <div class="nav-item" onclick="showRpt('resource',this)">&#128119; Resource Utilisation</div>
+      <div class="nav-item" onclick="showRpt('profitability',this)">&#128176; Profitability Report</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="loading-banner" style="color:var(--text3);font-size:13px;text-align:center;padding:3rem"><span class="spinner"></span> Loading data from Supabase...</div>
+
+    <!-- ════ 1. PROJECT STATUS ════════════════════════════════════════════════ -->
+    <div class="page" id="rpt-status">
+      <div class="page-header">
+        <div><div class="page-title">Project Status Report</div><div class="page-sub">Overview of all active projects — health, budget and schedule</div></div>
+        <div style="display:flex;gap:8px"><select class="form-select" id="ps-filter" onchange="renderStatus()"><option value="">All Projects</option></select><button class="btn btn-ghost" onclick="dlStatusCSV()">&#128229; CSV</button></div>
+      </div>
+      <div class="stats-grid stats-4" id="ps-stats"></div>
+      <div class="card"><div class="card-header"><div class="card-title">Project Health Summary</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Project</th><th>Client</th><th>PM</th><th>Type</th><th>Start</th><th>End</th><th>Task Progress</th><th>Budget Used</th><th>Risk</th><th>Status</th></tr></thead><tbody id="ps-table"></tbody></table>
+        </div></div>
+      </div>
+      <div id="ps-detail"></div>
+    </div>
+
+    <!-- ════ 2. PROGRESS REPORT ══════════════════════════════════════════════ -->
+    <div class="page" id="rpt-progress">
+      <div class="page-header">
+        <div><div class="page-title">Progress Report</div><div class="page-sub">Task-level completion tracking with quantity actuals vs targets</div></div>
+        <div style="display:flex;gap:8px"><select class="form-select" id="prg-filter" onchange="renderProgress()"><option value="">All Projects</option></select><button class="btn btn-ghost" onclick="dlProgressCSV()">&#128229; CSV</button></div>
+      </div>
+      <div class="stats-grid stats-4" id="prg-stats"></div>
+      <div class="card"><div class="card-header"><div class="card-title">Task Progress Detail</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Task</th><th>Project</th><th>Type</th><th>Total Qty</th><th>Completed</th><th>Remaining</th><th>Unit</th><th>Progress</th><th>Assigned</th><th>Status</th></tr></thead><tbody id="prg-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Recent Field Activity (Last 14 Days)</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Project</th><th>Reporter</th><th>Workers</th><th>Task Updates</th><th>Costs</th><th>HSE</th></tr></thead><tbody id="prg-activity"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ════ 3. RISK REPORT ══════════════════════════════════════════════════ -->
+    <div class="page" id="rpt-risk">
+      <div class="page-header">
+        <div><div class="page-title">Risk Report</div><div class="page-sub">Project risk register with likelihood, impact and mitigation status</div></div>
+        <div style="display:flex;gap:8px"><select class="form-select" id="risk-filter" onchange="renderRisk()"><option value="">All Projects</option></select><button class="btn btn-ghost" onclick="dlRiskCSV()">&#128229; CSV</button></div>
+      </div>
+      <div class="stats-grid stats-4" id="risk-stats"></div>
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="card"><div class="card-header"><div class="card-title">Risk by Category</div></div><div class="card-body" id="risk-by-cat"></div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Risk Score Matrix</div></div><div class="card-body" id="risk-matrix"></div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Risk Register</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Risk</th><th>Project</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Owner</th><th>Status</th><th>Mitigation</th></tr></thead><tbody id="risk-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">HSE Incidents from Field Reports</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Project</th><th>Reporter</th><th>Incident Type</th><th>Details</th><th>Location</th></tr></thead><tbody id="risk-hse"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ════ 4. RESOURCE UTILISATION ════════════════════════════════════════ -->
+    <div class="page" id="rpt-resource">
+      <div class="page-header">
+        <div><div class="page-title">Resource Utilisation Report</div><div class="page-sub">Workforce deployment, equipment status and site attendance</div></div>
+        <div style="display:flex;gap:8px"><select class="form-select" id="res-filter" onchange="renderResource()"><option value="">All Projects</option></select><button class="btn btn-ghost" onclick="dlResourceCSV()">&#128229; CSV</button></div>
+      </div>
+      <div class="stats-grid stats-4" id="res-stats"></div>
+      <div class="grid-2" style="margin-bottom:1rem">
+        <div class="card"><div class="card-header"><div class="card-title">Workforce by Project</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Project</th><th>Workers Assigned</th><th>Worker Days (Reported)</th><th>Avg Per Day</th></tr></thead><tbody id="res-by-proj"></tbody></table>
+          </div></div>
+        </div>
+        <div class="card"><div class="card-header"><div class="card-title">Equipment Status</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Item</th><th>Type</th><th>Assigned To</th><th>Hire Rate/day</th><th>Status</th></tr></thead><tbody id="res-equip"></tbody></table>
+          </div></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Worker Roster</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Role</th><th>Type</th><th>Project</th><th>Certs</th><th>Daily Rate</th><th>Status</th></tr></thead><tbody id="res-workers"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card"><div class="card-header"><div class="card-title">Site Attendance from Field Reports (Last 30 Days)</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Project</th><th>Reporter</th><th>Workers on Site</th><th>Civil</th><th>Telecoms</th><th>Electrical</th><th>Plant Op.</th><th>Supervisors</th><th>Subcon.</th></tr></thead><tbody id="res-attendance"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ════ 5. PROFITABILITY ════════════════════════════════════════════════ -->
+    <div class="page" id="rpt-profitability">
+      <div class="page-header">
+        <div><div class="page-title">Profitability Report</div><div class="page-sub">Revenue vs cost analysis — track margin and financial health per project</div></div>
+        <div style="display:flex;gap:8px"><select class="form-select" id="prf-filter" onchange="renderProfitability()"><option value="">All Projects</option></select><button class="btn btn-ghost" onclick="dlProfitCSV()">&#128229; CSV</button></div>
+      </div>
+      <div class="stats-grid stats-5" id="prf-stats"></div>
+      <!-- Portfolio margin bar -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header"><div class="card-title">Portfolio Profitability Overview</div></div>
+        <div class="card-body" id="prf-portfolio"></div>
+      </div>
+      <!-- Per-project breakdown -->
+      <div class="card" style="margin-bottom:1rem">
+        <div class="card-header"><div class="card-title">Project-by-Project Profitability</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Project</th><th>Contract Value</th><th>Budget (Costs)</th><th>Contracted Spend</th><th>Field Costs</th><th>Total Costs</th><th>Revenue Billed</th><th>Revenue Received</th><th>Gross Profit</th><th>Margin %</th><th>Health</th></tr></thead><tbody id="prf-table"></tbody></table>
+        </div></div>
+      </div>
+      <!-- Revenue entries -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Revenue Register</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead><tbody id="prf-revenue"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allEquipment=[],allRisks=[],allRevenue=[],allCostCats=[];
+const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
+const fmtPct=n=>Math.round(n||0)+'%';
+
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+async function loadAll(){
+  try{
+    document.getElementById('loading-banner').style.display='block';
+    [allProjects,allTasks,allReports,allWorkers,allEquipment,allRisks,allRevenue,allCostCats]=await Promise.all([
+      sbGet('projects','order=created_at.asc&active=eq.true'),
+      sbGet('project_tasks','order=created_at.asc&active=eq.true'),
+      sbGet('daily_reports','order=report_date.desc'),
+      sbGet('workers','order=name.asc&active=eq.true'),
+      sbGet('equipment','order=name.asc&active=eq.true'),
+      sbGet('project_risks','order=risk_score.desc&active=eq.true'),
+      sbGet('revenue_entries','order=entry_date.asc'),
+      sbGet('cost_categories','order=sort_order.asc&active=eq.true')
+    ]);
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
+    document.getElementById('conn-label').style.color='var(--green)';
+    // Populate all filter dropdowns
+    const projOpts='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+    ['ps-filter','prg-filter','risk-filter','res-filter','prf-filter'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
+    document.getElementById('loading-banner').style.display='none';
+    // Render active report
+    const active=document.querySelector('.page.active');
+    if(active)renderPage(active.id.replace('rpt-',''));
+  }catch(e){
+    document.getElementById('conn-label').textContent='Error loading data';
+    document.getElementById('conn-label').style.color='var(--red)';
+    document.getElementById('loading-banner').innerHTML='<span style="color:var(--red)">&#9888; Error loading data from Supabase. Check your connection.</span>';
+    console.error(e);
+  }
+}
+
+function showRpt(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('rpt-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  renderPage(name);
+}
+function renderPage(name){
+  ({status:renderStatus,progress:renderProgress,risk:renderRisk,resource:renderResource,profitability:renderProfitability}[name]||Function())();
+}
+
+function getFilter(id){return(document.getElementById(id)||{}).value||'';}
+function filtP(id){const f=getFilter(id);return f?allProjects.filter(p=>p.name===f):allProjects;}
+function filtT(id){const f=getFilter(id);return f?allTasks.filter(t=>t.project_name===f):allTasks;}
+function filtR(id){const f=getFilter(id);return f?allReports.filter(r=>r.project===f):allReports;}
+function filtRisks(id){const f=getFilter(id);return f?allRisks.filter(r=>r.project_name===f):allRisks;}
+function filtRev(id){const f=getFilter(id);return f?allRevenue.filter(r=>r.project_name===f):allRevenue;}
+function filtW(id){const f=getFilter(id);return f?allWorkers.filter(w=>w.project_name===f):allWorkers;}
+function filtE(id){const f=getFilter(id);return f?allEquipment.filter(e=>e.assigned_project===f):allEquipment;}
+
+// ── Field cost helpers ─────────────────────────────────────────────────────────
+function fieldCosts(){
+  const pc={};allProjects.forEach(p=>pc[p.name]=0);
+  allReports.forEach(r=>{if(!pc[r.project]&&r.project)pc[r.project]=0;pc[r.project]=(pc[r.project]||0)+(r.total_cost||0);});
+  return pc;
+}
+
+// ── Budget color ──────────────────────────────────────────────────────────────
+function bc(pct){return pct>100?'var(--red)':pct>=90?'var(--red)':pct>=75?'var(--accent)':'var(--green)';}
+function bl(pct){return pct>100?'OVER':pct>=90?'NEAR':pct>=75?'WARN':'OK';}
+function blClass(pct){return pct>100?'br':pct>=90?'br':pct>=75?'ba':'bg';}
+function riskBadge(r){const c={'low':'bg','medium':'ba','high':'br','critical':'bp'};return`<span class="badge ${c[r]||'bgr'}">${r||'—'}</span>`;}
+function statusBadge(s){const c={'on-track':'bg','at-risk':'ba','delayed':'br','completed':'bt','on-hold':'bgr'};return`<span class="badge ${c[s]||'bgr'}">${s||'—'}</span>`;}
+function projAvgProgress(name){const t=allTasks.filter(x=>x.project_name===name);return t.length?Math.round(t.reduce((a,x)=>a+(parseFloat(x.progress)||0),0)/t.length):0;}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 1. PROJECT STATUS
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderStatus(){
+  const projs=filtP('ps-filter');const fc=fieldCosts();
+  const onTrack=projs.filter(p=>p.status==='on-track').length;
+  const atRisk=projs.filter(p=>p.status==='at-risk'||p.status==='delayed').length;
+  const avgProg=projs.length?Math.round(projs.map(p=>projAvgProgress(p.name)).reduce((a,v)=>a+v,0)/projs.length):0;
+  const totalBudget=projs.reduce((a,p)=>a+(p.budget||0),0);
+  document.getElementById('ps-stats').innerHTML=`
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${projs.length}</div><div class="stat-l">Total Projects</div></div>
+    <div class="stat s-green"><div class="stat-n" style="color:var(--green)">${onTrack}</div><div class="stat-l">On Track</div></div>
+    <div class="stat s-red"><div class="stat-n" style="color:var(--red)">${atRisk}</div><div class="stat-l">At Risk / Delayed</div></div>
+    <div class="stat s-blue"><div class="stat-n" style="color:var(--blue)">${avgProg}%</div><div class="stat-l">Avg Task Progress</div></div>`;
+  document.getElementById('ps-table').innerHTML=projs.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects found.</td></tr>`:projs.map(p=>{
+    const pTasks=allTasks.filter(t=>t.project_name===p.name);
+    const avg=pTasks.length?Math.round(pTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pTasks.length):0;
+    const totalSpend=(p.contract_spend||0)+(fc[p.name]||0);
+    const pct=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
+      <td style="color:var(--text2)">${p.client||'—'}</td>
+      <td style="color:var(--text2);font-size:11px">${p.pm||'—'}</td>
+      <td style="font-size:11px">${p.type}</td>
+      <td style="color:var(--text2);font-size:11px">${p.start_date||'—'}</td>
+      <td style="color:var(--text2);font-size:11px">${p.end_date||'—'}</td>
+      <td style="min-width:120px"><div style="display:flex;align-items:center;gap:6px"><div class="progress-lg"><div class="progress-fill" style="width:${avg}%;background:${avg>=80?'var(--green)':avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-family:var(--font-d);font-size:13px;font-weight:700;min-width:36px;text-align:right">${avg}%</span></div></td>
+      <td style="min-width:120px"><div style="display:flex;align-items:center;gap:6px"><div class="budget-bar-wrap" style="flex:1"><div class="budget-bar-fill ${pct>100?'flash':''}" style="width:${Math.min(pct,100)}%;background:${bc(pct)}"></div></div><span class="badge ${blClass(pct)}">${pct}% ${bl(pct)}</span></div></td>
+      <td>${riskBadge(p.risk_level)}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>`;
+  }).join('');
+  // Detail cards per project
+  const detailHtml=projs.map(p=>{
+    const pTasks=allTasks.filter(t=>t.project_name===p.name);
+    const pReports=allReports.filter(r=>r.project===p.name);
+    const totalSpend=(p.contract_spend||0)+(fc[p.name]||0);
+    const pct=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+    const rev=allRevenue.filter(r=>r.project_name===p.name);
+    const revTotal=rev.reduce((a,r)=>a+(r.amount||0),0);
+    const revReceived=rev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+    const complete=pTasks.filter(t=>t.status==='complete').length;
+    return`<div class="card">
+      <div class="card-header"><div class="card-title">${p.name}</div><div style="display:flex;gap:6px">${statusBadge(p.status)}${riskBadge(p.risk_level)}</div></div>
+      <div class="card-body">
+        <div class="stats-grid stats-4" style="margin-bottom:1rem">
+          <div class="stat s-amber"><div class="stat-n" style="color:var(--accent);font-size:20px">${pTasks.length}</div><div class="stat-l">Tasks</div><div class="stat-sub">${complete} complete</div></div>
+          <div class="stat s-blue"><div class="stat-n" style="color:var(--blue);font-size:20px">${pReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${pReports.reduce((a,r)=>a+(r.workers||0),0)} worker days</div></div>
+          <div class="stat s-teal"><div class="stat-n" style="color:var(--teal);font-size:20px">${fmt(fc[p.name]||0)}</div><div class="stat-l">Field Costs</div></div>
+          <div class="stat ${pct>100?'s-red':pct>=75?'s-amber':'s-green'}"><div class="stat-n" style="color:${bc(pct)};font-size:20px">${pct}%</div><div class="stat-l">Budget Used</div><div class="stat-sub">${fmt(p.budget)} total</div></div>
+        </div>
+        ${pTasks.length?`<div style="margin-bottom:0.75rem"><div style="font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Task Progress</div>${pTasks.slice(0,4).map(t=>{const pct2=parseFloat(t.progress||0);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div><div class="progress" style="width:100px"><div class="progress-fill" style="width:${pct2}%;background:${pct2>=90?'var(--green)':pct2>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;min-width:36px;text-align:right">${pct2}%</span></div>`;}).join('')}</div>`:''}
+        <div style="font-size:11px;color:var(--text2)">Revenue billed: <strong style="color:var(--accent)">${fmt(revTotal)}</strong> &nbsp;|&nbsp; Received: <strong style="color:var(--green)">${fmt(revReceived)}</strong> &nbsp;|&nbsp; Outstanding: <strong style="color:var(--red)">${fmt(revTotal-revReceived)}</strong></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('ps-detail').innerHTML=detailHtml;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 2. PROGRESS REPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderProgress(){
+  const tasks=filtT('prg-filter');const rpts=filtR('prg-filter');
+  const complete=tasks.filter(t=>t.status==='complete').length;
+  const blocked=tasks.filter(t=>t.status==='blocked').length;
+  const avgProg=tasks.length?parseFloat((tasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/tasks.length).toFixed(1)):0;
+  document.getElementById('prg-stats').innerHTML=`
+    <div class="stat s-blue"><div class="stat-n" style="color:var(--blue)">${tasks.length}</div><div class="stat-l">Total Tasks</div></div>
+    <div class="stat s-green"><div class="stat-n" style="color:var(--green)">${complete}</div><div class="stat-l">Complete</div></div>
+    <div class="stat s-red"><div class="stat-n" style="color:var(--red)">${blocked}</div><div class="stat-l">Blocked</div></div>
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${avgProg}%</div><div class="stat-l">Avg Progress</div></div>`;
+  const statusB={'not-started':'bgr','in-progress':'bb',complete:'bg',blocked:'br'};
+  const typeB={Civil:'ba',Structural:'bp',Electrical:'bp',Telecoms:'bb',HSE:'br',Survey:'bt',Admin:'bgr'};
+  document.getElementById('prg-table').innerHTML=tasks.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No tasks.</td></tr>`:tasks.map(t=>{
+    const pct=parseFloat(t.progress||0);const rem=Math.max(0,(t.qty_total||0)-(t.qty_done||0));
+    return`<tr>
+      <td><div style="font-weight:500">${t.title}</div></td>
+      <td style="color:var(--text2);font-size:11px">${t.project_name}</td>
+      <td><span class="badge ${typeB[t.type]||'bgr'}">${t.type}</span></td>
+      <td style="font-family:var(--font-d);font-weight:700">${fmtN(t.qty_total)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--teal)">${fmtN(t.qty_done)}</td>
+      <td style="color:${rem===0?'var(--green)':'var(--text2)'}">${fmtN(rem)}</td>
+      <td style="color:var(--text2)">${t.unit}</td>
+      <td style="min-width:140px"><div style="display:flex;align-items:center;gap:6px"><div class="progress-lg"><div class="progress-fill" style="width:${Math.min(pct,100)}%;background:${pct>=90?'var(--green)':pct>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-family:var(--font-d);font-size:13px;font-weight:700;min-width:38px;text-align:right;color:${pct>=90?'var(--green)':pct>=50?'var(--blue)':'var(--accent)'}">${pct}%</span></div></td>
+      <td style="color:var(--text2);font-size:11px">${t.assigned_to||'—'}</td>
+      <td><span class="badge ${statusB[t.status]||'bgr'}">${t.status}</span></td>
+    </tr>`;
+  }).join('');
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-14);
+  const recent=rpts.filter(r=>new Date(r.report_date)>=cutoff);
+  const hseB={'none':'bg','near-miss':'ba','first-aid':'ba','medical':'br','lti':'br'};
+  document.getElementById('prg-activity').innerHTML=recent.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No activity in the last 14 days.</td></tr>`:recent.map(r=>`<tr>
+    <td style="font-family:var(--font-d);font-weight:600">${r.report_date}</td>
+    <td><div style="font-weight:500">${r.project}</div></td>
+    <td style="color:var(--text2);font-size:11px">${r.reporter||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700">${r.workers||0}</td>
+    <td style="font-size:11px;color:var(--text2)">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>t.title+': '+fmtN(t.qty_done)+' '+t.unit).join(', ')||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.total_cost)}</td>
+    <td><span class="badge ${hseB[r.hse]||'bgr'}">${r.hse==='none'?'Clear':r.hse||'—'}</span></td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 3. RISK REPORT
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderRisk(){
+  const risks=filtRisks('risk-filter');
+  const rpts=filtR('risk-filter');
+  const open=risks.filter(r=>r.status==='open').length;
+  const high=risks.filter(r=>r.likelihood==='high'&&r.impact==='high').length;
+  const hseInc=rpts.filter(r=>r.hse&&r.hse!=='none');
+  document.getElementById('risk-stats').innerHTML=`
+    <div class="stat s-red"><div class="stat-n" style="color:var(--red)">${open}</div><div class="stat-l">Open Risks</div></div>
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${risks.length}</div><div class="stat-l">Total Risks</div></div>
+    <div class="stat s-purple"><div class="stat-n" style="color:var(--purple)">${high}</div><div class="stat-l">High/High Risks</div></div>
+    <div class="stat s-teal"><div class="stat-n" style="color:var(--teal)">${hseInc.length}</div><div class="stat-l">HSE Incidents</div></div>`;
+  // By category
+  const cats={};risks.forEach(r=>{cats[r.category]=(cats[r.category]||0)+1;});
+  document.getElementById('risk-by-cat').innerHTML=Object.entries(cats).length===0?'<p style="color:var(--text3);font-size:13px">No risks logged.</p>':Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,cnt])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px">${cat}</span><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-fill" style="width:${Math.round(cnt/risks.length*100)}%;background:var(--accent)"></div></div><span style="font-family:var(--font-d);font-size:13px;font-weight:700;min-width:24px;text-align:right">${cnt}</span></div></div>`).join('');
+  // Score matrix
+  const scoreGroups={1:[],2:[],3:[],4:[],6:[],9:[]};
+  risks.forEach(r=>{const score=r.risk_score||1;if(scoreGroups[score])scoreGroups[score].push(r.title);});
+  document.getElementById('risk-matrix').innerHTML=`
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Likelihood × Impact score (1=Low, 9=Critical)</div>
+    <div class="risk-matrix">
+      ${[1,2,3,4,6,9].map(s=>`<div class="risk-cell ${s<=2?'rc-low':s<=4?'rc-med':s<=6?'rc-high':'rc-crit'}"><div style="font-size:18px;font-weight:800">${scoreGroups[s].length}</div><div>Score ${s}</div></div>`).join('')}
+    </div>`;
+  // Risk table
+  const scoreClass={1:'score-1',2:'score-2',3:'score-3',4:'score-4',6:'score-6',9:'score-9'};
+  const likeB={'low':'bg','medium':'ba','high':'br'};
+  const impB={'low':'bg','medium':'ba','high':'br'};
+  const riskStatB={'open':'br','mitigated':'ba','closed':'bg'};
+  document.getElementById('risk-table').innerHTML=risks.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No risks in register.</td></tr>`:risks.map(r=>`<tr>
+    <td><div style="font-weight:500">${r.title}</div></td>
+    <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
+    <td><span class="badge bt">${r.category}</span></td>
+    <td><span class="badge ${likeB[r.likelihood]||'bgr'}">${r.likelihood}</span></td>
+    <td><span class="badge ${impB[r.impact]||'bgr'}">${r.impact}</span></td>
+    <td><div class="score-badge ${scoreClass[r.risk_score]||'score-1'}">${r.risk_score}</div></td>
+    <td style="color:var(--text2);font-size:11px">${r.owner||'—'}</td>
+    <td><span class="badge ${riskStatB[r.status]||'bgr'}">${r.status}</span></td>
+    <td style="font-size:11px;color:var(--text3);max-width:200px">${r.mitigation||'—'}</td>
+  </tr>`).join('');
+  // HSE incidents
+  document.getElementById('risk-hse').innerHTML=hseInc.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:1.5rem">No HSE incidents recorded.</td></tr>`:hseInc.sort((a,b)=>b.report_date.localeCompare(a.report_date)).map(r=>`<tr>
+    <td style="font-family:var(--font-d);font-weight:600">${r.report_date}</td>
+    <td><div style="font-weight:500">${r.project}</div></td>
+    <td style="color:var(--text2)">${r.reporter||'—'}</td>
+    <td><span class="badge br">${r.hse}</span></td>
+    <td style="font-size:11px;color:var(--text2)">${r.hse_detail||'—'}</td>
+    <td style="color:var(--text2);font-size:11px">${r.location||'—'}</td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 4. RESOURCE UTILISATION
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderResource(){
+  const workers=filtW('res-filter');const equip=filtE('res-filter');
+  const rpts=filtR('res-filter');
+  const active=workers.filter(w=>w.status==='active').length;
+  const expiring=workers.filter(w=>w.status==='cert-expiring').length;
+  const totalWorkerDays=rpts.reduce((a,r)=>a+(r.workers||0),0);
+  const eqOp=equip.filter(e=>e.status==='operational').length;
+  const eqIssue=equip.filter(e=>e.status!=='operational').length;
+  document.getElementById('res-stats').innerHTML=`
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${workers.length}</div><div class="stat-l">Total Workers</div><div class="stat-sub">${active} active, ${expiring} cert expiring</div></div>
+    <div class="stat s-blue"><div class="stat-n" style="color:var(--blue)">${equip.length}</div><div class="stat-l">Equipment Items</div><div class="stat-sub">${eqOp} operational, ${eqIssue} issues</div></div>
+    <div class="stat s-teal"><div class="stat-n" style="color:var(--teal)">${totalWorkerDays}</div><div class="stat-l">Total Worker Days</div><div class="stat-sub">from field reports</div></div>
+    <div class="stat s-green"><div class="stat-n" style="color:var(--green)">${rpts.length}</div><div class="stat-l">Field Reports</div></div>`;
+  // Workers by project
+  const byProj={};allProjects.forEach(p=>{
+    const pw=workers.filter(w=>w.project_name===p.name);
+    const wd=rpts.filter(r=>r.project===p.name).reduce((a,r)=>a+(r.workers||0),0);
+    const days=rpts.filter(r=>r.project===p.name).length;
+    byProj[p.name]={workers:pw.length,workerDays:wd,reportDays:days};
+  });
+  document.getElementById('res-by-proj').innerHTML=allProjects.length===0?`<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:1.5rem">No projects.</td></tr>`:allProjects.filter(p=>!getFilter('res-filter')||p.name===getFilter('res-filter')).map(p=>{
+    const d=byProj[p.name]||{workers:0,workerDays:0,reportDays:0};
+    const avg=d.reportDays?Math.round(d.workerDays/d.reportDays):0;
+    return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="font-family:var(--font-d);font-weight:700">${d.workers}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--teal)">${d.workerDays}</td><td>${avg}/day</td></tr>`;
+  }).join('');
+  // Equipment
+  const eqStatB={operational:'bg','due-service':'ba',grounded:'br','in-repair':'bp'};
+  const eqTypeB={Plant:'ba',Telecoms:'bb',Safety:'br',Electrical:'bp',Survey:'bt',Vehicle:'bb',Tools:'bgr'};
+  document.getElementById('res-equip').innerHTML=equip.length===0?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">No equipment.</td></tr>`:equip.map(e=>`<tr>
+    <td><div style="font-weight:500">${e.name}</div><div style="font-size:10px;color:var(--text3)">${e.make_model||''}</div></td>
+    <td><span class="badge ${eqTypeB[e.type]||'bgr'}">${e.type}</span></td>
+    <td style="color:var(--text2);font-size:11px">${e.assigned_project||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${e.hire_rate>0?fmt(e.hire_rate)+'/day':'—'}</td>
+    <td><span class="badge ${eqStatB[e.status]||'bgr'}">${e.status}</span></td>
+  </tr>`).join('');
+  // Worker roster
+  const wfStatB={active:'bg',leave:'ba','cert-expiring':'br',inactive:'bgr'};
+  const wfTypeB={Civil:'ba',Telecoms:'bb',Electrical:'bp',Supervisor:'bt',Subcontractor:'bgr','Plant Operator':'ba'};
+  document.getElementById('res-workers').innerHTML=workers.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No workers.</td></tr>`:workers.map(w=>`<tr>
+    <td><div style="font-weight:500">${w.name}</div></td>
+    <td style="color:var(--text2);font-size:11px">${w.role||'—'}</td>
+    <td><span class="badge ${wfTypeB[w.type]||'bgr'}">${w.type}</span></td>
+    <td style="color:var(--text2);font-size:11px">${w.project_name||'—'}</td>
+    <td style="font-size:10px;color:var(--text3)">${w.certifications||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${w.daily_rate>0?fmt(w.daily_rate):'-'}</td>
+    <td><span class="badge ${wfStatB[w.status]||'bgr'}">${w.status}</span></td>
+  </tr>`).join('');
+  // Attendance (last 30 days)
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-30);
+  const recent=rpts.filter(r=>new Date(r.report_date)>=cutoff).sort((a,b)=>b.report_date.localeCompare(a.report_date));
+  document.getElementById('res-attendance').innerHTML=recent.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:1.5rem">No attendance data in last 30 days.</td></tr>`:recent.map(r=>{
+    const wb=r.worker_breakdown||{};
+    return`<tr>
+      <td style="font-family:var(--font-d);font-weight:600">${r.report_date}</td>
+      <td><div style="font-weight:500">${r.project}</div></td>
+      <td style="color:var(--text2);font-size:11px">${r.reporter||'—'}</td>
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${r.workers||0}</td>
+      <td>${wb.civil||0}</td><td>${wb.telecoms||0}</td><td>${wb.elec||0}</td>
+      <td>${wb.plant||0}</td><td>${wb.sup||0}</td><td>${wb.sub||0}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 5. PROFITABILITY
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderProfitability(){
+  const projs=filtP('prf-filter');const fc=fieldCosts();const rev=filtRev('prf-filter');
+  const totalCV=projs.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const totalBudget=projs.reduce((a,p)=>a+(p.budget||0),0);
+  const totalContracted=projs.reduce((a,p)=>a+(p.contract_spend||0),0);
+  const totalField=projs.reduce((a,p)=>a+(fc[p.name]||0),0);
+  const totalCosts=totalContracted+totalField;
+  const totalRevBilled=rev.reduce((a,r)=>a+(r.amount||0),0);
+  const totalRevReceived=rev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const grossProfit=totalCV-totalBudget;
+  const margin=totalCV>0?Math.round(grossProfit/totalCV*100):0;
+
+  document.getElementById('prf-stats').innerHTML=`
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(totalCV)}</div><div class="stat-l">Total Contract Value</div></div>
+    <div class="stat s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(totalBudget)}</div><div class="stat-l">Total Budget</div></div>
+    <div class="stat s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(totalRevBilled)}</div><div class="stat-l">Revenue Billed</div><div class="stat-sub">${fmt(totalRevReceived)} received</div></div>
+    <div class="stat ${grossProfit>=0?'s-green':'s-red'}"><div class="stat-n" style="color:${grossProfit>=0?'var(--green)':'var(--red)'}">${fmt(grossProfit)}</div><div class="stat-l">Gross Profit (Budget)</div><div class="stat-sub">${margin}% margin</div></div>
+    <div class="stat ${totalCosts<totalBudget?'s-green':'s-red'}"><div class="stat-n" style="color:${totalCosts<totalBudget?'var(--green)':'var(--red)'}">${fmt(totalCosts)}</div><div class="stat-l">Total Costs to Date</div><div class="stat-sub">${totalBudget>0?Math.round(totalCosts/totalBudget*100):0}% of budget</div></div>`;
+
+  // Portfolio overview
+  const mc=margin>=20?'var(--green)':margin>=10?'var(--accent)':'var(--red)';
+  const costPct=totalBudget>0?Math.min(Math.round(totalCosts/totalBudget*100),100):0;
+  const revPct=totalCV>0?Math.min(Math.round(totalRevBilled/totalCV*100),100):0;
+  document.getElementById('prf-portfolio').innerHTML=`
+    <div class="stats-grid stats-3" style="margin-bottom:1.25rem">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Target Margin</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--green)">${totalCV>0?Math.round((totalCV-totalBudget)/totalCV*100):0}%</div><div style="font-size:11px;color:var(--text3)">based on contract value vs budget</div></div>
+      <div style="background:var(--bg3);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Cost Burn Rate</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:${bc(costPct)}">${costPct}%</div><div style="font-size:11px;color:var(--text3)">of budget consumed</div></div>
+      <div style="background:var(--bg3);border-radius:var(--r);padding:12px;text-align:center"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Revenue Collected</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--teal)">${revPct}%</div><div style="font-size:11px;color:var(--text3)">${fmt(totalRevReceived)} of ${fmt(totalRevBilled)} billed</div></div>
+    </div>
+    <div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px"><span>Budget consumed</span><span style="font-weight:600;color:${bc(costPct)}">${costPct}%</span></div>
+      <div class="budget-bar-wrap"><div class="budget-bar-fill" style="width:${costPct}%;background:${bc(costPct)}"></div></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px"><span>Revenue billed vs contract value</span><span style="font-weight:600;color:var(--teal)">${revPct}%</span></div>
+      <div class="budget-bar-wrap"><div class="budget-bar-fill" style="width:${revPct}%;background:var(--teal)"></div></div>
+    </div>`;
+
+  // Per-project profitability
+  document.getElementById('prf-table').innerHTML=projs.length===0?`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No projects.</td></tr>`:projs.map(p=>{
+    const cv=p.contract_value||p.budget||0;
+    const fieldCostP=fc[p.name]||0;
+    const totalCostP=(p.contract_spend||0)+fieldCostP;
+    const grossP=cv-p.budget;const margP=cv>0?Math.round(grossP/cv*100):0;
+    const revP=allRevenue.filter(r=>r.project_name===p.name);
+    const revBilled=revP.reduce((a,r)=>a+(r.amount||0),0);
+    const revReceived=revP.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+    const actualProfit=revReceived-totalCostP;
+    const actualMargin=revReceived>0?Math.round(actualProfit/revReceived*100):0;
+    const health=margP>=20&&totalCostP<p.budget*0.9?'On Budget':'bg':margP>=10&&totalCostP<p.budget?'Watch':'ba':'At Risk':'br';
+    const hParts=health.split(':');
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(cv)}</td>
+      <td style="color:var(--text2)">${fmt(p.budget)}</td>
+      <td style="color:var(--text2)">${fmt(p.contract_spend)}</td>
+      <td style="color:var(--teal)">${fmt(fieldCostP)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${bc(p.budget>0?Math.round(totalCostP/p.budget*100):0)}">${fmt(totalCostP)}</td>
+      <td style="color:var(--text2)">${fmt(revBilled)}</td>
+      <td style="color:var(--green);font-weight:500">${fmt(revReceived)}</td>
+      <td style="color:${grossP>=0?'var(--green)':'var(--red)'};font-family:var(--font-d);font-weight:700">${fmt(grossP)}</td>
+      <td style="font-family:var(--font-d);font-weight:800;color:${margP>=20?'var(--green)':margP>=10?'var(--accent)':'var(--red)'}">${margP}%</td>
+      <td><span class="badge ${hParts[1]||'bgr'}">${hParts[0]}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Revenue register
+  const revStatB={billed:'bb',received:'bg',outstanding:'br'};
+  const revTypeB={Invoice:'bb',Payment:'bg',Claim:'ba',Variation:'bp',Retention:'br',Advance:'bt'};
+  document.getElementById('prf-revenue').innerHTML=rev.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries.</td></tr>`:rev.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
+    <td style="font-family:var(--font-d);font-weight:600">${r.entry_date}</td>
+    <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
+    <td><div style="font-weight:500">${r.description}</div></td>
+    <td><span class="badge ${revTypeB[r.type]||'bgr'}">${r.type}</span></td>
+    <td style="color:var(--text3);font-size:11px">${r.reference||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.amount)}</td>
+    <td><span class="badge ${revStatB[r.status]||'bgr'}">${r.status}</span></td>
+  </tr>`).join('');
+}
+
+// ── Download helpers ──────────────────────────────────────────────────────────
+function dl(filename,content){const b=new Blob(['\uFEFF'+content],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
+function esc(v){const s=String(v===null||v===undefined?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;}
+function row(...cells){return cells.map(esc).join(',');}
+
+function dlStatusCSV(){
+  const fc=fieldCosts();
+  const rows=[row('Project','Phase','Type','Client','PM','Start','End','Task Progress%','Budget Used%','Risk Level','Status','Field Costs')];
+  filtP('ps-filter').forEach(p=>{
+    const avg=projAvgProgress(p.name);
+    const totalSpend=(p.contract_spend||0)+(fc[p.name]||0);
+    const pct=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+    rows.push(row(p.name,p.phase||'',p.type,p.client||'',p.pm||'',p.start_date||'',p.end_date||'',avg,pct,p.risk_level||'',p.status,fc[p.name]||0));
+  });
+  dl('SiteCommand_StatusReport_'+new Date().toISOString().split('T')[0]+'.csv',rows.join('\r\n'));
+}
+function dlProgressCSV(){
+  const rows=[row('Task','Project','Type','Total Qty','Done','Remaining','Unit','Progress%','Assigned','Status')];
+  filtT('prg-filter').forEach(t=>{rows.push(row(t.title,t.project_name,t.type,t.qty_total,t.qty_done,Math.max(0,(t.qty_total||0)-(t.qty_done||0)),t.unit,t.progress||0,t.assigned_to||'',t.status));});
+  dl('SiteCommand_ProgressReport_'+new Date().toISOString().split('T')[0]+'.csv',rows.join('\r\n'));
+}
+function dlRiskCSV(){
+  const rows=[row('Risk','Project','Category','Likelihood','Impact','Score','Owner','Status','Mitigation')];
+  filtRisks('risk-filter').forEach(r=>{rows.push(row(r.title,r.project_name,r.category,r.likelihood,r.impact,r.risk_score||'',r.owner||'',r.status,r.mitigation||''));});
+  dl('SiteCommand_RiskReport_'+new Date().toISOString().split('T')[0]+'.csv',rows.join('\r\n'));
+}
+function dlResourceCSV(){
+  const rows=[row('Name','Role','Type','Project','Certifications','Daily Rate','Status')];
+  filtW('res-filter').forEach(w=>{rows.push(row(w.name,w.role||'',w.type,w.project_name||'',w.certifications||'',w.daily_rate||0,w.status));});
+  dl('SiteCommand_ResourceReport_'+new Date().toISOString().split('T')[0]+'.csv',rows.join('\r\n'));
+}
+function dlProfitCSV(){
+  const fc=fieldCosts();
+  const rows=[row('Project','Contract Value','Budget','Contracted Spend','Field Costs','Total Costs','Revenue Billed','Revenue Received','Gross Profit','Margin%')];
+  filtP('prf-filter').forEach(p=>{
+    const cv=p.contract_value||p.budget||0;const fieldC=fc[p.name]||0;
+    const totalC=(p.contract_spend||0)+fieldC;const gp=cv-p.budget;
+    const m=cv>0?Math.round(gp/cv*100):0;
+    const revP=allRevenue.filter(r=>r.project_name===p.name);
+    const billed=revP.reduce((a,r)=>a+(r.amount||0),0);
+    const received=revP.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+    rows.push(row(p.name,cv,p.budget,p.contract_spend||0,fieldC,totalC,billed,received,gp,m));
+  });
+  dl('SiteCommand_ProfitabilityReport_'+new Date().toISOString().split('T')[0]+'.csv',rows.join('\r\n'));
+}
+
+function printReport(){window.print();}
+
+loadAll().then(()=>{
+  document.getElementById('rpt-status').classList.add('active');
+  renderStatus();
+});
+</script>
+</body>
+</html>

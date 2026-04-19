@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — New Project Intake</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:10}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.badge{background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:3px 12px;font-size:11px;font-family:var(--font-d);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue)}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3)}
+.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.shell{max-width:960px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.steps{display:flex;margin-bottom:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;flex-wrap:wrap}
+.step{flex:1;min-width:120px;padding:10px 14px;display:flex;align-items:center;gap:7px;font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);border-right:1px solid var(--border);cursor:pointer;transition:all 0.15s}
+.step:last-child{border-right:none}
+.step.active{background:var(--bg3);color:var(--accent)}
+.step.done{color:var(--green)}
+.step-num{width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+.step.done .step-num{background:var(--green);border-color:var(--green);color:#000}
+.section-label{font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1.5rem}
+.card-inner{padding:1.25rem}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.req{color:var(--accent)}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 12px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-select option{background:var(--bg2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-success{background:var(--green);color:#000}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)}
+/* Risk matrix */
+.risk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.risk-opt{background:var(--bg3);border:2px solid var(--border);border-radius:var(--r);padding:10px;text-align:center;cursor:pointer;transition:all 0.15s}
+.risk-opt:hover{border-color:var(--border2)}
+.risk-opt.selected-low{border-color:var(--green);background:rgba(34,197,94,0.08)}
+.risk-opt.selected-medium{border-color:var(--accent);background:rgba(245,166,35,0.08)}
+.risk-opt.selected-high{border-color:var(--red);background:rgba(239,68,68,0.08)}
+.risk-opt.selected-critical{border-color:#a855f7;background:rgba(168,85,247,0.08)}
+.risk-opt input{display:none}
+.risk-icon{font-size:22px;margin-bottom:4px}
+.risk-name{font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
+/* Risk rows */
+.risk-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px}
+.risk-row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.add-row-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--border2);border-radius:var(--r);padding:8px 14px;color:var(--text3);cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;width:100%;justify-content:center;margin-top:6px}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* Revenue rows */
+.rev-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end}
+/* Summary sidebar */
+.summary-bar{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1rem 1.25rem;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem;position:sticky;top:56px;z-index:9}
+.sum-item{display:flex;flex-direction:column;gap:2px}
+.sum-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.sum-val{font-family:var(--font-d);font-size:18px;font-weight:700;line-height:1;color:var(--accent)}
+/* Review */
+.review-section{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:1rem}
+.review-title{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.kv-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.kv-key{color:var(--text3)}
+.kv-val{font-weight:500;text-align:right}
+.badge-risk{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.risk-low{background:rgba(34,197,94,0.12);color:#4ade80}
+.risk-medium{background:rgba(245,166,35,0.12);color:var(--accent)}
+.risk-high{background:rgba(239,68,68,0.12);color:#f87171}
+.risk-critical{background:rgba(168,85,247,0.12);color:#c084fc}
+.toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.04em;text-transform:uppercase;z-index:100;display:none;animation:slideup 0.3s ease}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner-sm{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:680px){.fg2,.fg3{grid-template-columns:1fr}.rev-row{grid-template-columns:1fr 1fr}.summary-bar{grid-template-columns:1fr 1fr}.steps .step{min-width:45%}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div class="badge">New Project Intake</div>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px"><div class="conn-dot" id="conn-dot"></div><span style="font-size:11px;color:var(--text3)" id="conn-label">Connecting...</span></div>
+  <div style="margin-left:auto;display:flex;gap:10px">
+    <a href="index.html" style="font-size:12px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);text-decoration:none">&#8592; Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div style="margin-bottom:1.5rem">
+    <h1 style="font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:0.03em;text-transform:uppercase">New Project Intake Form</h1>
+    <p style="color:var(--text2);font-size:13px;margin-top:4px">Capture full project details, contract value, risk profile, initial tasks, and revenue milestones. All data saves directly to the dashboard.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step active" onclick="goStep(0)"><div class="step-num">1</div>Project Details</div>
+    <div class="step" onclick="goStep(1)"><div class="step-num">2</div>Contract & Budget</div>
+    <div class="step" onclick="goStep(2)"><div class="step-num">3</div>Initial Tasks</div>
+    <div class="step" onclick="goStep(3)"><div class="step-num">4</div>Risk Register</div>
+    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Revenue Plan</div>
+    <div class="step" onclick="goStep(5)"><div class="step-num">6</div>Review & Submit</div>
+  </div>
+
+  <div class="summary-bar" id="summary-bar">
+    <div class="sum-item"><div class="sum-label">Project Name</div><div class="sum-val" id="sum-name" style="font-size:13px;color:var(--text)">—</div></div>
+    <div class="sum-item"><div class="sum-label">Contract Value</div><div class="sum-val" id="sum-cv">R 0</div></div>
+    <div class="sum-item"><div class="sum-label">Budget</div><div class="sum-val" id="sum-budget" style="color:var(--blue)">R 0</div></div>
+    <div class="sum-item"><div class="sum-label">Risk Level</div><div class="sum-val" id="sum-risk" style="font-size:13px;color:var(--text2)">—</div></div>
+  </div>
+
+  <!-- STEP 0: Project Details -->
+  <div id="step-0">
+    <div class="section-label"><div class="section-num">1</div>Project Information</div>
+    <div class="card"><div class="card-inner">
+      <div class="fg2">
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Name <span class="req">*</span></label><input class="form-input" id="p-name" placeholder="e.g. Cape Town Fibre Rollout — Phase 1" oninput="updateSummary()"/></div>
+        <div class="form-group"><label class="form-label">Project Phase / Sub-project</label><input class="form-input" id="p-phase" placeholder="e.g. Phase 1, Northern Zone"/></div>
+        <div class="form-group"><label class="form-label">Project Type <span class="req">*</span></label>
+          <select class="form-select" id="p-type">
+            <option>Construction</option><option>Telecoms</option><option>Electrical</option><option>Civil</option><option>Structural</option><option>Roads</option><option>Plumbing</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Client Name <span class="req">*</span></label><input class="form-input" id="p-client" placeholder="e.g. SANRAL, Vodacom, City of Cape Town"/></div>
+        <div class="form-group"><label class="form-label">Client Contact Person</label><input class="form-input" id="p-client-contact" placeholder="Name and designation"/></div>
+        <div class="form-group"><label class="form-label">Project Manager <span class="req">*</span></label><select class="form-select" id="p-pm"><option value="">— Select PM —</option></select></div>
+        <div class="form-group"><label class="form-label">Project Start Date <span class="req">*</span></label><input class="form-input" type="month" id="p-start"/></div>
+        <div class="form-group"><label class="form-label">Project End Date <span class="req">*</span></label><input class="form-input" type="month" id="p-end"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Site / Project Location</label><input class="form-input" id="p-location" placeholder="e.g. Cape Town Metro, Western Cape"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Scope &amp; Description <span class="req">*</span></label><textarea class="form-textarea" id="p-scope" placeholder="Describe the full scope of work, key deliverables, and special requirements..."></textarea></div>
+        <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Status</label>
+          <select class="form-select" id="p-status">
+            <option value="on-track">On Track</option><option value="at-risk">At Risk</option><option value="delayed">Delayed</option><option value="on-hold">On Hold</option>
+          </select>
+        </div>
+      </div>
+    </div></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="goStep(1)">Next: Contract &amp; Budget &#8594;</button></div>
+  </div>
+
+  <!-- STEP 1: Contract & Budget -->
+  <div id="step-1" style="display:none">
+    <div class="section-label"><div class="section-num">2</div>Contract &amp; Budget</div>
+    <div class="card"><div class="card-inner">
+      <div class="fg2">
+        <div class="form-group"><label class="form-label">Contract / Revenue Value (R) <span class="req">*</span></label><input class="form-input" type="number" id="p-contract-value" min="0" placeholder="0" oninput="updateSummary()"/><div style="font-size:11px;color:var(--text3);margin-top:3px">Total value you will bill the client</div></div>
+        <div class="form-group"><label class="form-label">Project Budget — Total Costs (R) <span class="req">*</span></label><input class="form-input" type="number" id="p-budget" min="0" placeholder="0" oninput="updateSummary()"/><div style="font-size:11px;color:var(--text3);margin-top:3px">All direct + indirect costs to deliver the project</div></div>
+        <div class="form-group"><label class="form-label">Initial Contracted Spend (R)</label><input class="form-input" type="number" id="p-contract-spend" min="0" placeholder="0"/><div style="font-size:11px;color:var(--text3);margin-top:3px">Subcontracts and committed spend at project start</div></div>
+        <div class="form-group"><label class="form-label">Target Gross Profit Margin (%)</label><input class="form-input" type="number" id="p-margin" min="0" max="100" placeholder="e.g. 25" oninput="updateSummary()"/></div>
+      </div>
+      <div id="profitability-preview" style="margin-top:1.25rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;display:none">
+        <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Profitability Preview</div>
+        <div class="fg3">
+          <div><div style="font-size:11px;color:var(--text2)">Contract Value</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent)" id="prev-cv">R 0</div></div>
+          <div><div style="font-size:11px;color:var(--text2)">Total Budget</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--blue)" id="prev-budget">R 0</div></div>
+          <div><div style="font-size:11px;color:var(--text2)">Gross Profit</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700" id="prev-profit">R 0</div></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--text2)">Margin</span><span style="font-family:var(--font-d);font-size:16px;font-weight:700" id="prev-margin-pct">0%</span></div>
+          <div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div id="prev-margin-bar" style="height:100%;border-radius:4px;background:var(--green);transition:width 0.4s;width:0%"></div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(0)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(2)">Next: Initial Tasks &#8594;</button></div>
+  </div>
+
+  <!-- STEP 2: Initial Tasks -->
+  <div id="step-2" style="display:none">
+    <div class="section-label"><div class="section-num">3</div>Initial Project Tasks</div>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Add the main work packages. Each task has a total quantity and unit — daily reports will accumulate progress automatically.</p>
+    <div id="tasks-container"></div>
+    <button class="add-row-btn" onclick="addTask()">+ Add Work Package / Task</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(1)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(3)">Next: Risk Register &#8594;</button></div>
+  </div>
+
+  <!-- STEP 3: Risk Register -->
+  <div id="step-3" style="display:none">
+    <div class="section-label"><div class="section-num">4</div>Initial Risk Register</div>
+    <div class="card" style="margin-bottom:1rem"><div class="card-inner">
+      <div class="form-group"><label class="form-label">Overall Project Risk Level</label>
+        <div class="risk-grid" style="grid-template-columns:repeat(4,1fr)">
+          <label class="risk-opt" id="ro-low"><input type="radio" name="risk-level" value="low" onchange="selRisk(this)"/><div class="risk-icon">🟢</div><div class="risk-name" style="color:#4ade80">Low</div></label>
+          <label class="risk-opt" id="ro-medium"><input type="radio" name="risk-level" value="medium" onchange="selRisk(this)"/><div class="risk-icon">🟡</div><div class="risk-name" style="color:var(--accent)">Medium</div></label>
+          <label class="risk-opt" id="ro-high"><input type="radio" name="risk-level" value="high" onchange="selRisk(this)"/><div class="risk-icon">🔴</div><div class="risk-name" style="color:#f87171">High</div></label>
+          <label class="risk-opt" id="ro-critical"><input type="radio" name="risk-level" value="critical" onchange="selRisk(this)"/><div class="risk-icon">🚨</div><div class="risk-name" style="color:#c084fc">Critical</div></label>
+        </div>
+      </div>
+    </div></div>
+    <div id="risks-container"></div>
+    <button class="add-row-btn" onclick="addRisk()">+ Add Risk Item</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(4)">Next: Revenue Plan &#8594;</button></div>
+  </div>
+
+  <!-- STEP 4: Revenue Plan -->
+  <div id="step-4" style="display:none">
+    <div class="section-label"><div class="section-num">5</div>Revenue &amp; Payment Plan</div>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Add planned invoices, claims, and milestone payments. These feed directly into the profitability reports.</p>
+    <div id="revenue-container"></div>
+    <button class="add-row-btn" onclick="addRevenue()">+ Add Revenue Milestone</button>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(3)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(5)">Review &amp; Submit &#8594;</button></div>
+  </div>
+
+  <!-- STEP 5: Review -->
+  <div id="step-5" style="display:none">
+    <div class="section-label"><div class="section-num" style="background:var(--green)">&#10003;</div>Review &amp; Submit</div>
+    <div id="review-content"></div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(4)">&#8592; Back</button>
+      <button class="btn btn-success" id="submit-btn" onclick="submitProject()">&#10003; Create Project in Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allWorkers=[], tasks=[], risks=[], revenues=[], taskId=0, riskId=0, revId=0;
+const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
+
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+async function init(){
+  try{
+    allWorkers=await sbGet('workers','order=name.asc&active=eq.true&status=neq.inactive');
+    const pm=document.getElementById('p-pm');
+    pm.innerHTML='<option value="">— Select PM —</option>'+allWorkers.filter(w=>w.role&&(w.role.toLowerCase().includes('manager')||w.role.toLowerCase().includes('foreman')||w.role.toLowerCase().includes('engineer')||w.type==='Supervisor')).map(w=>`<option value="${w.name}">${w.name} — ${w.role||w.type}</option>`).join('');
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected';
+    document.getElementById('conn-label').style.color='var(--green)';
+  }catch(e){document.getElementById('conn-label').textContent='Offline';document.getElementById('conn-label').style.color='var(--red)';}
+}
+
+function goStep(n){
+  for(let i=0;i<6;i++){
+    document.getElementById('step-'+i).style.display=i===n?'block':'none';
+    const s=document.querySelectorAll('.step')[i];
+    s.classList.remove('active','done');
+    if(i<n)s.classList.add('done');else if(i===n)s.classList.add('active');
+  }
+  if(n===5)buildReview();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateSummary(){
+  const name=document.getElementById('p-name').value.trim();
+  const cv=parseFloat(document.getElementById('p-contract-value').value)||0;
+  const budget=parseFloat(document.getElementById('p-budget').value)||0;
+  const risk=document.querySelector('input[name="risk-level"]:checked');
+  document.getElementById('sum-name').textContent=name||'—';
+  document.getElementById('sum-cv').textContent=fmt(cv);
+  document.getElementById('sum-budget').textContent=fmt(budget);
+  document.getElementById('sum-risk').textContent=risk?risk.value:'—';
+  // Profitability preview
+  if(cv>0||budget>0){
+    document.getElementById('profitability-preview').style.display='block';
+    const profit=cv-budget;
+    const margin=cv>0?Math.round(profit/cv*100):0;
+    const bc=margin>=20?'var(--green)':margin>=10?'var(--accent)':'var(--red)';
+    document.getElementById('prev-cv').textContent=fmt(cv);
+    document.getElementById('prev-budget').textContent=fmt(budget);
+    document.getElementById('prev-profit').textContent=fmt(profit);
+    document.getElementById('prev-profit').style.color=profit>=0?'var(--green)':'var(--red)';
+    document.getElementById('prev-margin-pct').textContent=margin+'%';
+    document.getElementById('prev-margin-pct').style.color=bc;
+    document.getElementById('prev-margin-bar').style.width=Math.min(Math.max(margin,0),100)+'%';
+    document.getElementById('prev-margin-bar').style.background=bc;
+  } else {
+    document.getElementById('profitability-preview').style.display='none';
+  }
+}
+
+function selRisk(el){
+  ['low','medium','high','critical'].forEach(r=>document.getElementById('ro-'+r).className='risk-opt');
+  el.closest('.risk-opt').className='risk-opt selected-'+el.value;
+  updateSummary();
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+function addTask(){
+  const id=++taskId;tasks.push({id});renderTasks();
+}
+function removeTask(id){tasks=tasks.filter(t=>t.id!==id);renderTasks();}
+function renderTasks(){
+  const c=document.getElementById('tasks-container');
+  const types=['Civil','Structural','Electrical','Telecoms','HSE','Survey','Admin','Plumbing','Cabling','Roads'];
+  const priorities=['high','med','low'];
+  c.innerHTML=tasks.map(t=>`<div class="risk-row" id="tr-${t.id}">
+    <div class="risk-row-header">
+      <span style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)">Work Package ${t.id}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeTask(${t.id})">Remove</button>
+    </div>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Task / Work Package Title <span class="req">*</span></label><input class="form-input" id="tt-title-${t.id}" placeholder="e.g. Concrete pour — piers 1-12"/></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="tt-type-${t.id}">${types.map(x=>`<option>${x}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="tt-pri-${t.id}">${priorities.map(x=>`<option value="${x}">${x.charAt(0).toUpperCase()+x.slice(1)}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Total Quantity <span class="req">*</span></label><input class="form-input" type="number" id="tt-qty-${t.id}" placeholder="e.g. 1200" min="0" step="any"/></div>
+      <div class="form-group"><label class="form-label">Unit of Measure <span class="req">*</span></label><input class="form-input" id="tt-unit-${t.id}" placeholder="e.g. m3, m2, km, units, tonnes"/></div>
+      <div class="form-group"><label class="form-label">Assigned To</label><select class="form-select" id="tt-assign-${t.id}"><option value="">— Unassigned —</option>${allWorkers.map(w=>`<option value="${w.name}">${w.name}</option>`).join('')}</select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Notes / Specifications</label><input class="form-input" id="tt-notes-${t.id}" placeholder="Location, spec, constraints..."/></div>
+    </div>
+  </div>`).join('');
+}
+function getTaskData(){
+  return tasks.map(t=>({
+    title:(document.getElementById('tt-title-'+t.id)||{}).value||'',
+    type:(document.getElementById('tt-type-'+t.id)||{}).value||'Civil',
+    priority:(document.getElementById('tt-pri-'+t.id)||{}).value||'med',
+    qty_total:parseFloat((document.getElementById('tt-qty-'+t.id)||{}).value)||0,
+    unit:(document.getElementById('tt-unit-'+t.id)||{}).value||'units',
+    assigned_to:(document.getElementById('tt-assign-'+t.id)||{}).value||'',
+    notes:(document.getElementById('tt-notes-'+t.id)||{}).value||''
+  })).filter(t=>t.title.trim()&&t.qty_total>0&&t.unit.trim());
+}
+
+// ── Risks ─────────────────────────────────────────────────────────────────────
+function addRisk(){const id=++riskId;risks.push({id});renderRisks();}
+function removeRisk(id){risks=risks.filter(r=>r.id!==id);renderRisks();}
+function renderRisks(){
+  const c=document.getElementById('risks-container');
+  const cats=['Technical','Financial','HSE','Schedule','Resource','Regulatory','Environmental'];
+  const levels=['low','medium','high'];
+  c.innerHTML=risks.map(r=>`<div class="risk-row">
+    <div class="risk-row-header">
+      <span style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)">Risk Item ${r.id}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeRisk(${r.id})">Remove</button>
+    </div>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Risk Description <span class="req">*</span></label><input class="form-input" id="ri-title-${r.id}" placeholder="e.g. Material delivery delays due to supplier capacity"/></div>
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="ri-cat-${r.id}">${cats.map(x=>`<option>${x}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Risk Owner</label><select class="form-select" id="ri-owner-${r.id}"><option value="">— Select —</option>${allWorkers.map(w=>`<option value="${w.name}">${w.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Likelihood</label><select class="form-select" id="ri-like-${r.id}">${levels.map(x=>`<option value="${x}">${x.charAt(0).toUpperCase()+x.slice(1)}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Impact</label><select class="form-select" id="ri-impact-${r.id}">${levels.map(x=>`<option value="${x}">${x.charAt(0).toUpperCase()+x.slice(1)}</option>`).join('')}</select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Mitigation Plan</label><textarea class="form-textarea" id="ri-mit-${r.id}" style="min-height:60px" placeholder="How will this risk be managed or reduced?"></textarea></div>
+    </div>
+  </div>`).join('');
+}
+function getRiskData(){
+  return risks.map(r=>({
+    title:(document.getElementById('ri-title-'+r.id)||{}).value||'',
+    category:(document.getElementById('ri-cat-'+r.id)||{}).value||'Technical',
+    owner:(document.getElementById('ri-owner-'+r.id)||{}).value||'',
+    likelihood:(document.getElementById('ri-like-'+r.id)||{}).value||'medium',
+    impact:(document.getElementById('ri-impact-'+r.id)||{}).value||'medium',
+    mitigation:(document.getElementById('ri-mit-'+r.id)||{}).value||''
+  })).filter(r=>r.title.trim());
+}
+
+// ── Revenue ───────────────────────────────────────────────────────────────────
+function addRevenue(){const id=++revId;revenues.push({id});renderRevenues();}
+function removeRevenue(id){revenues=revenues.filter(r=>r.id!==id);renderRevenues();}
+function renderRevenues(){
+  const c=document.getElementById('revenue-container');
+  const types=['Invoice','Payment','Claim','Variation','Retention','Advance'];
+  const statuses=['billed','received','outstanding'];
+  c.innerHTML=revenues.map(r=>`<div class="risk-row">
+    <div class="risk-row-header">
+      <span style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3)">Revenue Entry ${r.id}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeRevenue(${r.id})">Remove</button>
+    </div>
+    <div class="fg3">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description <span class="req">*</span></label><input class="form-input" id="rv-desc-${r.id}" placeholder="e.g. Progress Claim #1 — Mobilisation &amp; Foundations"/></div>
+      <div class="form-group"><label class="form-label">Planned Date</label><input class="form-input" type="date" id="rv-date-${r.id}"/></div>
+      <div class="form-group"><label class="form-label">Amount (R) <span class="req">*</span></label><input class="form-input" type="number" id="rv-amount-${r.id}" min="0" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="rv-type-${r.id}">${types.map(x=>`<option>${x}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Reference No.</label><input class="form-input" id="rv-ref-${r.id}" placeholder="e.g. PC-001, INV-001"/></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="rv-status-${r.id}">${statuses.map(x=>`<option value="${x}">${x.charAt(0).toUpperCase()+x.slice(1)}</option>`).join('')}</select></div>
+    </div>
+  </div>`).join('');
+}
+function getRevenueData(){
+  return revenues.map(r=>({
+    description:(document.getElementById('rv-desc-'+r.id)||{}).value||'',
+    entry_date:(document.getElementById('rv-date-'+r.id)||{}).value||new Date().toISOString().split('T')[0],
+    amount:parseFloat((document.getElementById('rv-amount-'+r.id)||{}).value)||0,
+    type:(document.getElementById('rv-type-'+r.id)||{}).value||'Invoice',
+    reference:(document.getElementById('rv-ref-'+r.id)||{}).value||'',
+    status:(document.getElementById('rv-status-'+r.id)||{}).value||'outstanding'
+  })).filter(r=>r.description.trim()&&r.amount>0);
+}
+
+// ── Review ────────────────────────────────────────────────────────────────────
+function buildReview(){
+  const name=document.getElementById('p-name').value.trim()||'—';
+  const cv=parseFloat(document.getElementById('p-contract-value').value)||0;
+  const budget=parseFloat(document.getElementById('p-budget').value)||0;
+  const profit=cv-budget;
+  const margin=cv>0?Math.round(profit/cv*100):0;
+  const risk=document.querySelector('input[name="risk-level"]:checked');
+  const taskData=getTaskData();
+  const riskData=getRiskData();
+  const revData=getRevenueData();
+  const totalRev=revData.reduce((a,r)=>a+r.amount,0);
+  const riskClass={'low':'risk-low','medium':'risk-medium','high':'risk-high','critical':'risk-critical'};
+  const riskVal=risk?risk.value:'—';
+
+  document.getElementById('review-content').innerHTML=`
+    <div class="review-section">
+      <div class="review-title">Project Details</div>
+      <div class="kv-grid">
+        <div class="kv-row"><span class="kv-key">Name</span><span class="kv-val">${name}</span></div>
+        <div class="kv-row"><span class="kv-key">Phase</span><span class="kv-val">${document.getElementById('p-phase').value||'—'}</span></div>
+        <div class="kv-row"><span class="kv-key">Type</span><span class="kv-val">${document.getElementById('p-type').value}</span></div>
+        <div class="kv-row"><span class="kv-key">Client</span><span class="kv-val">${document.getElementById('p-client').value||'—'}</span></div>
+        <div class="kv-row"><span class="kv-key">PM</span><span class="kv-val">${document.getElementById('p-pm').value||'—'}</span></div>
+        <div class="kv-row"><span class="kv-key">Start</span><span class="kv-val">${document.getElementById('p-start').value||'—'}</span></div>
+        <div class="kv-row"><span class="kv-key">End</span><span class="kv-val">${document.getElementById('p-end').value||'—'}</span></div>
+        <div class="kv-row"><span class="kv-key">Risk Level</span><span class="kv-val"><span class="badge-risk ${riskClass[riskVal]||'risk-low'}">${riskVal}</span></span></div>
+      </div>
+    </div>
+    <div class="review-section">
+      <div class="review-title">Financials &amp; Profitability</div>
+      <div class="fg3">
+        <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:var(--r)"><div style="font-size:11px;color:var(--text2)">Contract Value</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--accent)">${fmt(cv)}</div></div>
+        <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:var(--r)"><div style="font-size:11px;color:var(--text2)">Total Budget</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)">${fmt(budget)}</div></div>
+        <div style="text-align:center;padding:10px;background:var(--bg4);border-radius:var(--r)"><div style="font-size:11px;color:var(--text2)">Gross Profit</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:${profit>=0?'var(--green)':'var(--red)'}">${fmt(profit)}</div><div style="font-size:11px;color:${profit>=0?'var(--green)':'var(--red)'}">Margin: ${margin}%</div></div>
+      </div>
+    </div>
+    <div class="review-section">
+      <div class="review-title">Work Packages (${taskData.length})</div>
+      ${taskData.length===0?'<p style="color:var(--text3);font-size:13px">No tasks added.</p>':taskData.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px"><span style="font-weight:500">${t.title}</span><span style="color:var(--text2)">${t.qty_total} ${t.unit} — ${t.type}</span></div>`).join('')}
+    </div>
+    <div class="review-section">
+      <div class="review-title">Risk Register (${riskData.length})</div>
+      ${riskData.length===0?'<p style="color:var(--text3);font-size:13px">No risks added.</p>':riskData.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px"><span style="font-weight:500">${r.title}</span><span style="color:var(--text2)">${r.category} — L:${r.likelihood} / I:${r.impact}</span></div>`).join('')}
+    </div>
+    <div class="review-section">
+      <div class="review-title">Revenue Plan (${revData.length} entries — ${fmt(totalRev)} total)</div>
+      ${revData.length===0?'<p style="color:var(--text3);font-size:13px">No revenue entries added.</p>':revData.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px"><span style="font-weight:500">${r.description}</span><span style="color:var(--accent);font-weight:700;font-family:var(--font-d)">${fmt(r.amount)}</span></div>`).join('')}
+    </div>`;
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function submitProject(){
+  const name=document.getElementById('p-name').value.trim();
+  const client=document.getElementById('p-client').value.trim();
+  const cv=parseFloat(document.getElementById('p-contract-value').value)||0;
+  const budget=parseFloat(document.getElementById('p-budget').value)||0;
+  if(!name){showToast('Project name is required','err');goStep(0);return;}
+  if(!client){showToast('Client name is required','err');goStep(0);return;}
+  if(!cv||!budget){showToast('Contract value and budget are required','err');goStep(1);return;}
+
+  const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Creating project...';
+  const risk=document.querySelector('input[name="risk-level"]:checked');
+
+  try{
+    // 1. Create project
+    const projPayload={
+      name,
+      phase:document.getElementById('p-phase').value.trim(),
+      type:document.getElementById('p-type').value,
+      client,
+      client_contact:document.getElementById('p-client-contact').value.trim(),
+      start_date:document.getElementById('p-start').value,
+      end_date:document.getElementById('p-end').value,
+      status:document.getElementById('p-status').value,
+      pm:document.getElementById('p-pm').value,
+      budget,
+      contract_spend:parseFloat(document.getElementById('p-contract-spend').value)||0,
+      contract_value:cv,
+      description:document.getElementById('p-scope').value.trim(),
+      location:document.getElementById('p-location').value.trim(),
+      risk_level:risk?risk.value:'low',
+      active:true
+    };
+    btn.innerHTML='<span class="spinner-sm"></span> Saving project...';
+    const [proj]=await sbPost('projects',projPayload);
+
+    // 2. Create tasks
+    const taskData=getTaskData();
+    if(taskData.length){
+      btn.innerHTML='<span class="spinner-sm"></span> Creating tasks...';
+      await Promise.all(taskData.map(t=>sbPost('project_tasks',{...t,project_id:proj.id,project_name:name,qty_done:0,status:'not-started',active:true})));
+    }
+
+    // 3. Create risks
+    const riskData=getRiskData();
+    if(riskData.length){
+      btn.innerHTML='<span class="spinner-sm"></span> Saving risks...';
+      await Promise.all(riskData.map(r=>sbPost('project_risks',{...r,project_name:name,status:'open',active:true})));
+    }
+
+    // 4. Create revenue entries
+    const revData=getRevenueData();
+    if(revData.length){
+      btn.innerHTML='<span class="spinner-sm"></span> Saving revenue plan...';
+      await Promise.all(revData.map(r=>sbPost('revenue_entries',{...r,project_name:name})));
+    }
+
+    showToast('Project created successfully!','ok');
+    setTimeout(()=>window.location.href='index.html',2000);
+  }catch(e){
+    showToast('Error: '+e.message,'err');console.error(e);
+    btn.disabled=false;btn.innerHTML='&#10003; Create Project in Dashboard';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -186,6 +186,11 @@ tr:hover td{background:var(--bg3)}
       <div class="nav-label">Field Data</div>
       <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">&#128203;</span>Daily Reports<span class="nav-badge nb-teal" id="report-badge">0</span></div>
     </div>
+    <div class="nav-section">
+      <div class="nav-label">More</div>
+      <a href="reports.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128202;</span>Reports</a>
+      <a href="project_intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128196;</span>New Project Form</a>
+    </div>
     <div class="sidebar-footer"><div class="nav-item" style="font-size:12px"><span class="nav-icon">&#129302;</span>AI Assistant</div></div>
   </div>
 
@@ -527,7 +532,7 @@ const EQ_B={operational:'badge-green','due-service':'badge-amber',grounded:'badg
 const EQ_TB={Plant:'badge-amber',Telecoms:'badge-blue',Safety:'badge-red',Electrical:'badge-purple',Survey:'badge-teal',Vehicle:'badge-blue',Tools:'badge-gray'};
 const ISSUES_DATA=[{id:'ISS-001',desc:'Cable tray blocked — permit pending',cat:'Regulatory',project:'5G Rollout',prio:'high',status:'open',owner:'T. Dlamini'},{id:'ISS-002',desc:'HSE non-compliance — PPE sector 4',cat:'HSE',project:'N3 Highway',prio:'high',status:'open',owner:'S. Nkosi'},{id:'ISS-003',desc:'Crane operator shortage',cat:'Resource',project:'MTN Towers',prio:'med',status:'investigating',owner:'J. van Wyk'}];
 
-let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allEquipment=[],allCostCats=[];
+let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allEquipment=[],allCostCats=[],allRisks=[],allRevenue=[];
 let activeTaskFilter='all';
 const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
@@ -549,13 +554,15 @@ const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
 async function loadAllData(){
   try{
-    [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats]=await Promise.all([
+    [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats,allRisks,allRevenue]=await Promise.all([
       sbGet('projects','order=created_at.asc&active=eq.true'),
       sbGet('project_tasks','order=created_at.asc&active=eq.true'),
       sbGet('daily_reports','order=created_at.desc'),
       sbGet('workers','order=name.asc&active=eq.true'),
       sbGet('equipment','order=name.asc&active=eq.true'),
-      sbGet('cost_categories','order=sort_order.asc&active=eq.true')
+      sbGet('cost_categories','order=sort_order.asc&active=eq.true'),
+      sbGet('project_risks','order=created_at.desc&active=eq.true'),
+      sbGet('revenue_entries','order=entry_date.asc')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
