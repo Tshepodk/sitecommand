@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:2rem;width:400px;max-width:100%}
+.logo{font-family:var(--font-d);font-size:26px;font-weight:800;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase;text-align:center;margin-bottom:4px}
+.logo span{color:var(--text2);font-weight:400}
+.tagline{text-align:center;font-size:12px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;margin-bottom:2rem}
+.tabs{display:flex;background:var(--bg3);border-radius:var(--r);padding:3px;margin-bottom:1.5rem}
+.tab{flex:1;padding:7px;text-align:center;border-radius:4px;cursor:pointer;font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3);transition:all 0.15s}
+.tab.active{background:var(--bg2);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:5px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+.btn{display:block;width:100%;padding:11px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:15px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;margin-top:1.25rem}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--r);padding:10px 12px;font-size:13px;color:#f87171;margin-top:1rem;display:none}
+.success{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:var(--r);padding:10px 12px;font-size:13px;color:#4ade80;margin-top:1rem;display:none}
+.divider{display:flex;align-items:center;gap:10px;margin:1.25rem 0;color:var(--text3);font-size:11px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.forgot{text-align:right;margin-top:-6px;margin-bottom:1rem}
+.forgot a{font-size:12px;color:var(--text3);cursor:pointer;text-decoration:none}
+.forgot a:hover{color:var(--accent)}
+.role-info{background:var(--bg3);border-radius:var(--r);padding:10px 12px;margin-top:1.25rem;font-size:12px;color:var(--text3)}
+.role-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Site<span>Command</span></div>
+  <div class="tagline">Construction &amp; Telecoms PM</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Sign In</div>
+    <div class="tab" onclick="switchTab('register')">Register</div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="tab-login">
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" id="login-email" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <div class="forgot"><a onclick="doForgot()">Forgot password?</a></div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="error" id="login-error"></div>
+    <div class="success" id="login-success"></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="tab-register" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" type="text" id="reg-name" placeholder="e.g. John van der Merwe"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" id="reg-email" placeholder="you@company.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="reg-password" placeholder="Min 8 characters"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-input" id="reg-role" style="cursor:pointer">
+        <option value="admin">Admin — full access</option>
+        <option value="pm">Project Manager</option>
+        <option value="foreman">Site Foreman</option>
+        <option value="viewer">Viewer — read only</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="reg-btn" onclick="doRegister()">Create Account</button>
+    <div class="error" id="reg-error"></div>
+    <div class="success" id="reg-success"></div>
+    <div class="role-info">
+      <div style="font-weight:600;color:var(--text2);margin-bottom:6px;font-size:11px;letter-spacing:0.06em;text-transform:uppercase">Access Levels</div>
+      <div class="role-row"><span>Admin</span><span style="color:var(--accent)">Full access — all projects</span></div>
+      <div class="role-row"><span>Project Manager</span><span style="color:var(--text2)">Manage assigned projects</span></div>
+      <div class="role-row"><span>Site Foreman</span><span style="color:var(--text2)">Submit daily reports</span></div>
+      <div class="role-row"><span>Viewer</span><span style="color:var(--text3)">View reports only</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const AH={'Content-Type':'application/json','apikey':SK};
+
+function switchTab(t){
+  document.getElementById('tab-login').style.display=t==='login'?'block':'none';
+  document.getElementById('tab-register').style.display=t==='register'?'block':'none';
+  document.querySelectorAll('.tab').forEach((el,i)=>{el.classList.toggle('active',(t==='login'?i===0:i===1));});
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function hideMsg(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+function showOk(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value;
+  hideMsg('login-error');hideMsg('login-success');
+  if(!email||!password){showErr('login-error','Please enter your email and password.');return;}
+  const btn=document.getElementById('login-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Signing in...';
+  try{
+    const r=await fetch(`${SB}/auth/v1/token?grant_type=password`,{
+      method:'POST',headers:{...AH,'Authorization':'Bearer '+SK},
+      body:JSON.stringify({email,password})
+    });
+    const data=await r.json();
+    if(data.error||data.error_description){showErr('login-error',data.error_description||data.error);return;}
+    // Store session
+    localStorage.setItem('sc_session',JSON.stringify({
+      access_token:data.access_token,
+      refresh_token:data.refresh_token,
+      user:data.user,
+      expires_at:Date.now()+(data.expires_in*1000)
+    }));
+    showOk('login-success','Signed in! Redirecting...');
+    setTimeout(()=>window.location.href='index.html',800);
+  }catch(e){showErr('login-error','Connection error. Check your network.');}
+  btn.disabled=false;btn.innerHTML='Sign In';
+}
+
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const password=document.getElementById('reg-password').value;
+  const role=document.getElementById('reg-role').value;
+  hideMsg('reg-error');hideMsg('reg-success');
+  if(!name){showErr('reg-error','Please enter your full name.');return;}
+  if(!email){showErr('reg-error','Please enter your email.');return;}
+  if(password.length<8){showErr('reg-error','Password must be at least 8 characters.');return;}
+  const btn=document.getElementById('reg-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Creating account...';
+  try{
+    const r=await fetch(`${SB}/auth/v1/signup`,{
+      method:'POST',headers:{...AH,'Authorization':'Bearer '+SK},
+      body:JSON.stringify({email,password,data:{full_name:name,role}})
+    });
+    const data=await r.json();
+    if(data.error||data.error_description){showErr('reg-error',data.error_description||data.error);btn.disabled=false;btn.innerHTML='Create Account';return;}
+    // Also create user profile record
+    if(data.id){
+      await fetch(`${SB}/rest/v1/user_profiles`,{
+        method:'POST',
+        headers:{...AH,'Authorization':'Bearer SK','Prefer':'return=minimal'},
+        body:JSON.stringify({id:data.id,full_name:name,role})
+      });
+    }
+    showOk('reg-success','Account created! Check your email to confirm, then sign in.');
+    document.getElementById('reg-name').value='';document.getElementById('reg-email').value='';document.getElementById('reg-password').value='';
+  }catch(e){showErr('reg-error','Connection error. Check your network.');}
+  btn.disabled=false;btn.innerHTML='Create Account';
+}
+
+async function doForgot(){
+  const email=document.getElementById('login-email').value.trim();
+  if(!email){showErr('login-error','Enter your email address first.');return;}
+  try{
+    await fetch(`${SB}/auth/v1/recover`,{
+      method:'POST',headers:{...AH,'Authorization':'Bearer '+SK},
+      body:JSON.stringify({email})
+    });
+    showOk('login-success','Password reset email sent. Check your inbox.');
+  }catch(e){showErr('login-error','Could not send reset email.');}
+}
+
+// Check if already logged in
+const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+if(sess&&sess.expires_at>Date.now()){window.location.href='index.html';}
+</script>
+</body>
+</html>

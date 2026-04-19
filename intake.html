@@ -90,6 +90,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .spinner-sm{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-placeholder{color:var(--text3);font-size:13px;text-align:center;padding:2rem}
+.photo-drop{border:2px dashed var(--border2);border-radius:var(--rl);padding:2rem;text-align:center;cursor:pointer;transition:all 0.15s}
+.photo-drop:hover{border-color:var(--accent);background:rgba(245,166,35,0.04)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.photo-thumb{position:relative;border-radius:var(--r);overflow:hidden;background:var(--bg3);aspect-ratio:4/3}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .rmv{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.photo-cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);padding:4px 6px}
+.photo-cap input{background:none;border:none;color:#fff;font-size:10px;outline:none;width:100%;font-family:var(--font-b)}
+.uprog{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px;display:none}
+.uprog-fill{height:100%;background:var(--teal);border-radius:2px;transition:width 0.3s;width:0%}
 @media(max-width:600px){.form-grid.cols-2,.form-grid.cols-3{grid-template-columns:1fr}.cost-cats-grid{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(2,1fr)}.workers-grid{grid-template-columns:1fr 1fr}.steps{flex-wrap:wrap}.step{min-width:45%}.tqr-inputs{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -116,7 +126,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
     <div class="step" onclick="goStep(1)"><div class="step-num">2</div>Task Quantities</div>
     <div class="step" onclick="goStep(2)"><div class="step-num">3</div>Costs</div>
     <div class="step" onclick="goStep(3)"><div class="step-num">4</div>Site Conditions</div>
-    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Review &amp; Submit</div>
+    <div class="step" onclick="goStep(4)"><div class="step-num">5</div>Photos</div>
+    <div class="step" onclick="goStep(5)"><div class="step-num">6</div>Review &amp; Submit</div>
   </div>
 
   <div class="summary-bar">
@@ -218,11 +229,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
         <div class="form-group" style="margin-top:1rem"><label class="form-label">Blockers / Issues to Escalate</label><textarea class="form-textarea" id="f-blockers" placeholder="Equipment failures, permit issues, supply delays..."></textarea></div>
       </div></div>
     </div>
-    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(4)">Review &amp; Submit &#8594;</button></div>
+    <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(2)">&#8592; Back</button><button class="btn btn-primary" onclick="goStep(4)">Next: Photos &#8594;</button></div>
   </div>
 
-  <!-- STEP 4: Review -->
+  <!-- STEP 4: Photos -->
   <div id="step-4" style="display:none">
+    <div class="section">
+      <div class="section-label"><div class="section-num" style="background:var(--blue)">&#128247;</div>Site Photos &amp; Attachments</div>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Attach site photos. Uploaded to Supabase Storage and linked to this report.</p>
+      <div class="card"><div class="card-inner">
+        <div class="photo-drop" onclick="document.getElementById('photo-input').click()">
+          <input type="file" id="photo-input" accept="image/*,application/pdf" multiple style="display:none" onchange="handlePhotoSel(event)"/>
+          <div style="font-size:28px;margin-bottom:8px">&#128247;</div>
+          <div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Click to attach photos</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">JPG, PNG, PDF — max 5MB each</div>
+        </div>
+        <div class="uprog" id="uprog"><div class="uprog-fill" id="uprog-fill"></div></div>
+        <div class="photo-grid" id="photo-grid"></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text3)" id="photo-count-label">0 photos selected</div>
+      </div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(3)">&#8592; Back</button>
+      <button class="btn btn-primary" onclick="goStep(5)">Review &amp; Submit &#8594;</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Review -->
+  <div id="step-5" style="display:none">
     <div class="section">
       <div class="section-label"><div class="section-num" style="background:var(--green)">&#10003;</div>Review &amp; Submit</div>
       <div id="review-content"></div>
@@ -248,7 +282,7 @@ document.getElementById('f-date').value=today.toISOString().split('T')[0];
 document.getElementById('today-date').textContent=today.toLocaleDateString('en-ZA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
 async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
 
 async function init(){
@@ -407,14 +441,59 @@ function updateSummary(){
   const d=document.getElementById('cost-total-display');if(d)d.textContent=fmtC;
 }
 
+// ── Photos ───────────────────────────────────────────────────────────────────
+let selectedPhotos=[];
+
+function handlePhotoSel(e){
+  Array.from(e.target.files).forEach(f=>{
+    if(f.size>5*1024*1024){showToast(f.name+' exceeds 5MB','err');return;}
+    const reader=new FileReader();
+    reader.onload=ev=>{selectedPhotos.push({file:f,preview:ev.target.result,caption:''});renderPhotoGrid();};
+    reader.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+function renderPhotoGrid(){
+  document.getElementById('photo-count-label').textContent=selectedPhotos.length+' photo'+(selectedPhotos.length!==1?'s':'')+' selected';
+  document.getElementById('photo-grid').innerHTML=selectedPhotos.map((p,i)=>`
+    <div class="photo-thumb">
+      <img src="${p.preview}" alt="photo"/>
+      <button class="rmv" onclick="rmPhoto(${i})">&#10005;</button>
+      <div class="photo-cap"><input placeholder="Caption..." value="${p.caption}" onchange="selectedPhotos[${i}].caption=this.value"/></div>
+    </div>`).join('');
+}
+function rmPhoto(i){selectedPhotos.splice(i,1);renderPhotoGrid();}
+
+async function uploadPhotos(reportId,projName,reporter){
+  if(!selectedPhotos.length)return;
+  const prog=document.getElementById('uprog');const fill=document.getElementById('uprog-fill');
+  prog.style.display='block';
+  for(let i=0;i<selectedPhotos.length;i++){
+    const p=selectedPhotos[i];
+    const ext=p.file.name.split('.').pop();
+    const path=`${projName.replace(/\s+/g,'_')}/${reportId}/${Date.now()}_${i}.${ext}`;
+    try{
+      await fetch(`${SB}/storage/v1/object/site-photos/${path}`,{
+        method:'POST',headers:{'apikey':SK,'Authorization':'Bearer '+SK,'Content-Type':p.file.type,'x-upsert':'true'},body:p.file
+      });
+      await fetch(`${SB}/rest/v1/report_attachments`,{
+        method:'POST',headers:{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK,'Prefer':'return=minimal'},
+        body:JSON.stringify({report_id:reportId,project_name:projName,file_name:p.file.name,file_path:path,file_size:p.file.size,file_type:p.file.type,caption:p.caption,uploaded_by:reporter})
+      });
+    }catch(e){console.error('Upload error:',e);}
+    fill.style.width=Math.round((i+1)/selectedPhotos.length*100)+'%';
+  }
+  prog.style.display='none';fill.style.width='0%';
+}
+
 function goStep(n){
-  for(let i=0;i<5;i++){
+  for(let i=0;i<6;i++){
     document.getElementById('step-'+i).style.display=i===n?'block':'none';
     const s=document.querySelectorAll('.step')[i];
     s.classList.remove('active','done');
     if(i<n)s.classList.add('done');else if(i===n)s.classList.add('active');
   }
-  if(n===4)buildReview();
+  if(n===5)buildReview();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -481,12 +560,25 @@ async function submitForm(){
     blockers:document.getElementById('f-blockers').value.trim()
   };
   try{
-    await sbPost('daily_reports',payload);
+    const saved=await sbPost('daily_reports',payload);
+    const savedReport=Array.isArray(saved)?saved[0]:saved;
     // Update each task's qty_done (accumulate)
     await Promise.all(taskUpdates.filter(t=>t.qty_done>0).map(async t=>{
       const task=projectTasks.find(pt=>pt.id===t.task_id);if(!task)return;
       await sbPatch('project_tasks',t.task_id,{qty_done:parseFloat(task.qty_done||0)+t.qty_done,status:t.status});
     }));
+    // Upload photos
+    if(selectedPhotos.length&&savedReport&&savedReport.id){
+      btn.innerHTML='<span class="spinner-sm"></span> Uploading photos...';
+      await uploadPhotos(savedReport.id,projName,reporter);
+    }
+    // Log HSE notification
+    const hseVal=document.getElementById('f-hse').value;
+    if(hseVal&&hseVal!=='none'){
+      try{
+        await sbPost('notifications',{project_name:projName,type:'hse_incident',severity:hseVal==='lti'?'critical':'warning',title:'HSE Incident — '+projName,message:hseVal+' reported by '+reporter+'.',triggered_by:reporter,read:false});
+      }catch(e){}
+    }
     showToast('Report submitted! Task progress updated.','ok');
     setTimeout(()=>resetForm(),2500);
   }catch(e){showToast('Error: '+e.message,'err');console.error(e);}
@@ -503,7 +595,7 @@ function resetForm(){
   ['civil','telecoms','elec','plant','sup','sub'].forEach(k=>{const el=document.getElementById('w-'+k);if(el)el.value=0;});
   document.querySelectorAll('input[name="weather"]').forEach(r=>r.checked=false);
   document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));
-  projectTasks=[];renderTaskQtyRows();updateSummary();goStep(0);
+  projectTasks=[];selectedPhotos=[];renderPhotoGrid();renderTaskQtyRows();updateSummary();goStep(0);
 }
 
 init();

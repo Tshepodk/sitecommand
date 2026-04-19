@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Variation Orders</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;min-height:100vh}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:10;flex-wrap:wrap}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.shell{max-width:1100px;margin:0 auto;padding:1.5rem}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#e8861a}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-sm{padding:4px 10px;font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1rem}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1.1rem;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.s-amber::before{background:var(--accent)}.s-blue::before{background:var(--blue)}.s-green::before{background:var(--green)}.s-red::before{background:var(--red)}.s-teal::before{background:var(--teal)}
+.stat-n{font-family:var(--font-d);font-size:26px;font-weight:700;line-height:1;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.bg{background:rgba(34,197,94,0.12);color:#4ade80}.ba{background:rgba(245,166,35,0.12);color:var(--accent)}.br{background:rgba(239,68,68,0.12);color:#f87171}.bb{background:rgba(59,130,246,0.12);color:#60a5fa}.bt{background:rgba(20,184,166,0.12);color:#2dd4bf}.bp{background:rgba(168,85,247,0.12);color:#c084fc}.bgr{background:rgba(139,144,160,0.12);color:var(--text2)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}
+.modal-close:hover{color:var(--text);background:var(--bg3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;width:100%;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-textarea{resize:vertical;min-height:70px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 16px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}.fg2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+  <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Variation Orders</span>
+  <select style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;color:var(--text);font-family:var(--font-b);font-size:12px;outline:none;margin-left:8px" id="proj-filter" onchange="renderVOs()"><option value="">All Projects</option></select>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <a href="index.html" class="btn btn-ghost">&#8592; Dashboard</a>
+    <button class="btn btn-primary" onclick="openModal()">+ New Variation</button>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="stats-grid" id="vo-stats"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Variation Orders Register</div>
+      <button class="btn btn-ghost btn-sm" onclick="dlCSV()">&#128229; CSV</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>VO No.</th><th>Project</th><th>Title</th><th>Type</th><th>Submitted</th><th>Amount (R)</th><th>Cost Impact (R)</th><th>Submitted By</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="vo-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Summary by project -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Impact by Project</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Project</th><th>Total VOs</th><th>Approved</th><th>Pending</th><th>Approved Value (R)</th><th>Approved Cost Impact (R)</th><th>Net Margin Impact</th></tr></thead>
+        <tbody id="vo-summary"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: New/Edit VO -->
+<div class="modal-bg" id="modal-vo">
+  <div class="modal">
+    <div class="modal-title"><span id="vo-modal-title">New Variation Order</span><button class="modal-close" onclick="closeModal()">&#10005;</button></div>
+    <input type="hidden" id="vo-id"/>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Project *</label><select class="form-select" id="vo-project"></select></div>
+      <div class="form-group"><label class="form-label">VO Number *</label><input class="form-input" id="vo-number" placeholder="e.g. VO-001"/></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Title *</label><input class="form-input" id="vo-title" placeholder="Brief description of variation"/></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="vo-type">
+          <option>Addition</option><option>Omission</option><option>Substitution</option><option>Dayworks</option><option>Provisional Sum</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="vo-status">
+          <option value="pending">Pending</option><option value="under_review">Under Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Amount (R) — Revenue Impact</label><input class="form-input" type="number" id="vo-amount" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Cost Impact (R)</label><input class="form-input" type="number" id="vo-cost" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Submitted Date</label><input class="form-input" type="date" id="vo-submitted"/></div>
+      <div class="form-group"><label class="form-label">Approved Date</label><input class="form-input" type="date" id="vo-approved"/></div>
+      <div class="form-group"><label class="form-label">Submitted By</label><input class="form-input" id="vo-submitted-by" placeholder="Name"/></div>
+      <div class="form-group"><label class="form-label">Approved By</label><input class="form-input" id="vo-approved-by" placeholder="Name"/></div>
+      <div class="form-group"><label class="form-label">Client Reference</label><input class="form-input" id="vo-client-ref" placeholder="e.g. CLIENT-VO-007"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="vo-desc" placeholder="Detailed scope of the variation..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="vo-save-btn" onclick="saveVO()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allProjects=[],allVOs=[];
+const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3000);};
+
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+async function sbDel(t,id){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text());}
+
+async function loadAll(){
+  [allProjects,allVOs]=await Promise.all([
+    sbGet('projects','order=name.asc&active=eq.true'),
+    sbGet('variation_orders','order=created_at.desc&active=eq.true')
+  ]);
+  const psel=document.getElementById('proj-filter');
+  const cur=psel.value;
+  psel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+  renderVOs();
+}
+
+const TYPE_B={Addition:'bg',Omission:'br',Substitution:'ba',Dayworks:'bt',Provisional:'bp'};
+const STAT_B={pending:'ba',under_review:'bb',approved:'bg',rejected:'br'};
+
+function getFiltered(){const f=document.getElementById('proj-filter').value;return f?allVOs.filter(v=>v.project_name===f):allVOs;}
+
+function renderVOs(){
+  const vos=getFiltered();
+  const total=vos.length;const approved=vos.filter(v=>v.status==='approved').length;
+  const pending=vos.filter(v=>v.status==='pending'||v.status==='under_review').length;
+  const totalVal=vos.filter(v=>v.status==='approved').reduce((a,v)=>a+(v.amount||0),0);
+  const totalCost=vos.filter(v=>v.status==='approved').reduce((a,v)=>a+(v.cost_impact||0),0);
+  document.getElementById('vo-stats').innerHTML=`
+    <div class="stat s-amber"><div class="stat-n" style="color:var(--accent)">${total}</div><div class="stat-l">Total VOs</div></div>
+    <div class="stat s-green"><div class="stat-n" style="color:var(--green)">${approved}</div><div class="stat-l">Approved</div></div>
+    <div class="stat s-blue"><div class="stat-n" style="color:var(--blue)">${pending}</div><div class="stat-l">Pending / Review</div></div>
+    <div class="stat s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(totalVal)}</div><div class="stat-l">Approved Value</div></div>
+    <div class="stat s-red"><div class="stat-n" style="color:var(--red);font-size:18px">${fmt(totalCost)}</div><div class="stat-l">Cost Impact</div></div>`;
+  document.getElementById('vo-table').innerHTML=vos.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No variation orders. Click <strong style="color:var(--accent)">+ New Variation</strong> to add one.</td></tr>`:vos.map(v=>`<tr>
+    <td><span style="font-family:var(--font-d);font-weight:800;color:var(--accent)">${v.vo_number}</span></td>
+    <td style="color:var(--text2);font-size:12px">${v.project_name}</td>
+    <td><div style="font-weight:500">${v.title}</div>${v.description?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${v.description.slice(0,60)}${v.description.length>60?'...':''}</div>`:''}</td>
+    <td><span class="badge ${TYPE_B[v.type]||'bgr'}">${v.type}</span></td>
+    <td style="color:var(--text2);font-size:12px">${v.submitted_date||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:${(v.amount||0)>=0?'var(--green)':'var(--red)'}">${fmt(v.amount)}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--red)">${fmt(v.cost_impact)}</td>
+    <td style="color:var(--text2);font-size:12px">${v.submitted_by||'—'}</td>
+    <td><span class="badge ${STAT_B[v.status]||'bgr'}">${v.status}</span></td>
+    <td><div style="display:flex;gap:4px">
+      <button class="btn btn-ghost btn-sm" onclick='openModal(${JSON.stringify(v)})'>Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="delVO(${v.id})">Del</button>
+    </div></td>
+  </tr>`).join('');
+
+  // Summary by project
+  const byProj={};allProjects.forEach(p=>{
+    const pvos=allVOs.filter(v=>v.project_name===p.name);
+    const app=pvos.filter(v=>v.status==='approved');
+    byProj[p.name]={total:pvos.length,approved:app.length,pending:pvos.filter(v=>v.status==='pending'||v.status==='under_review').length,value:app.reduce((a,v)=>a+(v.amount||0),0),cost:app.reduce((a,v)=>a+(v.cost_impact||0),0)};
+  });
+  document.getElementById('vo-summary').innerHTML=allProjects.map(p=>{
+    const d=byProj[p.name]||{total:0,approved:0,pending:0,value:0,cost:0};
+    const net=d.value-d.cost;
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div></td>
+      <td style="font-family:var(--font-d);font-weight:700">${d.total}</td>
+      <td><span class="badge bg">${d.approved}</span></td>
+      <td><span class="badge ba">${d.pending}</span></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--green)">${fmt(d.value)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--red)">${fmt(d.cost)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${net>=0?'var(--green)':'var(--red)'}">${fmt(net)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openModal(vo=null){
+  const psel=document.getElementById('vo-project');
+  psel.innerHTML=allProjects.map(p=>`<option value="${p.name}"${vo&&vo.project_name===p.name?' selected':''}>${p.name}</option>`).join('');
+  document.getElementById('vo-id').value=vo?vo.id:'';
+  document.getElementById('vo-modal-title').textContent=vo?'Edit Variation Order':'New Variation Order';
+  const fields={number:'vo_number',title:'title',type:'type',status:'status',amount:'amount',cost:'cost_impact',submitted:'submitted_date',approved:'approved_date','submitted-by':'submitted_by','approved-by':'approved_by','client-ref':'client_ref',desc:'description'};
+  Object.entries(fields).forEach(([fid,key])=>{const el=document.getElementById('vo-'+fid);if(el)el.value=vo&&vo[key]!=null?vo[key]:'';});
+  if(!vo){document.getElementById('vo-submitted').value=new Date().toISOString().split('T')[0];}
+  document.getElementById('modal-vo').classList.add('open');
+  setTimeout(()=>document.getElementById('vo-number').focus(),100);
+}
+function closeModal(){document.getElementById('modal-vo').classList.remove('open');}
+
+async function saveVO(){
+  const title=document.getElementById('vo-title').value.trim();
+  const number=document.getElementById('vo-number').value.trim();
+  const project=document.getElementById('vo-project').value;
+  if(!title||!number||!project){showToast('Title, VO number and project are required','err');return;}
+  const btn=document.getElementById('vo-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
+  const payload={project_name:project,vo_number:number,title,description:document.getElementById('vo-desc').value.trim(),type:document.getElementById('vo-type').value,status:document.getElementById('vo-status').value,amount:parseFloat(document.getElementById('vo-amount').value)||0,cost_impact:parseFloat(document.getElementById('vo-cost').value)||0,submitted_date:document.getElementById('vo-submitted').value||null,approved_date:document.getElementById('vo-approved').value||null,submitted_by:document.getElementById('vo-submitted-by').value.trim(),approved_by:document.getElementById('vo-approved-by').value.trim(),client_ref:document.getElementById('vo-client-ref').value.trim(),active:true};
+  try{
+    const id=document.getElementById('vo-id').value;
+    if(id){await sbPatch('variation_orders',id,payload);showToast('Variation order updated');}
+    else{await sbPost('variation_orders',payload);showToast('Variation order created');}
+    closeModal();await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save';
+}
+
+async function delVO(id){
+  if(!confirm('Delete this variation order?'))return;
+  try{await sbPatch('variation_orders',id,{active:false});showToast('Deleted');await loadAll();}
+  catch(e){showToast('Delete failed','err');}
+}
+
+function dlCSV(){
+  const vos=getFiltered();
+  const rows=[['VO No.','Project','Title','Type','Submitted','Amount (R)','Cost Impact (R)','Submitted By','Status','Description'].join(',')];
+  vos.forEach(v=>{const esc=s=>String(s||'').includes(',')?'"'+String(s||'').replace(/"/g,'""')+'"':String(s||'');rows.push([esc(v.vo_number),esc(v.project_name),esc(v.title),esc(v.type),esc(v.submitted_date),v.amount||0,v.cost_impact||0,esc(v.submitted_by),esc(v.status),esc(v.description)].join(','));});
+  const b=new Blob(['\uFEFF'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SiteCommand_VOs_'+new Date().toISOString().split('T')[0]+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+document.getElementById('modal-vo').addEventListener('click',function(e){if(e.target===this)closeModal();});
+loadAll();
+</script>
+</body>
+</html>

@@ -150,6 +150,20 @@ tr:hover td{background:var(--bg3)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.notif-bell{position:relative;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px;transition:all 0.15s}
+.notif-bell:hover{border-color:var(--accent);color:var(--accent)}
+.notif-count{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;display:none}
+.notif-count.show{display:block}
+.notif-panel{display:none;position:fixed;top:60px;right:1rem;width:340px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:50;max-height:420px;overflow-y:auto}
+.notif-panel.open{display:block}
+.notif-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.notif-item{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s}
+.notif-item:hover{background:var(--bg3)}
+.notif-item.unread{border-left:3px solid var(--accent)}
+.notif-item.critical{border-left-color:var(--red)}
+.notif-item.warning{border-left-color:var(--accent)}
+.user-chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer}
+.user-chip:hover{border-color:var(--accent);color:var(--accent)}
 @media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px auto 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}.fg2,.fg3{grid-template-columns:1fr}.task-summary{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -162,6 +176,16 @@ tr:hover td{background:var(--bg3)}
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <a href="intake.html" class="btn-intake">&#128203; Daily Intake</a>
       <button style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px" onclick="loadAllData()" title="Refresh">&#8635;</button>
+      <div class="notif-bell" onclick="toggleNotif()" title="Notifications">&#128276;<span class="notif-count" id="notif-count">0</span></div>
+      <div class="user-chip" id="user-chip" onclick="signOut()"><span>&#128100;</span><span id="user-name">...</span><span style="font-size:10px;color:var(--text3)">Sign out</span></div>
+    </div>
+    <!-- Notification panel -->
+    <div class="notif-panel" id="notif-panel">
+      <div class="notif-header">
+        <span style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Notifications</span>
+        <button onclick="markAllRead()" style="background:none;border:none;color:var(--teal);font-size:12px;cursor:pointer;font-family:var(--font-d);font-weight:700;letter-spacing:0.04em;text-transform:uppercase">Mark all read</button>
+      </div>
+      <div id="notif-list"><div style="padding:1rem;color:var(--text3);font-size:13px;text-align:center">Loading...</div></div>
     </div>
   </div>
   <div class="sidebar">
@@ -189,7 +213,10 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">More</div>
       <a href="reports.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128202;</span>Reports</a>
-      <a href="project_intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128196;</span>New Project Form</a>
+      <a href="project_intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128196;</span>New Project</a>
+      <a href="gantt.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128200;</span>Gantt Schedule</a>
+      <a href="variations.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128260;</span>Variations</a>
+      <a href="login.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128274;</span>Sign In / Out</a>
     </div>
     <div class="sidebar-footer"><div class="nav-item" style="font-size:12px"><span class="nav-icon">&#129302;</span>AI Assistant</div></div>
   </div>
@@ -552,6 +579,104 @@ const sbGet=(t,q)=>sb('GET',t,null,q);
 const sbPost=(t,d)=>sb('POST',t,d,'');
 const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
+// ── Auth guard ────────────────────────────────────────────────────────────────
+function getSession(){
+  try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}
+}
+function checkAuth(){
+  const sess=getSession();
+  if(!sess||sess.expires_at<Date.now()){
+    // Soft auth — show user as guest if no session (allows offline access)
+    document.getElementById('user-name').textContent='Guest';
+    return null;
+  }
+  const name=sess.user?.user_metadata?.full_name||sess.user?.email||'User';
+  document.getElementById('user-name').textContent=name.split(' ')[0];
+  return sess;
+}
+function signOut(){
+  if(!confirm('Sign out of SiteCommand?'))return;
+  localStorage.removeItem('sc_session');
+  window.location.href='login.html';
+}
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+let allNotifications=[];
+function toggleNotif(){
+  const p=document.getElementById('notif-panel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open'))loadNotifications();
+}
+async function loadNotifications(){
+  try{
+    allNotifications=await sbGet('notifications','order=created_at.desc&limit=20');
+    renderNotifications();
+    const unread=allNotifications.filter(n=>!n.read).length;
+    const cnt=document.getElementById('notif-count');
+    cnt.textContent=unread;
+    cnt.className='notif-count'+(unread>0?' show':'');
+  }catch(e){console.error('Notifications error:',e);}
+}
+function renderNotifications(){
+  const el=document.getElementById('notif-list');
+  if(!allNotifications.length){el.innerHTML='<div style="padding:1rem;color:var(--text3);font-size:13px;text-align:center">No notifications</div>';return;}
+  el.innerHTML=allNotifications.map(n=>`
+    <div class="notif-item ${n.read?'':'unread'} ${n.severity}" onclick="markRead(${n.id})">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <span style="font-size:16px;flex-shrink:0">${n.type==='budget_alert'?'💰':n.type==='hse_incident'?'⚠️':n.type==='variation'?'📋':'🔔'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:${n.read?'var(--text2)':'var(--text)'}">${n.title}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${n.message||''}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">${n.project_name||''} — ${new Date(n.created_at).toLocaleDateString('en-ZA')}</div>
+        </div>
+        ${!n.read?'<div style="width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px"></div>':''}
+      </div>
+    </div>`).join('');
+}
+async function markRead(id){
+  try{
+    await sbPatch('notifications',id,{read:true,read_at:new Date().toISOString()});
+    await loadNotifications();
+  }catch(e){}
+}
+async function markAllRead(){
+  try{
+    await Promise.all(allNotifications.filter(n=>!n.read).map(n=>sbPatch('notifications',n.id,{read:true,read_at:new Date().toISOString()})));
+    await loadNotifications();
+    document.getElementById('notif-panel').classList.remove('open');
+  }catch(e){}
+}
+
+// Auto-generate budget alert notifications
+async function checkBudgetAlerts(){
+  const pc=bpc();
+  const alerts=allProjects.filter(p=>{
+    const total=(p.contract_spend||0)+(pc[p.name]||{}).totalCost||0;
+    const pct=p.budget>0?Math.round(total/p.budget*100):0;
+    return pct>=75;
+  });
+  for(const p of alerts){
+    const total=(p.contract_spend||0)+((pc[p.name]||{}).totalCost||0);
+    const pct=p.budget>0?Math.round(total/p.budget*100):0;
+    // Check if notification already exists for this threshold
+    const exists=allNotifications.some(n=>n.project_name===p.name&&n.type==='budget_alert'&&!n.read);
+    if(!exists&&pct>=90){
+      try{
+        await sbPost('notifications',{project_name:p.name,type:'budget_alert',severity:pct>100?'critical':'warning',title:`Budget ${pct>100?'Exceeded':'Alert'} — ${p.name}`,message:`Project spend is at ${pct}% of budget. ${pct>100?'Budget has been exceeded.':'Review costs urgently.'}`,triggered_by:'system',read:false});
+      }catch(e){}
+    }
+  }
+}
+
+// Close notif panel on outside click
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('notif-panel');
+  const bell=panel.previousElementSibling;
+  if(panel.classList.contains('open')&&!panel.contains(e.target)&&!bell.contains(e.target)){
+    panel.classList.remove('open');
+  }
+});
+
 async function loadAllData(){
   try{
     [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats,allRisks,allRevenue]=await Promise.all([
@@ -568,6 +693,8 @@ async function loadAllData(){
     document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
     document.getElementById('proj-badge').textContent=allProjects.length;
+    loadNotifications();
+    checkBudgetAlerts();
     document.getElementById('task-badge').textContent=allTasks.filter(t=>t.status!=='complete').length;
     document.getElementById('worker-badge').textContent=allWorkers.length;
     document.getElementById('equip-badge').textContent=allEquipment.length;
@@ -1463,6 +1590,8 @@ function downloadJSON(){
 
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 setInterval(loadAllData,30000);
+setInterval(loadNotifications,60000);
+checkAuth();
 loadAllData().then(()=>renderDashboard());
 </script>
 

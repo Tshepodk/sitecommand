@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Gantt Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:13px;min-height:100vh}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:20}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#e8861a}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.form-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;color:var(--text);font-family:var(--font-b);font-size:12px;outline:none}
+.form-select:focus{border-color:var(--accent)}
+.shell{padding:1.25rem}
+/* Gantt layout */
+.gantt-wrap{overflow-x:auto;overflow-y:visible}
+.gantt-grid{display:grid;min-width:800px}
+.gantt-row{display:flex;align-items:center;min-height:44px;border-bottom:1px solid var(--border);transition:background 0.12s}
+.gantt-row:hover{background:var(--bg3)}
+.gantt-row.header-row{background:var(--bg2);font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);position:sticky;top:52px;z-index:10;border-bottom:1px solid var(--border2)}
+.gantt-row.project-row{background:var(--bg3);font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent);border-bottom:1px solid var(--border2)}
+.task-label{width:260px;min-width:260px;padding:6px 12px;border-right:1px solid var(--border)}
+.task-meta{width:80px;min-width:80px;padding:6px 8px;border-right:1px solid var(--border);text-align:center}
+.task-bar-area{flex:1;padding:4px 8px;position:relative;min-height:44px;display:flex;align-items:center}
+.gantt-month-header{display:flex;border-right:1px solid var(--border)}
+.month-cell{border-right:1px solid var(--border);padding:4px 6px;font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);white-space:nowrap}
+/* Task bar */
+.g-bar{height:22px;border-radius:4px;position:absolute;display:flex;align-items:center;padding:0 8px;font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:rgba(255,255,255,0.9);overflow:hidden;white-space:nowrap;cursor:pointer;transition:opacity 0.15s;z-index:2}
+.g-bar:hover{opacity:0.85}
+.g-progress{position:absolute;left:0;top:0;bottom:0;border-radius:4px;opacity:0.5}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:0.6;z-index:5}
+/* Badge */
+.badge{display:inline-flex;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.bg{background:rgba(34,197,94,0.12);color:#4ade80}
+.ba{background:rgba(245,166,35,0.12);color:var(--accent)}
+.br{background:rgba(239,68,68,0.12);color:#f87171}
+.bb{background:rgba(59,130,246,0.12);color:#60a5fa}
+.bgr{background:rgba(139,144,160,0.12);color:var(--text2)}
+/* Legend */
+.legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}
+.modal-close:hover{color:var(--text);background:var(--bg3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:0.75rem}
+.form-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.form-input{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:12px;outline:none;width:100%}
+.form-input:focus{border-color:var(--accent)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 16px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+  <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Gantt Schedule</span>
+  <select class="form-select" id="proj-filter" onchange="renderGantt()" style="margin-left:8px">
+    <option value="">All Projects</option>
+  </select>
+  <select class="form-select" id="view-months" onchange="renderGantt()">
+    <option value="6">6 months</option>
+    <option value="12" selected>12 months</option>
+    <option value="18">18 months</option>
+    <option value="24">24 months</option>
+  </select>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-ghost" onclick="loadAll()">&#8635;</button>
+    <a href="index.html" class="btn btn-ghost">&#8592; Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Construction</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Telecoms</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Electrical</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Civil / Survey</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>HSE</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.2)"></div>Progress fill</div>
+      <div class="legend-item"><div style="width:2px;height:14px;background:var(--accent)"></div>Today</div>
+    </div>
+    <button class="btn btn-primary" onclick="openEditModal()">+ Add Task Dates</button>
+  </div>
+  <div id="gantt-container"><div style="color:var(--text3);font-size:13px;text-align:center;padding:3rem"><span class="spinner"></span> Loading schedule...</div></div>
+</div>
+
+<!-- Edit task modal -->
+<div class="modal-bg" id="modal-task">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-task-title">Edit Task Schedule</span><button class="modal-close" onclick="closeModal()">&#10005;</button></div>
+    <input type="hidden" id="edit-task-id"/>
+    <div class="form-group"><label class="form-label">Task</label><select class="form-input" id="edit-task-sel" onchange="onTaskSel()"></select></div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Planned Start</label><input class="form-input" type="date" id="edit-pstart"/></div>
+      <div class="form-group"><label class="form-label">Planned End</label><input class="form-input" type="date" id="edit-pend"/></div>
+      <div class="form-group"><label class="form-label">Actual Start</label><input class="form-input" type="date" id="edit-astart"/></div>
+      <div class="form-group"><label class="form-label">Actual End</label><input class="form-input" type="date" id="edit-aend"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label>
+      <select class="form-input" id="edit-status">
+        <option value="not-started">Not Started</option>
+        <option value="in-progress">In Progress</option>
+        <option value="complete">Complete</option>
+        <option value="blocked">Blocked</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveTask()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allProjects=[],allTasks=[];
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3000);};
+
+const TYPE_COLORS={Civil:'var(--teal)',Structural:'var(--accent)',Construction:'var(--accent)',Electrical:'var(--purple)',Telecoms:'var(--blue)',HSE:'var(--red)',Survey:'var(--teal)',Admin:'var(--text3)',Plumbing:'var(--teal)',Cabling:'var(--blue)',Roads:'var(--accent)'};
+const STATUS_BADGE={'not-started':'bgr','in-progress':'bb',complete:'bg',blocked:'br'};
+
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+
+async function loadAll(){
+  try{
+    [allProjects,allTasks]=await Promise.all([
+      sbGet('projects','order=created_at.asc&active=eq.true'),
+      sbGet('project_tasks','order=project_name.asc,created_at.asc&active=eq.true')
+    ]);
+    // Populate project filter
+    const sel=document.getElementById('proj-filter');
+    const cur=sel.value;
+    sel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+    // Populate task selector in modal
+    const tsel=document.getElementById('edit-task-sel');
+    tsel.innerHTML=allTasks.map(t=>`<option value="${t.id}">${t.project_name} — ${t.title}</option>`).join('');
+    renderGantt();
+  }catch(e){console.error(e);document.getElementById('gantt-container').innerHTML='<div style="color:var(--red);text-align:center;padding:2rem">Error loading data: '+e.message+'</div>';}
+}
+
+function renderGantt(){
+  const projFilter=document.getElementById('proj-filter').value;
+  const months=parseInt(document.getElementById('view-months').value)||12;
+  const tasks=projFilter?allTasks.filter(t=>t.project_name===projFilter):allTasks;
+  const projs=projFilter?allProjects.filter(p=>p.name===projFilter):allProjects;
+
+  if(!tasks.length&&!projs.length){document.getElementById('gantt-container').innerHTML='<div style="color:var(--text3);text-align:center;padding:3rem">No tasks with schedule dates. Click <strong style="color:var(--accent)">+ Add Task Dates</strong> to get started.</div>';return;}
+
+  // Determine date range
+  const today=new Date();today.setHours(0,0,0,0);
+  // Start from first task date or 3 months ago
+  let startD=new Date(today);startD.setMonth(startD.getMonth()-1);
+  tasks.forEach(t=>{if(t.planned_start){const d=new Date(t.planned_start);if(d<startD)startD=d;}});
+  startD.setDate(1); // snap to month start
+  const endD=new Date(startD);endD.setMonth(endD.getMonth()+months);
+
+  // Build month columns
+  const monthCols=[];let cur=new Date(startD);
+  while(cur<endD){monthCols.push(new Date(cur));cur.setMonth(cur.getMonth()+1);}
+  const totalDays=(endD-startD)/(1000*60*60*24);
+  const dayPct=d=>Math.max(0,Math.min(100,((d-startD)/(1000*60*60*24))/totalDays*100));
+
+  const CELL_W=Math.max(40,Math.round(800/monthCols.length));
+  const barAreaW=CELL_W*monthCols.length;
+
+  // Today line position
+  const todayPct=dayPct(today);
+
+  let html=`<div class="gantt-wrap"><div style="display:flex;min-width:${260+80+barAreaW}px">`;
+  // Header
+  html+=`<div style="width:260px;min-width:260px;border-right:1px solid var(--border2);background:var(--bg2);padding:8px 12px;font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);position:sticky;left:0;z-index:10">Task / Work Package</div>`;
+  html+=`<div style="width:80px;min-width:80px;border-right:1px solid var(--border2);background:var(--bg2);padding:8px 8px;font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);text-align:center">Progress</div>`;
+  html+=`<div style="flex:1;background:var(--bg2);display:flex;border-bottom:1px solid var(--border2);overflow:hidden">`;
+  monthCols.forEach(m=>{
+    const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.getMonth()];
+    const yr=m.getFullYear().toString().slice(2);
+    html+=`<div style="width:${CELL_W}px;min-width:${CELL_W}px;border-right:1px solid var(--border);padding:8px 4px;font-family:var(--font-d);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${m.getMonth()===today.getMonth()&&m.getFullYear()===today.getFullYear()?'var(--accent)':'var(--text3)'};text-align:center">${mn} ${yr}</div>`;
+  });
+  html+='</div></div>';
+
+  // Group tasks by project
+  projs.forEach(proj=>{
+    const projTasks=tasks.filter(t=>t.project_name===proj.name);
+    // Project header row
+    html+=`<div style="display:flex;min-width:${260+80+barAreaW}px;background:var(--bg3);border-bottom:1px solid var(--border2)">`;
+    html+=`<div style="width:260px;min-width:260px;padding:8px 12px;border-right:1px solid var(--border2);font-family:var(--font-d);font-size:12px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:var(--accent);position:sticky;left:0;background:var(--bg3)">${proj.name}</div>`;
+    html+=`<div style="width:80px;min-width:80px;border-right:1px solid var(--border2)"></div>`;
+    html+=`<div style="flex:1;position:relative;min-height:36px"></div></div>`;
+
+    if(!projTasks.length){
+      html+=`<div style="display:flex;min-width:${260+80+barAreaW}px;border-bottom:1px solid var(--border)"><div style="width:260px;min-width:260px;padding:8px 12px;border-right:1px solid var(--border);color:var(--text3);font-size:12px;font-style:italic">No scheduled tasks</div><div style="width:80px;min-width:80px;border-right:1px solid var(--border)"></div><div style="flex:1"></div></div>`;
+    }
+
+    projTasks.forEach(t=>{
+      const hasDates=t.planned_start&&t.planned_end;
+      const pct=parseFloat(t.progress||0);
+      const color=TYPE_COLORS[t.type]||'var(--accent)';
+      const statusB=STATUS_BADGE[t.status]||'bgr';
+
+      html+=`<div style="display:flex;min-width:${260+80+barAreaW}px;border-bottom:1px solid var(--border);min-height:44px;cursor:pointer" onclick="openEditModal(${t.id})" title="Click to edit schedule">`;
+      html+=`<div style="width:260px;min-width:260px;padding:8px 12px;border-right:1px solid var(--border);position:sticky;left:0;background:var(--bg2)">
+        <div style="font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px">${t.type}${t.assigned_to?' — '+t.assigned_to:''}</div>
+      </div>`;
+      html+=`<div style="width:80px;min-width:80px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px">
+        <span style="font-family:var(--font-d);font-size:15px;font-weight:800;color:${pct>=90?'var(--green)':pct>=50?'var(--blue)':'var(--accent)'}">${pct}%</span>
+        <span class="badge ${statusB}" style="font-size:9px">${t.status}</span>
+      </div>`;
+      html+=`<div style="flex:1;position:relative;min-height:44px;display:flex;align-items:center">`;
+      // Today line
+      if(todayPct>=0&&todayPct<=100)html+=`<div class="g-today" style="left:${todayPct}%"></div>`;
+      // Month grid lines
+      monthCols.forEach((_,i)=>html+=`<div style="position:absolute;left:${(i/monthCols.length)*100}%;top:0;bottom:0;width:1px;background:var(--border);opacity:0.5"></div>`);
+      if(hasDates){
+        const ps=new Date(t.planned_start);const pe=new Date(t.planned_end);
+        const pl=dayPct(ps);const pw=Math.max(1,dayPct(pe)-pl);
+        // Planned bar
+        html+=`<div class="g-bar" style="left:${pl}%;width:${pw}%;background:${color};min-width:4px">
+          <div class="g-progress" style="width:${pct}%;background:rgba(255,255,255,0.3)"></div>
+          <span style="position:relative;z-index:1;font-size:10px;overflow:hidden;text-overflow:ellipsis">${pw>8?t.title:''}</span>
+        </div>`;
+        // Actual bar if exists
+        if(t.actual_start&&t.actual_end){
+          const as=new Date(t.actual_start);const ae=new Date(t.actual_end);
+          const al=dayPct(as);const aw=Math.max(1,dayPct(ae)-al);
+          html+=`<div style="position:absolute;left:${al}%;width:${aw}%;height:6px;bottom:6px;background:var(--green);border-radius:3px;opacity:0.7;min-width:4px" title="Actual: ${t.actual_start} - ${t.actual_end}"></div>`;
+        }
+      } else {
+        html+=`<div style="padding:0 12px;font-size:11px;color:var(--text3);font-style:italic">No dates set — click to add</div>`;
+      }
+      html+=`</div></div>`;
+    });
+  });
+
+  html+='</div>';
+  document.getElementById('gantt-container').innerHTML=html;
+}
+
+function openEditModal(taskId=null){
+  const sel=document.getElementById('edit-task-sel');
+  if(taskId){
+    sel.value=taskId;
+    onTaskSel();
+  } else {
+    document.getElementById('edit-pstart').value='';document.getElementById('edit-pend').value='';
+    document.getElementById('edit-astart').value='';document.getElementById('edit-aend').value='';
+  }
+  document.getElementById('modal-task-title').textContent=taskId?'Edit Task Schedule':'Add Task Dates';
+  document.getElementById('modal-task').classList.add('open');
+}
+
+function onTaskSel(){
+  const id=document.getElementById('edit-task-sel').value;
+  const task=allTasks.find(t=>t.id==id);
+  if(!task)return;
+  document.getElementById('edit-pstart').value=task.planned_start||'';
+  document.getElementById('edit-pend').value=task.planned_end||'';
+  document.getElementById('edit-astart').value=task.actual_start||'';
+  document.getElementById('edit-aend').value=task.actual_end||'';
+  document.getElementById('edit-status').value=task.status||'not-started';
+}
+
+function closeModal(){document.getElementById('modal-task').classList.remove('open');}
+
+async function saveTask(){
+  const id=document.getElementById('edit-task-sel').value;
+  if(!id){showToast('Select a task','err');return;}
+  const btn=document.getElementById('save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
+  try{
+    await sbPatch('project_tasks',id,{
+      planned_start:document.getElementById('edit-pstart').value||null,
+      planned_end:document.getElementById('edit-pend').value||null,
+      actual_start:document.getElementById('edit-astart').value||null,
+      actual_end:document.getElementById('edit-aend').value||null,
+      status:document.getElementById('edit-status').value
+    });
+    showToast('Task schedule saved');
+    closeModal();
+    await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save';
+}
+
+loadAll();
+</script>
+</body>
+</html>
