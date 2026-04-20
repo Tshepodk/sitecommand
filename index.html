@@ -147,6 +147,27 @@ tr:hover td{background:var(--bg3)}
 .bpct-warn{background:rgba(245,166,35,0.15);color:var(--accent)}
 .bpct-danger{background:rgba(239,68,68,0.15);color:#f87171}
 .bpct-over{background:rgba(239,68,68,0.25);color:#f87171;animation:pulse-red 1.5s infinite}
+/* PMO Hub tabs */
+.pmo-tab{background:none;border:none;border-bottom:3px solid transparent;padding:8px 14px;font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;margin-bottom:-1px}
+.pmo-tab:hover{color:var(--text2)}
+.pmo-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.pmo-tab-content{display:none}
+.pmo-tab-content.active{display:block}
+/* PMO RAG dots */
+.rag-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0}
+.rag-g{background:var(--green)}
+.rag-a{background:var(--accent);animation:pulse 2s infinite}
+.rag-r{background:var(--red);animation:pulse 1s infinite}
+/* Gate step */
+.gate-pipe{display:flex;align-items:center;gap:0;margin:8px 0}
+.gate-stp{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;position:relative}
+.gate-stp:not(:last-child)::after{content:'';position:absolute;top:12px;left:55%;width:90%;height:2px;background:var(--border2);z-index:0}
+.gate-circ{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;z-index:1;position:relative;flex-shrink:0}
+.gc-done{background:var(--green);color:#000}
+.gc-active{background:var(--accent);color:#000}
+.gc-review{background:var(--blue);color:#fff}
+.gc-pending{background:var(--bg4);border:1px solid var(--border2);color:var(--text3)}
+.gate-lbl{font-size:8px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text3);text-align:center}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
@@ -278,6 +299,7 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Overview</div>
       <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">&#9638;</span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('pmo',this)" id="nav-pmo"><span class="nav-icon">🗂</span>PMO Hub<span class="nav-badge" style="background:var(--purple);color:#fff" id="pmo-badge"></span></div>
       <div class="nav-item" onclick="showPage('projects',this)"><span class="nav-icon">&#128193;</span>Projects<span class="nav-badge nb-blue" id="proj-badge">0</span></div>
     </div>
     <div class="nav-section">
@@ -300,7 +322,6 @@ tr:hover td{background:var(--bg3)}
       <div class="nav-label">More</div>
       <a href="reports.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128202;</span>Reports</a>
       <a href="project_intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128196;</span>New Project</a>
-      <a href="pmo.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">🗂</span>PMO Hub</a>
       <a href="gantt.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128200;</span>Gantt Schedule</a>
       <a href="variations.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128260;</span>Variations</a>
       <a href="users.html" class="nav-item" data-admin-link style="text-decoration:none;display:none"><span class="nav-icon">👥</span>User Management</a>
@@ -379,6 +400,106 @@ tr:hover td{background:var(--bg3)}
         <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-dash" placeholder="Ask about task progress, costs, risks, workforce..." onkeydown="if(event.key==='Enter')askAI('dash')"/><button class="btn btn-primary btn-sm" onclick="askAI('dash')">Ask &#8599;</button></div>
         <div class="ai-response" id="ai-resp-dash"></div>
       </div>
+    </div>
+
+    <!-- PMO HUB (embedded) -->
+    <div class="page" id="page-pmo">
+      <div class="page-header">
+        <div>
+          <div class="page-title">PMO Hub</div>
+          <div class="page-sub">Portfolio intelligence — live from your project data</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="pmo.html" class="btn btn-ghost btn-sm" target="_blank">&#8599; Open Full PMO</a>
+          <button class="btn btn-ghost btn-sm" onclick="renderPMOPage()">&#8635; Refresh</button>
+        </div>
+      </div>
+
+      <!-- PMO Tab bar -->
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:1.25rem;border-bottom:1px solid var(--border);padding-bottom:0">
+        <button class="pmo-tab active" onclick="setPMOTab('portfolio',this)">🗂 Portfolio</button>
+        <button class="pmo-tab" onclick="setPMOTab('gates',this)">🚦 Stage Gates</button>
+        <button class="pmo-tab" onclick="setPMOTab('kpi',this)">📊 KPIs</button>
+        <button class="pmo-tab" onclick="setPMOTab('risks',this)">⚠️ Risks</button>
+        <button class="pmo-tab" onclick="setPMOTab('revenue',this)">💰 Revenue</button>
+        <button class="pmo-tab" onclick="setPMOTab('lessons',this)">📖 Lessons</button>
+      </div>
+
+      <!-- Portfolio tab -->
+      <div class="pmo-tab-content active" id="pmotab-portfolio">
+        <div class="stats-grid" id="pmo-port-stats" style="grid-template-columns:repeat(5,1fr)"></div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Project Health — RAG Status</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Project</th><th>RAG</th><th>Client</th><th>Progress</th><th>Budget</th><th>Risk</th><th>SPI</th><th>Stage</th><th>PM</th></tr></thead>
+            <tbody id="pmo-rag-table"></tbody></table>
+          </div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="card-header"><div class="card-title">Budget Health</div></div><div class="card-body" id="pmo-budget-bars"></div></div>
+          <div class="card"><div class="card-header"><div class="card-title">Open Risks by Category</div></div><div class="card-body" id="pmo-risk-cats"></div></div>
+        </div>
+      </div>
+
+      <!-- Stage Gates tab -->
+      <div class="pmo-tab-content" id="pmotab-gates" style="display:none">
+        <div id="pmo-gates-container"></div>
+      </div>
+
+      <!-- KPI tab -->
+      <div class="pmo-tab-content" id="pmotab-kpi" style="display:none">
+        <div class="stats-grid" id="pmo-kpi-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div class="card"><div class="card-header"><div class="card-title">KPI Scorecard</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Project</th><th>SPI</th><th>CPI</th><th>Safety</th><th>Quality</th><th>Client Sat.</th><th>Score</th></tr></thead>
+            <tbody id="pmo-kpi-table"></tbody></table>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Risks tab -->
+      <div class="pmo-tab-content" id="pmotab-risks" style="display:none">
+        <div class="stats-grid" id="pmo-risk-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div class="card"><div class="card-header"><div class="card-title">Risk Register</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Risk</th><th>Project</th><th>Category</th><th>Score</th><th>Likelihood</th><th>Impact</th><th>Owner</th><th>Status</th></tr></thead>
+            <tbody id="pmo-risks-table"></tbody></table>
+          </div></div>
+        </div>
+        <div class="card mt1"><div class="card-header"><div class="card-title">HSE Incidents (from Field Reports)</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Date</th><th>Project</th><th>Reporter</th><th>Type</th><th>Details</th></tr></thead>
+            <tbody id="pmo-hse-table"></tbody></table>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Revenue tab -->
+      <div class="pmo-tab-content" id="pmotab-revenue" style="display:none">
+        <div class="stats-grid" id="pmo-rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="pmo-rev-table"></tbody></table>
+          </div></div>
+        </div>
+        <div class="card mt1"><div class="card-header"><div class="card-title">Profitability by Project</div></div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table><thead><tr><th>Project</th><th>Contract Value</th><th>Budget</th><th>Total Spend</th><th>Revenue Billed</th><th>Revenue Received</th><th>Gross Profit</th><th>Margin</th></tr></thead>
+            <tbody id="pmo-profit-table"></tbody></table>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Lessons tab -->
+      <div class="pmo-tab-content" id="pmotab-lessons" style="display:none">
+        <div class="stats-grid" id="pmo-lessons-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div id="pmo-lessons-list"></div>
+        <div style="margin-top:1rem;text-align:center">
+          <a href="pmo.html" class="btn btn-ghost btn-sm" target="_blank">+ Add Lesson in PMO Hub &#8599;</a>
+        </div>
+      </div>
+
     </div>
 
     <!-- PROJECTS -->
@@ -903,6 +1024,13 @@ async function loadAllData(){
     document.getElementById('proj-badge').textContent=allProjects.length;
     loadNotifications();
     checkBudgetAlerts();
+    // Update PMO hub badge
+    loadPMOData().then(()=>{
+      const fc=pmoFC();
+      const alerts=allProjects.filter(p=>pmoBP(p,fc)>=75).length;
+      const badge=document.getElementById('pmo-badge');
+      if(badge){badge.textContent=alerts||'';badge.style.display=alerts?'':'none';}
+    });
     document.getElementById('task-badge').textContent=allTasks.filter(t=>t.status!=='complete').length;
     document.getElementById('worker-badge').textContent=allWorkers.length;
     document.getElementById('equip-badge').textContent=allEquipment.length;
@@ -918,7 +1046,7 @@ async function loadAllData(){
 }
 
 function renderPage(id){
-  ({dashboard:renderDashboard,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,costs:renderCostCats,reports:renderReportsPage}[id]||Function())();
+  ({dashboard:renderDashboard,pmo:renderPMOPortfolio,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,costs:renderCostCats,reports:renderReportsPage}[id]||Function())();
 }
 
 function showPage(id,el){
@@ -1295,6 +1423,7 @@ function renderReportsPage(){
   }
   const projFilter=filterSel?filterSel.value:'';
   const filteredReports=projFilter?allReports.filter(r=>r.project===projFilter):allReports;
+  const pc=bpc();
   const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=filteredReports.reduce((a,r)=>a+(r.workers||0),0);const tt=filteredReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
   document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
   const c=document.getElementById('reports-list');
@@ -1805,6 +1934,325 @@ function updateBN(activeId){
   document.querySelectorAll('.bn-item').forEach(el=>el.classList.remove('active'));
   const el=document.getElementById(activeId);if(el)el.classList.add('active');
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// PMO HUB — renders directly from app data (no extra fetches needed)
+// ═══════════════════════════════════════════════════════════════════
+let allGates=[],allKPIs=[],allLessons=[];
+let activePMOTab='portfolio';
+
+async function loadPMOData(){
+  try{
+    [allGates,allKPIs,allLessons]=await Promise.all([
+      sbGet('stage_gates','order=project_name.asc&active=eq.true'),
+      sbGet('project_kpis','order=kpi_date.desc'),
+      sbGet('lessons_learned','order=created_at.desc&active=eq.true')
+    ]);
+  }catch(e){console.warn('PMO data load error:',e);}
+}
+
+function setPMOTab(name,el){
+  activePMOTab=name;
+  document.querySelectorAll('.pmo-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.pmo-tab-content').forEach(t=>{t.classList.remove('active');t.style.display='none';});
+  if(el)el.classList.add('active');
+  const tc=document.getElementById('pmotab-'+name);
+  if(tc){tc.classList.add('active');tc.style.display='block';}
+  renderPMOTab(name);
+}
+
+function renderPMOPage(){
+  loadPMOData().then(()=>renderPMOTab(activePMOTab));
+}
+
+function renderPMOTab(name){
+  ({portfolio:renderPMOPortfolio,gates:renderPMOGates,kpi:renderPMOKPI,risks:renderPMORisks,revenue:renderPMORevenue,lessons:renderPMOLessons}[name]||Function())();
+}
+
+// ── helpers ────────────────────────────────────────────────────────
+function pmoFC(){const fc={};allProjects.forEach(p=>fc[p.name]=0);allReports.forEach(r=>{fc[r.project]=(fc[r.project]||0)+(r.total_cost||0);});return fc;}
+function pmoAvgProg(name){const t=allTasks.filter(x=>x.project_name===name);return t.length?Math.round(t.reduce((a,x)=>a+(parseFloat(x.progress)||0),0)/t.length):0;}
+function pmoBP(p,fc){const tot=(p.contract_spend||0)+(fc[p.name]||0);return p.budget>0?Math.round(tot/p.budget*100):0;}
+function pmoLatestKPI(name){return allKPIs.filter(k=>k.project_name===name).sort((a,b)=>b.kpi_date.localeCompare(a.kpi_date))[0]||null;}
+function pmoCurrentGate(name){
+  const order=['Initiation','Planning','Execution','Monitoring','Closeout'];
+  const gates=allGates.filter(g=>g.project_name===name);
+  const approved=gates.filter(g=>g.status==='approved').map(g=>order.indexOf(g.stage)).filter(i=>i>=0);
+  if(!approved.length)return'—';
+  return order[Math.max(...approved)]||'—';
+}
+function pmoRAG(p,fc){
+  const prog=pmoAvgProg(p.name);const bp=pmoBP(p,fc);
+  const kpi=pmoLatestKPI(p.name);
+  if(bp>100||p.status==='delayed'||(kpi&&kpi.spi<0.75))return'r';
+  if(bp>=75||p.status==='at-risk'||prog<50||(kpi&&kpi.spi<0.9))return'a';
+  return'g';
+}
+function pmoKPIScore(kpi){
+  if(!kpi)return null;
+  const vals=[(kpi.spi||0)*100,(kpi.cpi||0)*100,(kpi.safety_rating||0),(kpi.quality_score||0),(kpi.client_satisfaction||0)*10].filter(v=>v>0);
+  return vals.length?Math.round(vals.reduce((a,v)=>a+v,0)/vals.length):null;
+}
+function pmoBc(pct){return pct>100?'var(--red)':pct>=90?'var(--red)':pct>=75?'var(--accent)':'var(--green)';}
+function pmoBl(pct){return pct>100?'OVER':pct>=90?'NEAR':pct>=75?'WARN':'OK';}
+function pmoBLC(pct){return pct>100?'badge-red':pct>=90?'badge-red':pct>=75?'badge-amber':'badge-green';}
+
+// ── Portfolio ──────────────────────────────────────────────────────
+function renderPMOPortfolio(){
+  const fc=pmoFC();
+  const rC={g:0,a:0,r:0};
+  allProjects.forEach(p=>{rC[pmoRAG(p,fc)]++;});
+  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const tBudget=allProjects.reduce((a,p)=>a+(p.budget||0),0);
+  const tSpend=allProjects.reduce((a,p)=>a+(p.contract_spend||0)+(fc[p.name]||0),0);
+  const tRev=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
+  const margin=tCV>0?Math.round((tCV-tBudget)/tCV*100):0;
+
+  document.getElementById('pmo-port-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Projects</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${rC.g}</div><div class="stat-l">🟢 On Track</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${rC.a}</div><div class="stat-l">🟡 At Risk</div></div>
+    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${rC.r}</div><div class="stat-l">🔴 Critical</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(tCV)}</div><div class="stat-l">Portfolio Value</div><div class="stat-sub">${margin}% target margin</div></div>`;
+
+  const ragText={g:'On Track',a:'At Risk',r:'Critical'};
+  document.getElementById('pmo-rag-table').innerHTML=allProjects.length===0
+    ?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No projects yet.</td></tr>`
+    :allProjects.map(p=>{
+      const rag=pmoRAG(p,fc);const prog=pmoAvgProg(p.name);const bp=pmoBP(p,fc);
+      const kpi=pmoLatestKPI(p.name);const gate=pmoCurrentGate(p.name);
+      const score=pmoKPIScore(kpi);
+      const pc2=pmoBc(bp);const pg2=prog>=80?'var(--green)':prog>=50?'var(--blue)':'var(--accent)';
+      return`<tr>
+        <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
+        <td><div style="display:flex;align-items:center;gap:6px"><div class="rag-dot rag-${rag}"></div><span style="font-size:11px;color:var(--text2)">${ragText[rag]}</span></div></td>
+        <td style="color:var(--text2);font-size:11px">${p.client||'—'}</td>
+        <td style="min-width:100px"><div style="display:flex;align-items:center;gap:5px"><div class="progress-lg"><div class="progress-fill" style="width:${prog}%;background:${pg2}"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${pg2};min-width:32px">${prog}%</span></div></td>
+        <td style="min-width:100px"><div style="display:flex;align-items:center;gap:5px"><div class="progress-lg"><div class="progress-fill" style="width:${Math.min(bp,100)}%;background:${pc2}"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${pc2};min-width:32px">${bp}%</span></div></td>
+        <td><span class="badge ${p.risk_level==='low'?'badge-green':p.risk_level==='medium'?'badge-amber':p.risk_level==='high'?'badge-red':'badge-purple'}">${p.risk_level||'—'}</span></td>
+        <td style="font-family:var(--font-d);font-weight:700;color:${kpi?(kpi.spi>=1?'var(--green)':kpi.spi>=0.85?'var(--accent)':'var(--red)'):'var(--text3)'}">${kpi?(kpi.spi||0).toFixed(2):'—'}</td>
+        <td><span class="badge badge-teal">${gate}</span></td>
+        <td style="color:var(--text2);font-size:11px">${p.pm||'—'}</td>
+      </tr>`;
+    }).join('');
+
+  // Budget bars
+  document.getElementById('pmo-budget-bars').innerHTML=allProjects.map(p=>{
+    const spend=(p.contract_spend||0)+(fc[p.name]||0);
+    const pct=p.budget>0?Math.round(spend/p.budget*100):0;
+    const bc=pmoBc(pct);
+    return`<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:500">${p.name}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--text3)">${fmt(spend)} / ${fmt(p.budget)}</span>
+          <span class="badge ${pmoBLC(pct)}">${pct}% ${pmoBl(pct)}</span>
+        </div>
+      </div>
+      <div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pct,100)}%;background:${bc};border-radius:4px${pct>100?';animation:pulse-red 1.5s infinite':''}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Risk categories
+  const cats={};allRisks.filter(r=>r.status==='open').forEach(r=>{cats[r.category]=(cats[r.category]||0)+1;});
+  const total=Object.values(cats).reduce((a,v)=>a+v,0);
+  document.getElementById('pmo-risk-cats').innerHTML=total===0
+    ?'<p style="color:var(--text3);font-size:13px">No open risks.</p>'
+    :Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,cnt])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px">${cat}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="progress" style="width:80px"><div class="progress-fill" style="width:${Math.round(cnt/total*100)}%;background:var(--red)"></div></div>
+          <span style="font-family:var(--font-d);font-size:14px;font-weight:700;min-width:20px;text-align:right">${cnt}</span>
+        </div>
+      </div>`).join('');
+}
+
+// ── Stage Gates ────────────────────────────────────────────────────
+function renderPMOGates(){
+  const order=['Initiation','Planning','Execution','Monitoring','Closeout'];
+  const sIcon={approved:'✅',in_review:'🔵',pending:'⏳',rejected:'❌'};
+  const sCls={approved:'gc-done',in_review:'gc-review',pending:'gc-pending',rejected:'gc-pending'};
+  document.getElementById('pmo-gates-container').innerHTML=allProjects.map(p=>{
+    const gates=allGates.filter(g=>g.project_name===p.name);
+    const byStage={};gates.forEach(g=>byStage[g.stage]=g);
+    return`<div class="card" style="margin-bottom:0.875rem">
+      <div class="card-header">
+        <div class="card-title">${p.name}</div>
+        <span style="font-size:12px;color:var(--text2)">${p.client||''}</span>
+      </div>
+      <div class="card-body">
+        <div class="gate-pipe">
+          ${order.map(stage=>{
+            const g=byStage[stage];
+            const cls=g?sCls[g.status]:'gc-pending';
+            const icon=g?sIcon[g.status]:'○';
+            return`<div class="gate-stp">
+              <div class="gate-circ ${cls}">${icon}</div>
+              <div class="gate-lbl">${stage}</div>
+              ${g&&g.approved_date?`<div style="font-size:8px;color:var(--text3)">${g.approved_date}</div>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+        ${gates.filter(g=>g.notes).slice(-1).map(g=>`<div style="margin-top:8px;font-size:11px;color:var(--text3);font-style:italic">📝 ${g.stage}: ${g.notes}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('')||'<p style="color:var(--text3)">No gate data. Run setup_v3.sql and setup_pmo.sql first.</p>';
+}
+
+// ── KPI ────────────────────────────────────────────────────────────
+function renderPMOKPI(){
+  const avgSPI=allKPIs.length?parseFloat((allKPIs.reduce((a,k)=>a+(k.spi||0),0)/allKPIs.length).toFixed(2)):0;
+  const avgCPI=allKPIs.length?parseFloat((allKPIs.reduce((a,k)=>a+(k.cpi||0),0)/allKPIs.length).toFixed(2)):0;
+  const avgSafe=allKPIs.length?Math.round(allKPIs.reduce((a,k)=>a+(k.safety_rating||0),0)/allKPIs.length):0;
+  const avgCSAT=allKPIs.length?parseFloat((allKPIs.reduce((a,k)=>a+(k.client_satisfaction||0),0)/allKPIs.length).toFixed(1)):0;
+  const spiC=v=>v>=1?'var(--green)':v>=0.85?'var(--accent)':'var(--red)';
+  document.getElementById('pmo-kpi-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:${spiC(avgSPI)}">${avgSPI.toFixed(2)}</div><div class="stat-l">Avg SPI</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:${spiC(avgCPI)}">${avgCPI.toFixed(2)}</div><div class="stat-l">Avg CPI</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${avgSafe}</div><div class="stat-l">Avg Safety</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${avgCSAT}</div><div class="stat-l">Avg Client Sat.</div></div>`;
+  document.getElementById('pmo-kpi-table').innerHTML=allProjects.map(p=>{
+    const k=pmoLatestKPI(p.name);const score=pmoKPIScore(k);
+    if(!k)return`<tr><td><div style="font-weight:500">${p.name}</div></td><td colspan="6" style="color:var(--text3);font-size:12px">No KPI data — record in PMO Hub</td></tr>`;
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${k.kpi_date}</div></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${spiC(k.spi||0)}">${(k.spi||0).toFixed(2)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${spiC(k.cpi||0)}">${(k.cpi||0).toFixed(2)}</td>
+      <td><div style="display:flex;align-items:center;gap:5px"><div class="progress" style="width:60px"><div class="progress-fill" style="width:${k.safety_rating||0}%;background:var(--green)"></div></div><span style="font-size:11px">${k.safety_rating||0}</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:5px"><div class="progress" style="width:60px"><div class="progress-fill" style="width:${k.quality_score||0}%;background:var(--blue)"></div></div><span style="font-size:11px">${k.quality_score||0}</span></div></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${(k.client_satisfaction||0)>=8?'var(--green)':(k.client_satisfaction||0)>=6?'var(--accent)':'var(--red)'}">${k.client_satisfaction||'—'}/10</td>
+      <td>${score!==null?`<div style="display:flex;align-items:center;gap:5px"><div class="progress-lg"><div class="progress-fill" style="width:${score}%;background:${score>=80?'var(--green)':score>=60?'var(--accent)':'var(--red)'}"></div></div><span style="font-family:var(--font-d);font-weight:700;color:${score>=80?'var(--green)':score>=60?'var(--accent)':'var(--red)'}">${score}</span></div>`:'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Risks ──────────────────────────────────────────────────────────
+function renderPMORisks(){
+  const open=allRisks.filter(r=>r.status==='open').length;
+  const high=allRisks.filter(r=>r.likelihood==='high'&&r.impact==='high').length;
+  const hse=allReports.filter(r=>r.hse&&r.hse!=='none');
+  document.getElementById('pmo-risk-stats').innerHTML=`
+    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${open}</div><div class="stat-l">Open Risks</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allRisks.length}</div><div class="stat-l">Total Risks</div></div>
+    <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${high}</div><div class="stat-l">High/High</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${hse.length}</div><div class="stat-l">HSE Incidents</div></div>`;
+  const lB={'low':'badge-green','medium':'badge-amber','high':'badge-red'};
+  const sB={open:'badge-red',mitigated:'badge-amber',closed:'badge-green'};
+  const scoreC=s=>s<=2?'var(--green)':s<=4?'var(--accent)':s<=6?'var(--red)':'var(--purple)';
+  document.getElementById('pmo-risks-table').innerHTML=allRisks.length===0
+    ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No risks logged yet.</td></tr>`
+    :allRisks.map(r=>`<tr>
+        <td><div style="font-weight:500">${r.title}</div>${r.mitigation?`<div style="font-size:10px;color:var(--text3);margin-top:2px">→ ${r.mitigation.slice(0,60)}${r.mitigation.length>60?'...':''}</div>`:''}</td>
+        <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
+        <td><span class="badge badge-teal">${r.category}</span></td>
+        <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:${scoreC(r.risk_score||1)}">${r.risk_score||1}</td>
+        <td><span class="badge ${lB[r.likelihood]||'badge-gray'}">${r.likelihood}</span></td>
+        <td><span class="badge ${lB[r.impact]||'badge-gray'}">${r.impact}</span></td>
+        <td style="color:var(--text2);font-size:11px">${r.owner||'—'}</td>
+        <td><span class="badge ${sB[r.status]||'badge-gray'}">${r.status}</span></td>
+      </tr>`).join('');
+  document.getElementById('pmo-hse-table').innerHTML=hse.length===0
+    ?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">✅ No HSE incidents recorded.</td></tr>`
+    :hse.sort((a,b)=>b.report_date.localeCompare(a.report_date)).map(r=>`<tr>
+        <td style="font-family:var(--font-d);font-weight:600">${r.report_date}</td>
+        <td>${r.project}</td>
+        <td style="color:var(--text2)">${r.reporter||'—'}</td>
+        <td><span class="badge badge-red">${r.hse}</span></td>
+        <td style="font-size:11px;color:var(--text2)">${r.hse_detail||'—'}</td>
+      </tr>`).join('');
+}
+
+// ── Revenue & Profitability ────────────────────────────────────────
+function renderPMORevenue(){
+  const fc=pmoFC();
+  const tBilled=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
+  const tReceived=allRevenue.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const tOutstanding=allRevenue.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
+  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  document.getElementById('pmo-rev-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(tCV)}</div><div class="stat-l">Contract Value</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(tBilled)}</div><div class="stat-l">Revenue Billed</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green);font-size:18px">${fmt(tReceived)}</div><div class="stat-l">Received</div></div>
+    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red);font-size:18px">${fmt(tOutstanding)}</div><div class="stat-l">Outstanding</div></div>`;
+  const revStatB={billed:'badge-blue',received:'badge-green',outstanding:'badge-red'};
+  const revTypeB={Invoice:'badge-blue',Payment:'badge-green',Claim:'badge-amber',Variation:'badge-purple',Retention:'badge-red',Advance:'badge-teal'};
+  document.getElementById('pmo-rev-table').innerHTML=allRevenue.length===0
+    ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet.</td></tr>`
+    :allRevenue.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
+        <td style="font-family:var(--font-d);font-weight:600">${r.entry_date}</td>
+        <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
+        <td><div style="font-weight:500">${r.description}</div></td>
+        <td><span class="badge ${revTypeB[r.type]||'badge-gray'}">${r.type}</span></td>
+        <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.amount)}</td>
+        <td><span class="badge ${revStatB[r.status]||'badge-gray'}">${r.status}</span></td>
+      </tr>`).join('');
+  document.getElementById('pmo-profit-table').innerHTML=allProjects.map(p=>{
+    const cv=p.contract_value||p.budget||0;
+    const fieldCost=fc[p.name]||0;
+    const totalCost=(p.contract_spend||0)+fieldCost;
+    const gp=cv-p.budget;
+    const margin=cv>0?Math.round(gp/cv*100):0;
+    const rev=allRevenue.filter(r=>r.project_name===p.name);
+    const billed=rev.reduce((a,r)=>a+(r.amount||0),0);
+    const received=rev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(cv)}</td>
+      <td style="color:var(--text2)">${fmt(p.budget)}</td>
+      <td style="color:${pmoBc(p.budget>0?Math.round(totalCost/p.budget*100):0)};font-family:var(--font-d);font-weight:700">${fmt(totalCost)}</td>
+      <td style="color:var(--teal)">${fmt(billed)}</td>
+      <td style="color:var(--green);font-weight:500">${fmt(received)}</td>
+      <td style="color:${gp>=0?'var(--green)':'var(--red)'};font-family:var(--font-d);font-weight:700">${fmt(gp)}</td>
+      <td style="font-family:var(--font-d);font-weight:800;color:${margin>=20?'var(--green)':margin>=10?'var(--accent)':'var(--red)'}">${margin}%</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Lessons ────────────────────────────────────────────────────────
+function renderPMOLessons(){
+  const succ=allLessons.filter(l=>l.type==='success').length;
+  const impr=allLessons.filter(l=>l.type==='improvement').length;
+  const warn=allLessons.filter(l=>l.type==='warning').length;
+  document.getElementById('pmo-lessons-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allLessons.length}</div><div class="stat-l">Lessons</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${succ}</div><div class="stat-l">Successes</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${impr}</div><div class="stat-l">Improvements</div></div>
+    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${warn}</div><div class="stat-l">Warnings</div></div>`;
+  const tIcon={success:'✅',improvement:'🔶',warning:'🔴'};
+  const impB={High:'badge-red',Medium:'badge-amber',Low:'badge-green'};
+  document.getElementById('pmo-lessons-list').innerHTML=allLessons.length===0
+    ?`<div class="card"><div class="card-body" style="text-align:center;color:var(--text3)">No lessons yet. <a href="pmo.html" style="color:var(--teal)" target="_blank">Add in PMO Hub ↗</a></div></div>`
+    :allLessons.map(l=>`
+      <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${l.type==='success'?'var(--green)':l.type==='warning'?'var(--red)':'var(--accent)'};border-radius:var(--r);padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span>${tIcon[l.type]||'📝'}</span>
+          <span style="font-weight:600;font-size:13px;flex:1">${l.title}</span>
+          <span class="badge ${impB[l.impact]||'badge-gray'}">${l.impact||''}</span>
+          <span class="badge badge-teal">${l.category}</span>
+          <span style="font-size:11px;color:var(--text3)">${l.project_name}</span>
+        </div>
+        ${l.description?`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">${l.description}</div>`:''}
+        ${l.recommendations?`<div style="font-size:12px;color:var(--teal);background:rgba(20,184,166,0.06);border-radius:4px;padding:5px 8px">💡 ${l.recommendations}</div>`:''}
+      </div>`).join('');
+}
+
+// Ensure PMO data loads when PMO page is shown
+const _origShowPage = showPage;
+function showPage(id,el){
+  _origShowPage(id,el);
+  if(id==='pmo'){
+    loadPMOData().then(()=>renderPMOTab(activePMOTab));
+    // Update pmo badge with alert count
+    const fc=pmoFC();
+    const alerts=allProjects.filter(p=>pmoBP(p,fc)>=75).length;
+    const badge=document.getElementById('pmo-badge');
+    if(badge){badge.textContent=alerts||'';badge.style.display=alerts?'':'none';}
+  }
+}
+
 setInterval(loadAllData,30000);
 setInterval(loadNotifications,60000);
 initRBAC();
