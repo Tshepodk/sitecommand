@@ -347,16 +347,27 @@ async function initRBAC(){
 
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+// ── Dynamic auth headers — always uses live session token ──────────────────
+function getH(){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
+  }catch(e){
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+  }
+}
+// For backwards compat — H is now a getter alias
+Object.defineProperty(window,'H',{get:getH,configurable:true});
 
 let allProjects=[],allVOs=[];
 const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3000);};
 
-async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
-async function sbDel(t,id){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error(await r.text());}
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:getH()});if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return[];}if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...getH(),'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+async function sbDel(t,id){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:getH()});if(!r.ok)throw new Error(await r.text());}
 
 async function loadAll(){
   [allProjects,allVOs]=await Promise.all([

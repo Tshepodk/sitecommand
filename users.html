@@ -187,7 +187,18 @@ tr:hover td{background:var(--bg3)}
 <script>
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+// ── Dynamic auth headers — always uses live session token ──────────────────
+function getH(){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
+  }catch(e){
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+  }
+}
+// For backwards compat — H is now a getter alias
+Object.defineProperty(window,'H',{get:getH,configurable:true});
 
 let allUsers=[],allProfiles=[],allProjects=[],allProjectAccess=[];
 let selectedRole='viewer',editingUserId=null;
@@ -198,20 +209,20 @@ function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||
 function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
 
 async function sbGet(t,q='',token=null){
-  const authToken=token||(getSession()?.access_token)||SK;
-  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:{...H,'Authorization':'Bearer '+authToken}});
+  
+  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:{...getH(),'Authorization':'Bearer '+authToken}});
   if(!r.ok)throw new Error(await r.text());return r.json();
 }
 async function sbPatch(t,id,d){
-  const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});
+  const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});
   if(!r.ok)throw new Error(await r.text());
 }
 async function sbPost(t,d){
-  const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});
+  const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});
   if(!r.ok)throw new Error(await r.text());
 }
 async function sbDel(t,q){
-  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{method:'DELETE',headers:H});
+  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{method:'DELETE',headers:getH()});
   if(!r.ok)throw new Error(await r.text());
 }
 

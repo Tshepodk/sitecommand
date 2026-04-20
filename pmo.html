@@ -693,7 +693,18 @@ async function initRBAC(){
 
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+// ── Dynamic auth headers — always uses live session token ──────────────────
+function getH(){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
+  }catch(e){
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+  }
+}
+// For backwards compat — H is now a getter alias
+Object.defineProperty(window,'H',{get:getH,configurable:true});
 
 let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allRisks=[],allRevenue=[],allGates=[],allKPIs=[],allLessons=[],allAllocations=[],allDocuments=[];
 
@@ -701,9 +712,9 @@ const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
 const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3200);};
 
-async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
-async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:getH()});if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return[];}if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...getH(),'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
 
 async function loadAll(){
   try{
@@ -1155,7 +1166,7 @@ function openEditDoc(id){
 // ── Delete helpers ────────────────────────────────────────────────────────────
 async function delLesson(id){if(!confirm('Delete this lesson?'))return;try{await sbPatch('lessons_learned',id,{active:false});showToast('Deleted');await loadAll();}catch(e){showToast('Delete failed','err');}}
 async function delDoc(id){if(!confirm('Delete this document record?'))return;try{await sbPatch('documents',id,{active:false});showToast('Deleted');await loadAll();}catch(e){showToast('Delete failed','err');}}
-async function delAllocation(id){if(!confirm('Remove this allocation?'))return;try{const r=await fetch(`${SB}/rest/v1/resource_allocations?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error();showToast('Allocation removed');await loadAll();}catch(e){showToast('Delete failed','err');}}
+async function delAllocation(id){if(!confirm('Remove this allocation?'))return;try{const r=await fetch(`${SB}/rest/v1/resource_allocations?id=eq.${id}`,{method:'DELETE',headers:getH()});if(!r.ok)throw new Error();showToast('Allocation removed');await loadAll();}catch(e){showToast('Delete failed','err');}}
 
 // ── CSV export ────────────────────────────────────────────────────────────────
 function dlDocsCSV(){
@@ -1200,7 +1211,7 @@ async function saveDependency(){
 async function delDependency(id){
   if(!confirm('Remove this dependency?'))return;
   try{
-    await fetch(`${SB}/rest/v1/task_dependencies?id=eq.${id}`,{method:'DELETE',headers:H});
+    await fetch(`${SB}/rest/v1/task_dependencies?id=eq.${id}`,{method:'DELETE',headers:getH()});
     showToast('Dependency removed');await loadDeps();renderDependencies();
   }catch(e){showToast('Delete failed','err');}
 }
