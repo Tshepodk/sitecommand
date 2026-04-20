@@ -359,6 +359,123 @@ tr:hover td{background:var(--bg3)}
 </div>
 
 <script>
+
+// ═══════════════════════════════════════════════════════════════════
+// SITECOMMAND RBAC — Roles: admin | pm | foreman | viewer
+// ═══════════════════════════════════════════════════════════════════
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+function getUserName(){const s=getSession();return s?.user?.user_metadata?.full_name||s?.user?.email?.split('@')[0]||'User';}
+function isAdmin(){return getUserRole()==='admin';}
+function isPM(){return ['admin','pm'].includes(getUserRole());}
+function isForeman(){return ['admin','pm','foreman'].includes(getUserRole());}
+
+function requireAuth(){
+  const s=getSession();
+  if(!s||s.expires_at<Date.now()){window.location.href='login.html';return false;}
+  return true;
+}
+
+async function loadAndCacheProfile(){
+  const s=getSession();if(!s)return null;
+  try{
+    const r=await fetch(`https://dovdqmzyfgmkxvqdaeyr.supabase.co/rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
+      {headers:{'apikey':'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq','Authorization':'Bearer '+s.access_token}});
+    if(r.ok){const d=await r.json();if(d[0]){s.profile=d[0];localStorage.setItem('sc_session',JSON.stringify(s));return d[0];}}
+  }catch(e){}
+  return null;
+}
+
+function applyRBAC(){
+  const role=getUserRole();
+  const name=getUserName();
+
+  // ── Update UI chrome ──────────────────────────────────────────────
+  const nameEl=document.getElementById('user-name');if(nameEl)nameEl.textContent=name.split(' ')[0];
+  const roleEl=document.getElementById('user-role-badge');
+  if(roleEl){roleEl.textContent=role.toUpperCase();roleEl.style.color={admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)';}
+
+  // ── Show role banner ──────────────────────────────────────────────
+  if(!document.getElementById('rbac-banner')){
+    const msgs={admin:'Full access — all projects',pm:'Project Manager — assigned projects',foreman:'Site Foreman — field reports only',viewer:'Viewer — read only'};
+    const colors={admin:'rgba(245,166,35,0.08)',pm:'rgba(59,130,246,0.08)',foreman:'rgba(20,184,166,0.08)',viewer:'rgba(139,144,160,0.08)'};
+    const borderColors={admin:'rgba(245,166,35,0.25)',pm:'rgba(59,130,246,0.25)',foreman:'rgba(20,184,166,0.25)',viewer:'rgba(139,144,160,0.2)'};
+    const b=document.createElement('div');b.id='rbac-banner';
+    b.style.cssText=`background:${colors[role]||colors.viewer};border-bottom:1px solid ${borderColors[role]||borderColors.viewer};padding:5px 1.25rem;font-size:11px;font-family:var(--font-d,sans-serif);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${{admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)'};display:flex;align-items:center;justify-content:space-between;gap:8px;`;
+    b.innerHTML=`<span>👤 ${name} &nbsp;·&nbsp; <span style="opacity:0.7">${msgs[role]||role}</span></span><a href="login.html" onclick="signOut(event)" style="font-size:10px;color:inherit;opacity:0.6;text-decoration:none;cursor:pointer">Sign out</a>`;
+    const topbar=document.querySelector('.topbar,.header');
+    if(topbar&&topbar.parentNode)topbar.parentNode.insertBefore(b,topbar.nextSibling);
+  }
+
+  // ── Admin — full access, add user management links ────────────────
+  if(role==='admin'){
+    document.querySelectorAll('[data-admin-link]').forEach(el=>el.style.display='');
+    return;
+  }
+
+  // ── VIEWER — hide ALL write actions ──────────────────────────────
+  if(role==='viewer'){
+    document.querySelectorAll(
+      'button.btn-primary:not([data-keep]), button.btn-danger, '+
+      '[onclick*="openModal"], [onclick*="deleteRecord"], [onclick*="deleteReport"], '+
+      '[onclick*="saveRecord"], [onclick*="openReportEdit"], [onclick*="delVO"], '+
+      '[onclick*="saveVO"], [onclick*="addTask"], [onclick*="addRisk"]'
+    ).forEach(el=>{
+      const txt=(el.textContent||'').toLowerCase().trim();
+      const safe=['ask','ai','view','filter','csv','pdf','report','summary','analyse','gantt','back'];
+      if(!safe.some(k=>txt.includes(k)))el.style.display='none';
+    });
+    // Hide add/edit buttons in sidebars
+    document.querySelectorAll('a[href*="project_intake"]').forEach(el=>el.style.display='none');
+    return;
+  }
+
+  // ── FOREMAN — can only do field reports ──────────────────────────
+  if(role==='foreman'){
+    // Hide entire pages from sidebar nav
+    ['projects','equipment','budget','cost categor','variations','pmo','user'].forEach(keyword=>{
+      document.querySelectorAll('.nav-item, .mob-nav-item, .bn-item').forEach(el=>{
+        if((el.textContent||'').toLowerCase().includes(keyword))el.style.display='none';
+      });
+    });
+    // Hide write buttons except intake form
+    document.querySelectorAll(
+      '[onclick*="openModal(\'project\')"], [onclick*="openModal(\'equipment\')"], '+
+      '[onclick*="openModal(\'worker\')"], [onclick*="openModal(\'cost-cat\')"], '+
+      '[onclick*="deleteRecord"], button.btn-danger:not([data-keep])'
+    ).forEach(el=>el.style.display='none');
+    // Redirect away from restricted pages
+    const page=window.location.pathname.split('/').pop();
+    if(['variations.html','pmo.html','users.html'].includes(page)){
+      window.location.href='index.html';
+    }
+    return;
+  }
+
+  // ── PM — hide cost categories, user management, admin settings ───
+  if(role==='pm'){
+    document.querySelectorAll('.nav-item, .mob-nav-item').forEach(el=>{
+      const txt=(el.textContent||'').toLowerCase();
+      if(txt.includes('cost categor')||txt.includes('user manage'))el.style.display='none';
+    });
+    document.querySelectorAll('[href*="users.html"]').forEach(el=>el.style.display='none');
+    return;
+  }
+}
+
+function signOut(e){
+  if(e)e.preventDefault();
+  if(!confirm('Sign out of SiteCommand?'))return;
+  localStorage.removeItem('sc_session');
+  window.location.href='login.html';
+}
+
+async function initRBAC(){
+  if(!requireAuth())return;
+  await loadAndCacheProfile();
+  applyRBAC();
+}
+
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};

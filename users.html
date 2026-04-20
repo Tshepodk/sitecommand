@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — User Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;min-height:100vh;padding-bottom:64px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:10}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.shell{max-width:1000px;margin:0 auto;padding:1.5rem}
+.page-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:4px}
+.page-sub{color:var(--text2);font-size:13px;margin-bottom:1.5rem}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#e8861a}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-sm{padding:4px 10px;font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1rem}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1.1rem;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sa::before{background:var(--accent)}.sb::before{background:var(--blue)}.sg::before{background:var(--green)}.sr::before{background:var(--red)}
+.stat-n{font-family:var(--font-d);font-size:26px;font-weight:700;line-height:1;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.b-admin{background:rgba(245,166,35,0.15);color:var(--accent)}
+.b-pm{background:rgba(59,130,246,0.15);color:#60a5fa}
+.b-foreman{background:rgba(20,184,166,0.15);color:#2dd4bf}
+.b-viewer{background:rgba(139,144,160,0.12);color:var(--text2)}
+/* Role selector card */
+.role-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;cursor:pointer;transition:all 0.15s}
+.role-card:hover{border-color:var(--border2)}
+.role-card.selected{border-color:var(--accent);background:rgba(245,166,35,0.07)}
+.role-icon{font-size:24px;margin-bottom:6px}
+.role-name{font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
+.role-desc{font-size:11px;color:var(--text3);margin-top:3px}
+/* Access toggle */
+.access-proj-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-top:8px}
+.access-proj-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:var(--r);cursor:pointer}
+.access-proj-item:hover{background:var(--bg4)}
+.access-proj-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--accent)}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl) var(--rl) 0 0;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.form-group{margin-bottom:0.875rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:5px}
+.form-input,.form-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;color:var(--text);font-family:var(--font-b);font-size:14px;outline:none;width:100%;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.admin-only{background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 16px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr}.role-cards{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span></div>
+  <div style="width:1px;height:20px;background:var(--border)"></div>
+  <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent)">User Management</span>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="loadUsers()">&#8635; Refresh</button>
+    <a href="index.html" class="btn btn-ghost btn-sm">&#8592; Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="page-title">User Management</div>
+  <div class="page-sub">Manage user roles and project access — Admin only</div>
+
+  <div id="admin-check" class="admin-only" style="display:none">
+    ⚠️ This page is restricted to Admins only. You are logged in as <strong id="current-role-display">—</strong>.
+  </div>
+
+  <div class="stats-grid" id="user-stats"></div>
+
+  <!-- Role permissions reference -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="card-header"><div class="card-title">Role Permissions</div></div>
+    <div class="card-body" style="padding:0"><div class="table-wrap">
+      <table>
+        <thead><tr><th>Permission</th><th>Admin</th><th>Project Manager</th><th>Site Foreman</th><th>Viewer</th></tr></thead>
+        <tbody>
+          <tr><td>View dashboard &amp; reports</td><td>✅</td><td>✅ (assigned projects)</td><td>✅ (own project)</td><td>✅ (read only)</td></tr>
+          <tr><td>Submit daily reports</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
+          <tr><td>Edit / delete reports</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Create / edit projects</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Manage workers &amp; equipment</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Budget &amp; cost categories</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Variation orders</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>PMO — risks, KPIs, lessons</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Manage users</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Cost category settings</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- Users table -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">All Users</div>
+      <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite User</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Projects Access</th><th>Last Sign In</th><th>Actions</th></tr></thead>
+        <tbody id="users-table"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-bg" id="modal-edit-user">
+  <div class="modal">
+    <div class="modal-title"><span id="edit-user-modal-title">Edit User</span><button class="modal-close" onclick="closeEditModal()">✕</button></div>
+    <input type="hidden" id="edit-user-id"/>
+    <input type="hidden" id="edit-user-email-hidden"/>
+
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="edit-user-name" placeholder="Full name"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px" class="role-cards">
+        <div class="role-card" id="rc-admin" onclick="selectRole('admin')"><div class="role-icon">👑</div><div class="role-name" style="color:var(--accent)">Admin</div><div class="role-desc">Full access</div></div>
+        <div class="role-card" id="rc-pm" onclick="selectRole('pm')"><div class="role-icon">📋</div><div class="role-name" style="color:var(--blue)">PM</div><div class="role-desc">Manage projects</div></div>
+        <div class="role-card" id="rc-foreman" onclick="selectRole('foreman')"><div class="role-icon">👷</div><div class="role-name" style="color:var(--teal)">Foreman</div><div class="role-desc">Field reports</div></div>
+        <div class="role-card" id="rc-viewer" onclick="selectRole('viewer')"><div class="role-icon">👁</div><div class="role-name">Viewer</div><div class="role-desc">Read only</div></div>
+      </div>
+    </div>
+
+    <div class="form-group" id="project-access-section">
+      <label class="form-label">Project Access</label>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Leave all unchecked to give access to all projects (for PM role). Check specific projects to restrict access.</div>
+      <div class="access-proj-list" id="project-access-list"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="disableUser()" id="disable-user-btn">Disable User</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" id="save-user-btn" onclick="saveUserRole()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="modal-bg" id="modal-invite">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title"><span>Invite New User</span><button class="modal-close" onclick="document.getElementById('modal-invite').classList.remove('open')">✕</button></div>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)">
+      📧 Send this registration link to your team member. They register themselves and you assign their role here.
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-family:var(--font-d);font-size:12px;color:var(--teal);word-break:break-all" id="invite-link"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:1rem;justify-content:center" onclick="copyInviteLink()">📋 Copy Registration Link</button>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('modal-invite').classList.remove('open')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allUsers=[],allProfiles=[],allProjects=[],allProjectAccess=[];
+let selectedRole='viewer',editingUserId=null;
+
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
+
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+
+async function sbGet(t,q='',token=null){
+  const authToken=token||(getSession()?.access_token)||SK;
+  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:{...H,'Authorization':'Bearer '+authToken}});
+  if(!r.ok)throw new Error(await r.text());return r.json();
+}
+async function sbPatch(t,id,d){
+  const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function sbPost(t,d){
+  const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});
+  if(!r.ok)throw new Error(await r.text());
+}
+async function sbDel(t,q){
+  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{method:'DELETE',headers:H});
+  if(!r.ok)throw new Error(await r.text());
+}
+
+async function loadUsers(){
+  const sess=getSession();
+  const role=getUserRole();
+
+  // Check admin
+  if(role!=='admin'){
+    document.getElementById('admin-check').style.display='block';
+    document.getElementById('current-role-display').textContent=role;
+    document.getElementById('users-table').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">Admin access required to manage users.</td></tr>`;
+    return;
+  }
+
+  try{
+    // Load profiles, projects, access — use service key for admin operations
+    [allProfiles,allProjects,allProjectAccess]=await Promise.all([
+      sbGet('user_profiles','order=created_at.asc'),
+      sbGet('projects','order=name.asc&active=eq.true'),
+      sbGet('project_access','order=user_email.asc')
+    ]);
+
+    // Stats
+    const byRole={admin:0,pm:0,foreman:0,viewer:0};
+    allProfiles.forEach(p=>byRole[p.role]=(byRole[p.role]||0)+1);
+    document.getElementById('user-stats').innerHTML=`
+      <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${allProfiles.length}</div><div class="stat-l">Total Users</div></div>
+      <div class="stat sb"><div class="stat-n" style="color:var(--blue)">${byRole.admin||0}</div><div class="stat-l">Admins</div></div>
+      <div class="stat sg"><div class="stat-n" style="color:var(--green)">${byRole.pm||0}</div><div class="stat-l">Project Managers</div></div>
+      <div class="stat" style="border-top:3px solid var(--teal)"><div class="stat-n" style="color:var(--teal)">${(byRole.foreman||0)+(byRole.viewer||0)}</div><div class="stat-l">Foreman / Viewers</div></div>`;
+
+    const roleBadge={admin:'b-admin',pm:'b-pm',foreman:'b-foreman',viewer:'b-viewer'};
+    document.getElementById('users-table').innerHTML=allProfiles.length===0
+      ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">No user profiles found. Users appear here after they register.</td></tr>`
+      :allProfiles.map(u=>{
+        const access=allProjectAccess.filter(a=>a.user_id===u.id);
+        const projList=access.length?access.map(a=>a.project_name).join(', '):'All projects';
+        return`<tr>
+          <td><div style="font-weight:500">${u.full_name||'—'}</div></td>
+          <td style="color:var(--text2);font-size:12px">${u.id.slice(0,8)}...</td>
+          <td><span class="badge ${roleBadge[u.role]||'b-viewer'}">${u.role||'viewer'}</span></td>
+          <td style="font-size:12px;color:var(--text2)">${projList}</td>
+          <td style="font-size:11px;color:var(--text3)">${u.created_at?new Date(u.created_at).toLocaleDateString('en-ZA'):'—'}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}','${(u.full_name||'').replace(/'/g,"\\'")}','${u.role||'viewer'}')">Edit Role</button></td>
+        </tr>`;
+      }).join('');
+  }catch(e){showToast('Error loading users: '+e.message,'err');console.error(e);}
+}
+
+function selectRole(role){
+  selectedRole=role;
+  ['admin','pm','foreman','viewer'].forEach(r=>{
+    const el=document.getElementById('rc-'+r);
+    if(el)el.classList.toggle('selected',r===role);
+  });
+  // Show/hide project access for non-admin roles
+  const section=document.getElementById('project-access-section');
+  if(section)section.style.display=role==='admin'?'none':'block';
+}
+
+function openEditModal(userId,name,currentRole){
+  editingUserId=userId;
+  document.getElementById('edit-user-id').value=userId;
+  document.getElementById('edit-user-modal-title').textContent='Edit: '+name;
+  document.getElementById('edit-user-name').value=name;
+  selectRole(currentRole||'viewer');
+
+  // Build project access checkboxes
+  const currentAccess=allProjectAccess.filter(a=>a.user_id===userId).map(a=>a.project_name);
+  const list=document.getElementById('project-access-list');
+  list.innerHTML=allProjects.map(p=>`
+    <label class="access-proj-item">
+      <input type="checkbox" value="${p.name}" ${currentAccess.includes(p.name)?'checked':''}/>
+      <span style="font-size:13px">${p.name}</span>
+      <span style="font-size:11px;color:var(--text3);margin-left:auto">${p.client||''}</span>
+    </label>`).join('');
+
+  document.getElementById('modal-edit-user').classList.add('open');
+}
+
+function closeEditModal(){
+  document.getElementById('modal-edit-user').classList.remove('open');
+  editingUserId=null;
+}
+
+async function saveUserRole(){
+  if(!editingUserId){showToast('No user selected','err');return;}
+  const btn=document.getElementById('save-user-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
+  const name=document.getElementById('edit-user-name').value.trim();
+
+  try{
+    // 1. Update user_profiles role
+    await sbPatch('user_profiles',editingUserId,{role:selectedRole,full_name:name});
+
+    // 2. Update project access — delete existing then re-insert selected
+    await sbDel('project_access','user_id=eq.'+editingUserId);
+    const checkedProjects=[...document.querySelectorAll('#project-access-list input:checked')].map(i=>i.value);
+    if(checkedProjects.length>0&&selectedRole!=='admin'){
+      await Promise.all(checkedProjects.map(pname=>
+        sbPost('project_access',{user_id:editingUserId,project_name:pname,access_level:selectedRole})
+      ));
+    }
+
+    showToast('User updated successfully');
+    closeEditModal();
+    await loadUsers();
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save Changes';
+}
+
+async function disableUser(){
+  if(!editingUserId){return;}
+  const name=document.getElementById('edit-user-name').value;
+  if(!confirm(`Disable account for ${name}?\n\nThey will not be able to log in. You can re-enable them by setting their role back.`))return;
+  try{
+    await sbPatch('user_profiles',editingUserId,{active:false,role:'viewer'});
+    showToast('User disabled');closeEditModal();await loadUsers();
+  }catch(e){showToast('Failed to disable user','err');}
+}
+
+function openInviteModal(){
+  const link=`https://tshepodk.github.io/sitecommand/login.html`;
+  document.getElementById('invite-link').textContent=link;
+  document.getElementById('modal-invite').classList.add('open');
+}
+
+function copyInviteLink(){
+  const link=document.getElementById('invite-link').textContent;
+  navigator.clipboard.writeText(link).then(()=>showToast('Link copied!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=link;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('Link copied!');
+  });
+}
+
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// Check auth — admin only
+const sess=getSession();
+if(!sess||sess.expires_at<Date.now()){
+  window.location.href='login.html';
+} else {
+  loadUsers();
+}
+</script>
+</body>
+</html>
