@@ -9,10 +9,10 @@
 :root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
-.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
-.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;flex-wrap:wrap}
-.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto}
-.main{background:var(--bg);overflow:auto}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh;overflow:hidden}
+.topbar{grid-column:1/-1;grid-row:1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;flex-wrap:wrap}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto;min-width:220px;width:220px;grid-column:1;grid-row:2}
+.main{background:var(--bg);overflow:auto;min-width:0;grid-column:2;grid-row:2}
 .logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
 .logo span{color:var(--text2);font-weight:400}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s;flex-shrink:0}
@@ -21,7 +21,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
 .nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
-.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;white-space:nowrap;overflow:hidden}
 .nav-item:hover{background:var(--bg3);color:var(--text)}
 .nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
 .nav-icon{font-size:14px;width:18px;text-align:center}
@@ -728,10 +728,14 @@ function applyRBAC(){
     const colors={admin:'rgba(245,166,35,0.08)',pm:'rgba(59,130,246,0.08)',foreman:'rgba(20,184,166,0.08)',viewer:'rgba(139,144,160,0.08)'};
     const borderColors={admin:'rgba(245,166,35,0.25)',pm:'rgba(59,130,246,0.25)',foreman:'rgba(20,184,166,0.25)',viewer:'rgba(139,144,160,0.2)'};
     const b=document.createElement('div');b.id='rbac-banner';
-    b.style.cssText=`background:${colors[role]||colors.viewer};border-bottom:1px solid ${borderColors[role]||borderColors.viewer};padding:5px 1.25rem;font-size:11px;font-family:var(--font-d,sans-serif);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${{admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)'};display:flex;align-items:center;justify-content:space-between;gap:8px;`;
+    b.style.cssText=`background:${colors[role]||colors.viewer};border-bottom:1px solid ${borderColors[role]||borderColors.viewer};padding:6px 1.5rem;font-size:11px;font-family:var(--font-d,sans-serif);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${{admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)'};display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;width:100%;box-sizing:border-box;`;
     b.innerHTML=`<span>👤 ${name} &nbsp;·&nbsp; <span style="opacity:0.7">${msgs[role]||role}</span></span><a href="login.html" onclick="signOut(event)" style="font-size:10px;color:inherit;opacity:0.6;text-decoration:none;cursor:pointer">Sign out</a>`;
-    const topbar=document.querySelector('.topbar,.header');
-    if(topbar&&topbar.parentNode)topbar.parentNode.insertBefore(b,topbar.nextSibling);
+    // Insert banner at top of .main content area, not between grid items
+    const mainEl=document.querySelector('.main');
+    if(mainEl){
+      // no extra margin needed — banner is now flush
+      mainEl.insertBefore(b,mainEl.firstChild);
+    }
   }
 
   // ── Admin — full access, add user management links ────────────────

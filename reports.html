@@ -403,8 +403,12 @@ function applyRBAC(){
     const b=document.createElement('div');b.id='rbac-banner';
     b.style.cssText=`background:${colors[role]||colors.viewer};border-bottom:1px solid ${borderColors[role]||borderColors.viewer};padding:5px 1.25rem;font-size:11px;font-family:var(--font-d,sans-serif);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${{admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)'};display:flex;align-items:center;justify-content:space-between;gap:8px;`;
     b.innerHTML=`<span>👤 ${name} &nbsp;·&nbsp; <span style="opacity:0.7">${msgs[role]||role}</span></span><a href="login.html" onclick="signOut(event)" style="font-size:10px;color:inherit;opacity:0.6;text-decoration:none;cursor:pointer">Sign out</a>`;
-    const topbar=document.querySelector('.topbar,.header');
-    if(topbar&&topbar.parentNode)topbar.parentNode.insertBefore(b,topbar.nextSibling);
+    // Insert after header without breaking grid layout
+    const headerEl=document.querySelector('.topbar,.header');
+    if(headerEl&&headerEl.parentNode){
+      // For grid layouts, insert into body after header
+      headerEl.insertAdjacentElement('afterend',b);
+    }
   }
 
   // ── Admin — full access, add user management links ────────────────
