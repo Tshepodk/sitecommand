@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — PMO</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;min-height:100vh;padding-bottom:64px}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.25rem;gap:1rem;position:sticky;top:0;z-index:20;flex-wrap:nowrap}
+.logo{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent);text-transform:uppercase;white-space:nowrap}
+.logo span{color:var(--text2);font-weight:400}
+.shell{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 52px)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1rem 0;overflow-y:auto}
+.main{overflow:auto}
+.nav-section{padding:0 0.625rem;margin-bottom:1rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.page{padding:1.25rem;display:none}
+.page.active{display:block}
+.page-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-sm{padding:4px 10px;font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1rem}
+.card-header{padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.stats-grid{display:grid;gap:10px;margin-bottom:1.25rem}
+.sg-4{grid-template-columns:repeat(4,1fr)}
+.sg-5{grid-template-columns:repeat(5,1fr)}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1.1rem;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sa::before{background:var(--accent)}.sb::before{background:var(--blue)}.sg::before{background:var(--green)}.sr::before{background:var(--red)}.st::before{background:var(--teal)}.sp::before{background:var(--purple)}
+.stat-n{font-family:var(--font-d);font-size:26px;font-weight:700;line-height:1;margin-bottom:2px}
+.stat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:7px 10px;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.bg{background:rgba(34,197,94,0.12);color:#4ade80}
+.ba{background:rgba(245,166,35,0.12);color:var(--accent)}
+.br{background:rgba(239,68,68,0.12);color:#f87171}
+.bb{background:rgba(59,130,246,0.12);color:#60a5fa}
+.bt{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.bp{background:rgba(168,85,247,0.12);color:#c084fc}
+.bgr{background:rgba(139,144,160,0.12);color:var(--text2)}
+/* RAG dots */
+.rag{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0}
+.rag-g{background:var(--green)}
+.rag-a{background:var(--accent);animation:pulse 2s infinite}
+.rag-r{background:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+/* Stage gate pipeline */
+.gate-pipeline{display:flex;align-items:center;gap:0;margin:8px 0}
+.gate-step{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;position:relative}
+.gate-step:not(:last-child)::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:2px;background:var(--border2);z-index:0}
+.gate-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;z-index:1;position:relative;border:2px solid var(--border2)}
+.gc-done{background:var(--green);border-color:var(--green);color:#000}
+.gc-active{background:var(--accent);border-color:var(--accent);color:#000;animation:pulse 2s infinite}
+.gc-review{background:var(--blue);border-color:var(--blue);color:#fff}
+.gc-pending{background:var(--bg4);border-color:var(--border2);color:var(--text3)}
+.gc-rejected{background:var(--red);border-color:var(--red);color:#fff}
+.gate-label{font-size:9px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3);text-align:center;white-space:nowrap}
+/* KPI gauge */
+.kpi-gauge{display:flex;align-items:center;gap:8px}
+.kpi-bar-wrap{flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.kpi-bar{height:100%;border-radius:4px;transition:width 0.5s}
+.kpi-val{font-family:var(--font-d);font-size:14px;font-weight:700;min-width:40px;text-align:right}
+/* Capacity bar */
+.cap-bar-wrap{height:12px;background:var(--bg4);border-radius:6px;overflow:hidden;position:relative}
+.cap-bar{height:100%;border-radius:6px;transition:width 0.5s}
+.cap-bar.over{animation:pulse 1s infinite}
+/* Lesson card */
+.lesson-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;border-left:3px solid var(--border2)}
+.lesson-card.success{border-left-color:var(--green)}
+.lesson-card.improvement{border-left-color:var(--accent)}
+.lesson-card.warning{border-left-color:var(--red)}
+/* Document row */
+.doc-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.doc-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+/* Modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl) var(--rl) 0 0;padding:1.5rem;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
+.modal-close:hover{color:var(--text);background:var(--bg3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:0.875rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;color:var(--text);font-family:var(--font-b);font-size:14px;outline:none;width:100%;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent)}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--text3)}
+.form-textarea{resize:vertical;min-height:80px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.toast{position:fixed;bottom:4.5rem;right:1rem;padding:10px 16px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Bottom nav */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--bg2);border-top:1px solid var(--border2);z-index:50;flex-direction:row;align-items:stretch}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--text3);font-size:9px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;font-family:var(--font-d);border:none;background:none;text-decoration:none;transition:color 0.15s;position:relative;-webkit-tap-highlight-color:transparent}
+.bn-item:active,.bn-item.active{color:var(--accent)}
+.bn-item.active::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:3px;background:var(--accent);border-radius:0 0 3px 3px}
+.bn-icon{font-size:19px;line-height:1}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+@media(max-width:768px){
+  body{padding-bottom:60px}
+  .bottom-nav{display:flex}
+  .sidebar{display:none!important}
+  .shell{grid-template-columns:1fr!important}
+  .page{padding:0.875rem!important}
+  .grid-2,.grid-3,.fg2{grid-template-columns:1fr!important}
+  .stats-grid.sg-4,.stats-grid.sg-5{grid-template-columns:1fr 1fr!important}
+  .gate-label{font-size:8px!important}
+  .gate-circle{width:24px!important;height:24px!important}
+  .form-input,.form-select,.form-textarea{font-size:16px!important}
+  table{min-width:480px}
+}
+@media(max-width:480px){
+  .stats-grid.sg-4,.stats-grid.sg-5{grid-template-columns:1fr 1fr!important}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Site<span>Command</span> <span style="color:var(--blue);font-size:13px;font-weight:700;letter-spacing:0.08em">PMO</span></div>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--text3)" id="conn-dot"></div>
+    <span style="font-size:11px;color:var(--text3)" id="conn-label">Loading...</span>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="loadAll()">&#8635;</button>
+    <a href="index.html" class="btn btn-ghost btn-sm">&#8592; Dashboard</a>
+  </div>
+</div>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">PMO</div>
+      <div class="nav-item active" onclick="showPage('portfolio',this)">🗂 Portfolio Overview</div>
+      <div class="nav-item" onclick="showPage('gates',this)">🚦 Stage Gates</div>
+      <div class="nav-item" onclick="showPage('kpi',this)">📊 KPI Benchmarks</div>
+      <div class="nav-item" onclick="showPage('dependencies',this)">🔗 Dependencies</div>
+      <div class="nav-item" onclick="showPage('stakeholder',this)">📄 Stakeholder Report</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Resources</div>
+      <div class="nav-item" onclick="showPage('capacity',this)">👥 Capacity Planning</div>
+      <div class="nav-item" onclick="showPage('lessons',this)">📖 Lessons Learned</div>
+      <div class="nav-item" onclick="showPage('documents',this)">📁 Document Register</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Links</div>
+      <a href="reports.html" class="nav-item">📈 Reports</a>
+      <a href="gantt.html" class="nav-item">📉 Gantt</a>
+      <a href="variations.html" class="nav-item">🔄 Variations</a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- ══ PORTFOLIO OVERVIEW ═════════════════════════════════════════════ -->
+    <div class="page active" id="page-portfolio">
+      <div class="page-header">
+        <div><div class="page-title">Portfolio Overview</div><div class="page-sub">RAG status, health scores and strategic summary</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="printPDF()">&#128438; Export PDF</button>
+      </div>
+      <div class="stats-grid sg-5" id="port-stats"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Project Health — RAG Status</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Project</th><th>RAG</th><th>Phase</th><th>Task Progress</th><th>Budget Health</th><th>Schedule</th><th>Risk</th><th>KPI Score</th><th>Stage</th><th>PM</th></tr></thead>
+          <tbody id="port-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Portfolio Budget Snapshot</div></div>
+          <div class="card-body" id="port-budget"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Portfolio Risk Heatmap</div></div>
+          <div class="card-body" id="port-risk"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STAGE GATES ═════════════════════════════════════════════════════ -->
+    <div class="page" id="page-gates">
+      <div class="page-header">
+        <div><div class="page-title">Stage Gates</div><div class="page-sub">Project lifecycle approval tracking</div></div>
+        <button class="btn btn-primary" onclick="openModal('gate')">+ Update Gate</button>
+      </div>
+      <div id="gates-container"></div>
+    </div>
+
+    <!-- ══ KPI BENCHMARKS ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-kpi">
+      <div class="page-header">
+        <div><div class="page-title">KPI Benchmarks</div><div class="page-sub">Compare project performance across the portfolio</div></div>
+        <button class="btn btn-primary" onclick="openModal('kpi')">+ Record KPIs</button>
+      </div>
+      <div class="stats-grid sg-4" id="kpi-portfolio-stats"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Performance Comparison</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Project</th><th>SPI</th><th>CPI</th><th>Productivity</th><th>Safety</th><th>Quality</th><th>Client Sat.</th><th>Overall</th></tr></thead>
+          <tbody id="kpi-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">SPI vs CPI Chart</div></div>
+        <div class="card-body" id="kpi-chart"></div>
+      </div>
+    </div>
+
+    <!-- ══ CAPACITY PLANNING ════════════════════════════════════════════════ -->
+    <div class="page" id="page-capacity">
+      <div class="page-header">
+        <div><div class="page-title">Capacity Planning</div><div class="page-sub">Worker allocation across all projects — spot over-allocation</div></div>
+        <button class="btn btn-primary" onclick="openModal('allocation')">+ Add Allocation</button>
+      </div>
+      <div class="stats-grid sg-4" id="cap-stats"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Worker Allocation Matrix</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Worker</th><th>Role</th><th>Type</th><th>Allocation</th><th>Projects</th><th>Status</th></tr></thead>
+          <tbody id="cap-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Allocation Detail</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Worker</th><th>Project</th><th>Role</th><th>Allocation %</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
+          <tbody id="cap-detail-table"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ══ LESSONS LEARNED ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-lessons">
+      <div class="page-header">
+        <div><div class="page-title">Lessons Learned</div><div class="page-sub">Capture and search knowledge across all projects</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="form-select" id="ll-cat-filter" onchange="renderLessons()" style="font-size:12px;padding:5px 10px">
+            <option value="">All Categories</option>
+            <option>Planning</option><option>Execution</option><option>Risk</option>
+            <option>Resource</option><option>Technical</option><option>HSE</option>
+            <option>Financial</option><option>General</option>
+          </select>
+          <select class="form-select" id="ll-type-filter" onchange="renderLessons()" style="font-size:12px;padding:5px 10px">
+            <option value="">All Types</option>
+            <option value="success">Success</option>
+            <option value="improvement">Improvement</option>
+            <option value="warning">Warning</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('lesson')">+ Add Lesson</button>
+        </div>
+      </div>
+      <div class="stats-grid sg-4" id="ll-stats"></div>
+      <div id="lessons-container"></div>
+    </div>
+
+    <!-- ══ DOCUMENT REGISTER ════════════════════════════════════════════════ -->
+    <div class="page" id="page-documents">
+      <div class="page-header">
+        <div><div class="page-title">Document Register</div><div class="page-sub">Contracts, drawings, permits and specifications</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="form-select" id="doc-proj-filter" onchange="renderDocuments()" style="font-size:12px;padding:5px 10px"><option value="">All Projects</option></select>
+          <select class="form-select" id="doc-cat-filter" onchange="renderDocuments()" style="font-size:12px;padding:5px 10px">
+            <option value="">All Categories</option>
+            <option>Contract</option><option>Drawing</option><option>Permit</option>
+            <option>Specification</option><option>Report</option><option>HSE</option>
+            <option>Financial</option><option>General</option>
+          </select>
+          <button class="btn btn-primary" onclick="openModal('document')">+ Add Document</button>
+        </div>
+      </div>
+      <div class="stats-grid sg-4" id="doc-stats"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Document Register</div><button class="btn btn-ghost btn-sm" onclick="dlDocsCSV()">&#128229; CSV</button></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Title</th><th>Project</th><th>Category</th><th>Doc No.</th><th>Rev.</th><th>Status</th><th>Expiry</th><th>Uploaded By</th><th>Actions</th></tr></thead>
+          <tbody id="docs-table"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+  <!-- ══ DEPENDENCIES ═════════════════════════════════════════════════════ -->
+    <div class="page" id="page-dependencies">
+      <div class="page-header">
+        <div><div class="page-title">Task Dependencies</div><div class="page-sub">Link tasks that must finish before others can start — cascade warnings auto-flag delays</div></div>
+        <button class="btn btn-primary" onclick="openDepModal()">+ Add Dependency</button>
+      </div>
+      <div class="stats-grid sg-4" id="dep-stats"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Dependency Map</div>
+          <select class="form-select" id="dep-proj-filter" onchange="renderDependencies()" style="font-size:12px;padding:5px 10px"><option value="">All Projects</option></select>
+        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Predecessor Task</th><th>Project</th><th>Progress</th><th>Status</th><th>→</th><th>Successor Task</th><th>Project</th><th>Progress</th><th>Status</th><th>Dep. Type</th><th>Warning</th><th>Actions</th></tr></thead>
+          <tbody id="dep-table"></tbody></table>
+        </div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Tasks Blocking Others</div></div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Blocked Task</th><th>Waiting For</th><th>Predecessor Progress</th><th>Est. Impact</th><th>Action</th></tr></thead>
+          <tbody id="dep-blocked-table"></tbody></table>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ══ STAKEHOLDER REPORT ═══════════════════════════════════════════════ -->
+    <div class="page" id="page-stakeholder">
+      <div class="page-header">
+        <div><div class="page-title">Stakeholder Report</div><div class="page-sub">Generate a professional PDF for clients, executives or board members</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:1.25rem">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Report Settings</div></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Project *</label><select class="form-select" id="sh-project" onchange="onSHProjChange()"><option value="">— Select project —</option></select></div>
+            <div class="form-group"><label class="form-label">Report Type</label>
+              <select class="form-select" id="sh-type">
+                <option value="executive">Executive Summary — 1 page overview</option>
+                <option value="progress">Progress Report — task and cost detail</option>
+                <option value="financial">Financial Report — budget, revenue, profitability</option>
+                <option value="full">Full PMO Report — all sections</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Reporting Period</label>
+              <select class="form-select" id="sh-period">
+                <option>Monthly</option><option>Quarterly</option><option>Milestone</option><option>Ad Hoc</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Report Date</label><input class="form-input" type="date" id="sh-date"/></div>
+            <div class="form-group"><label class="form-label">Prepared By</label><input class="form-input" id="sh-author" placeholder="Your name and title"/></div>
+            <div class="form-group"><label class="form-label">Prepared For</label><input class="form-input" id="sh-recipient" placeholder="Client name / executive name"/></div>
+            <div class="form-group"><label class="form-label">Executive Summary (optional)</label><textarea class="form-textarea" id="sh-summary" placeholder="Key messages, highlights, decisions needed..." style="min-height:90px"></textarea></div>
+            <div class="form-group"><label class="form-label">Include Sections</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-overview" checked> Project Overview</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-progress" checked> Task Progress</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-budget" checked> Budget & Costs</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-financial" checked> Revenue & Profit</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-risk" checked> Risk Register</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-hse" checked> HSE Summary</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-kpi" checked> KPI Scorecard</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="sh-inc-next"> Next Period Plan</label>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Next Period Planned Actions</label><textarea class="form-textarea" id="sh-next-actions" placeholder="What will be achieved in the next reporting period..." style="min-height:70px"></textarea></div>
+            <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;justify-content:center;padding:10px" onclick="generateStakeholderPDF()">📄 Generate PDF Report</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Report Preview</div></div>
+          <div class="card-body" id="sh-preview" style="font-size:12px;color:var(--text3);text-align:center;padding:3rem">
+            Select a project to preview the report summary
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom nav (mobile) -->
+<div class="bottom-nav">
+  <div class="bn-item active" onclick="showPage('portfolio',this)"><span class="bn-icon">🗂</span>Portfolio</div>
+  <div class="bn-item" onclick="showPage('gates',this)"><span class="bn-icon">🚦</span>Gates</div>
+  <div class="bn-item" onclick="showPage('kpi',this)"><span class="bn-icon">📊</span>KPIs</div>
+  <div class="bn-item" onclick="showPage('dependencies',this)"><span class="bn-icon">🔗</span>Depend.</div>
+  <div class="bn-item" onclick="showPage('stakeholder',this)"><span class="bn-icon">📄</span>PDF</div>
+</div>
+
+<!-- ── MODALS ──────────────────────────────────────────────────────────── -->
+
+<!-- Stage Gate Modal -->
+<div class="modal-bg" id="modal-gate">
+  <div class="modal">
+    <div class="modal-title"><span>Update Stage Gate</span><button class="modal-close" onclick="closeModal('gate')">✕</button></div>
+    <input type="hidden" id="gate-id"/>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="gate-project"></select></div>
+      <div class="form-group"><label class="form-label">Stage</label>
+        <select class="form-select" id="gate-stage">
+          <option>Initiation</option><option>Planning</option><option>Execution</option><option>Monitoring</option><option>Closeout</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="gate-status">
+          <option value="pending">Pending</option><option value="in_review">In Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Approved By</label><input class="form-input" id="gate-approved-by" placeholder="Name"/></div>
+      <div class="form-group"><label class="form-label">Submitted Date</label><input class="form-input" type="date" id="gate-submitted"/></div>
+      <div class="form-group"><label class="form-label">Approved Date</label><input class="form-input" type="date" id="gate-approved-date"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="gate-notes" style="min-height:70px" placeholder="Gate review notes, conditions, actions..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gate')">Cancel</button>
+      <button class="btn btn-primary" id="gate-save-btn" onclick="saveGate()">Save Gate</button>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Modal -->
+<div class="modal-bg" id="modal-kpi">
+  <div class="modal">
+    <div class="modal-title"><span>Record KPIs</span><button class="modal-close" onclick="closeModal('kpi')">✕</button></div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="kpi-project"></select></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="kpi-date"/></div>
+      <div class="form-group"><label class="form-label">SPI (Schedule Performance)</label><input class="form-input" type="number" id="kpi-spi" step="0.01" placeholder="e.g. 0.95 (1.0 = on schedule)"/></div>
+      <div class="form-group"><label class="form-label">CPI (Cost Performance)</label><input class="form-input" type="number" id="kpi-cpi" step="0.01" placeholder="e.g. 1.05 (1.0 = on budget)"/></div>
+      <div class="form-group"><label class="form-label">Productivity Rate</label><input class="form-input" type="number" id="kpi-productivity" step="0.1" placeholder="units per worker-day"/></div>
+      <div class="form-group"><label class="form-label">Safety Rating (0-100)</label><input class="form-input" type="number" id="kpi-safety" min="0" max="100"/></div>
+      <div class="form-group"><label class="form-label">Quality Score (0-100)</label><input class="form-input" type="number" id="kpi-quality" min="0" max="100"/></div>
+      <div class="form-group"><label class="form-label">Client Satisfaction (0-10)</label><input class="form-input" type="number" id="kpi-csat" step="0.1" min="0" max="10"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="kpi-notes" style="min-height:60px" placeholder="Observations for this period..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('kpi')">Cancel</button>
+      <button class="btn btn-primary" id="kpi-save-btn" onclick="saveKPI()">Save KPIs</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lesson Learned Modal -->
+<div class="modal-bg" id="modal-lesson">
+  <div class="modal">
+    <div class="modal-title"><span id="ll-modal-title">Add Lesson Learned</span><button class="modal-close" onclick="closeModal('lesson')">✕</button></div>
+    <input type="hidden" id="ll-id"/>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="ll-project"></select></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="ll-category">
+          <option>Planning</option><option>Execution</option><option>Risk</option><option>Resource</option><option>Technical</option><option>HSE</option><option>Financial</option><option>General</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="ll-type">
+          <option value="success">✅ Success — what worked well</option>
+          <option value="improvement">🔶 Improvement — what to do better</option>
+          <option value="warning">🔴 Warning — what to avoid</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Impact</label>
+        <select class="form-select" id="ll-impact">
+          <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Project Phase</label><input class="form-input" id="ll-phase" placeholder="e.g. Planning, Construction"/></div>
+      <div class="form-group"><label class="form-label">Submitted By</label><input class="form-input" id="ll-submitted-by" placeholder="Name"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Title / Summary *</label><input class="form-input" id="ll-title" placeholder="Brief description of the lesson"/></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="ll-description" placeholder="What happened? What was the context?"></textarea></div>
+    <div class="form-group"><label class="form-label">Recommendations</label><textarea class="form-textarea" id="ll-recommendations" placeholder="What should be done differently on future projects?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('lesson')">Cancel</button>
+      <button class="btn btn-primary" id="ll-save-btn" onclick="saveLesson()">Save Lesson</button>
+    </div>
+  </div>
+</div>
+
+<!-- Allocation Modal -->
+<div class="modal-bg" id="modal-allocation">
+  <div class="modal">
+    <div class="modal-title"><span id="alloc-modal-title">Add Resource Allocation</span><button class="modal-close" onclick="closeModal('allocation')">✕</button></div>
+    <input type="hidden" id="alloc-id"/>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Worker</label><select class="form-select" id="alloc-worker"></select></div>
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="alloc-project"></select></div>
+      <div class="form-group"><label class="form-label">Allocation % *</label><input class="form-input" type="number" id="alloc-pct" min="1" max="100" placeholder="e.g. 100 = full time"/></div>
+      <div class="form-group"><label class="form-label">Role on Project</label><input class="form-input" id="alloc-role" placeholder="e.g. Lead Engineer"/></div>
+      <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" id="alloc-start"/></div>
+      <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" id="alloc-end"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="alloc-notes" style="min-height:60px" placeholder="Any notes on this allocation..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('allocation')">Cancel</button>
+      <button class="btn btn-primary" id="alloc-save-btn" onclick="saveAllocation()">Save Allocation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Document Modal -->
+<div class="modal-bg" id="modal-document">
+  <div class="modal">
+    <div class="modal-title"><span id="doc-modal-title">Add Document</span><button class="modal-close" onclick="closeModal('document')">✕</button></div>
+    <input type="hidden" id="doc-id"/>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Document Title *</label><input class="form-input" id="doc-title" placeholder="e.g. Subcontract Agreement — Steel Works"/></div>
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="doc-project"></select></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="doc-category">
+          <option>Contract</option><option>Drawing</option><option>Permit</option><option>Specification</option><option>Report</option><option>HSE</option><option>Financial</option><option>General</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Document Number</label><input class="form-input" id="doc-number" placeholder="e.g. DWG-001"/></div>
+      <div class="form-group"><label class="form-label">Revision</label><input class="form-input" id="doc-revision" placeholder="e.g. Rev 2"/></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="doc-status">
+          <option value="draft">Draft</option><option value="current">Current</option><option value="superseded">Superseded</option><option value="archived">Archived</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Expiry Date</label><input class="form-input" type="date" id="doc-expiry"/></div>
+      <div class="form-group"><label class="form-label">Uploaded By</label><input class="form-input" id="doc-uploaded-by" placeholder="Name"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description / Notes</label><textarea class="form-textarea" id="doc-description" style="min-height:70px" placeholder="Document scope, notes, or version history..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('document')">Cancel</button>
+      <button class="btn btn-primary" id="doc-save-btn" onclick="saveDocument()">Save Document</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dependency Modal -->
+<div class="modal-bg" id="modal-dependency">
+  <div class="modal">
+    <div class="modal-title"><span>Add Task Dependency</span><button class="modal-close" onclick="closeModal('dependency')">✕</button></div>
+    <div class="form-group"><label class="form-label">Predecessor — must finish first *</label>
+      <select class="form-select" id="dep-predecessor" onchange="updateDepProjFilter()"><option value="">— Select task —</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Successor — starts after *</label>
+      <select class="form-select" id="dep-successor"><option value="">— Select task —</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Dependency Type</label>
+      <select class="form-select" id="dep-type">
+        <option value="finish_to_start">Finish-to-Start (most common)</option>
+        <option value="start_to_start">Start-to-Start</option>
+        <option value="finish_to_finish">Finish-to-Finish</option>
+      </select>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text3);margin-bottom:1rem">
+      ℹ Finish-to-Start: Task B cannot start until Task A is complete.<br>
+      Start-to-Start: Task B starts when Task A starts.<br>
+      Finish-to-Finish: Task B finishes when Task A finishes.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('dependency')">Cancel</button>
+      <button class="btn btn-primary" id="dep-save-btn" onclick="saveDependency()">Add Dependency</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const H={'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+
+let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allRisks=[],allRevenue=[],allGates=[],allKPIs=[],allLessons=[],allAllocations=[],allDocuments=[];
+
+const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3200);};
+
+async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:H});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
+
+async function loadAll(){
+  try{
+    document.getElementById('conn-dot').style.background='var(--accent)';
+    document.getElementById('conn-label').textContent='Loading...';
+    [allProjects,allTasks,allReports,allWorkers,allRisks,allRevenue,allGates,allKPIs,allLessons,allAllocations,allDocuments]=await Promise.all([
+      sbGet('projects','order=name.asc&active=eq.true'),
+      sbGet('project_tasks','order=project_name.asc&active=eq.true'),
+      sbGet('daily_reports','order=report_date.desc'),
+      sbGet('workers','order=name.asc&active=eq.true'),
+      sbGet('project_risks','order=risk_score.desc&active=eq.true'),
+      sbGet('revenue_entries','order=entry_date.asc'),
+      sbGet('stage_gates','order=project_name.asc&active=eq.true'),
+      sbGet('project_kpis','order=kpi_date.desc'),
+      sbGet('lessons_learned','order=created_at.desc&active=eq.true'),
+      sbGet('resource_allocations','order=worker_name.asc'),
+      sbGet('documents','order=created_at.desc&active=eq.true')
+    ]);
+    document.getElementById('conn-dot').style.background='var(--green)';
+    document.getElementById('conn-label').textContent='Connected';
+    document.getElementById('conn-label').style.color='var(--green)';
+    // Populate project dropdowns
+    const projOpts=allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+    ['gate-project','kpi-project','ll-project','alloc-project','doc-project','doc-proj-filter'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      const blank=el.id.includes('filter')?'<option value="">All Projects</option>':'';
+      el.innerHTML=blank+projOpts;
+    });
+    // Worker dropdown for allocations
+    const wOpts=allWorkers.map(w=>`<option value="${w.name}">${w.name}${w.role?' — '+w.role:''}</option>`).join('');
+    const wSel=document.getElementById('alloc-worker');
+    if(wSel)wSel.innerHTML=wOpts;
+    // Load dependencies
+    await loadDeps();
+    // Render active page
+    const active=document.querySelector('.page.active');
+    if(active)renderPage(active.id.replace('page-',''));
+  }catch(e){
+    document.getElementById('conn-dot').style.background='var(--red)';
+    document.getElementById('conn-label').textContent='Connection error';
+    console.error(e);
+  }
+}
+
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.bn-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  renderPage(id);
+}
+function renderPage(id){
+  ({portfolio:renderPortfolio,gates:renderGates,kpi:renderKPI,capacity:renderCapacity,lessons:renderLessons,documents:renderDocuments,dependencies:renderDependencies,stakeholder:()=>{const sh=document.getElementById('sh-project');if(sh&&!sh.querySelector('option[value=""]~option'))sh.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}}[id]||Function())();
+}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+function openModal(id,rec=null){document.getElementById('modal-'+id).classList.add('open');}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fieldCosts(){const fc={};allProjects.forEach(p=>fc[p.name]=0);allReports.forEach(r=>{fc[r.project]=(fc[r.project]||0)+(r.total_cost||0);});return fc;}
+function avgProgress(name){const t=allTasks.filter(x=>x.project_name===name);return t.length?Math.round(t.reduce((a,x)=>a+(parseFloat(x.progress)||0),0)/t.length):0;}
+function budgetPct(p,fc){const tot=(p.contract_spend||0)+(fc[p.name]||0);return p.budget>0?Math.round(tot/p.budget*100):0;}
+function latestKPI(name){return allKPIs.filter(k=>k.project_name===name).sort((a,b)=>b.kpi_date.localeCompare(a.kpi_date))[0]||null;}
+function currentGate(name){
+  const order=['Initiation','Planning','Execution','Monitoring','Closeout'];
+  const gates=allGates.filter(g=>g.project_name===name);
+  const approved=gates.filter(g=>g.status==='approved').map(g=>order.indexOf(g.stage)).filter(i=>i>=0);
+  if(!approved.length)return'—';
+  return order[Math.max(...approved)]||'—';
+}
+function ragStatus(p,fc){
+  const prog=avgProgress(p.name);const bp=budgetPct(p,fc);const kpi=latestKPI(p.name);
+  const spiOk=!kpi||kpi.spi>=0.9;const cpiOk=!kpi||kpi.cpi>=0.9;
+  if(bp>100||p.status==='delayed'||prog<30&&!spiOk)return'r';
+  if(bp>=75||p.status==='at-risk'||prog<60||!spiOk||!cpiOk)return'a';
+  return'g';
+}
+function kpiScore(kpi){if(!kpi)return null;const scores=[(kpi.spi||0)*100,(kpi.cpi||0)*100,(kpi.safety_rating||0),(kpi.quality_score||0),(kpi.client_satisfaction||0)*10].filter(v=>v>0);return scores.length?Math.round(scores.reduce((a,v)=>a+v,0)/scores.length):null;}
+
+// ══ PORTFOLIO OVERVIEW ════════════════════════════════════════════════════════
+function renderPortfolio(){
+  const fc=fieldCosts();
+  const rCount={g:0,a:0,r:0};
+  allProjects.forEach(p=>{rCount[ragStatus(p,fc)]++;});
+  const totalBudget=allProjects.reduce((a,p)=>a+(p.budget||0),0);
+  const totalSpend=allProjects.reduce((a,p)=>a+(p.contract_spend||0)+(fc[p.name]||0),0);
+  const totalCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const totalRevBilled=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
+  const margin=totalCV>0?Math.round((totalCV-totalBudget)/totalCV*100):0;
+
+  document.getElementById('port-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${allProjects.length}</div><div class="stat-l">Active Projects</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${rCount.g}</div><div class="stat-l">🟢 On Track</div></div>
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${rCount.a}</div><div class="stat-l">🟡 At Risk</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${rCount.r}</div><div class="stat-l">🔴 Critical</div></div>
+    <div class="stat st"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(totalCV)}</div><div class="stat-l">Portfolio Value</div><div class="stat-sub">${margin}% target margin</div></div>`;
+
+  document.getElementById('port-table').innerHTML=allProjects.map(p=>{
+    const rag=ragStatus(p,fc);const prog=avgProgress(p.name);const bp=budgetPct(p,fc);
+    const kpi=latestKPI(p.name);const score=kpiScore(kpi);const gate=currentGate(p.name);
+    const budC=bp>100?'var(--red)':bp>=75?'var(--accent)':'var(--green)';
+    const progC=prog>=80?'var(--green)':prog>=50?'var(--blue)':'var(--accent)';
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.client||'—'}</div></td>
+      <td><div style="display:flex;align-items:center;gap:6px"><div class="rag rag-${rag}"></div><span style="font-size:10px;color:var(--text2)">${rag==='g'?'On Track':rag==='a'?'At Risk':'Critical'}</span></div></td>
+      <td style="color:var(--text2);font-size:11px">${p.phase||'—'}</td>
+      <td style="min-width:110px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${prog}%;background:${progC};border-radius:3px"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${progC};min-width:32px">${prog}%</span></div></td>
+      <td style="min-width:100px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.min(bp,100)}%;background:${budC};border-radius:3px"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${budC};min-width:32px">${bp}%</span></div></td>
+      <td>${kpi?`<span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${(kpi.spi||0)>=1?'var(--green)':(kpi.spi||0)>=0.85?'var(--accent)':'var(--red)'}">SPI ${(kpi.spi||0).toFixed(2)}</span>`:'<span style="color:var(--text3);font-size:11px">No data</span>'}</td>
+      <td><span class="badge ${p.risk_level==='low'?'bg':p.risk_level==='medium'?'ba':p.risk_level==='high'?'br':'bp'}">${p.risk_level||'—'}</span></td>
+      <td>${score!==null?`<span style="font-family:var(--font-d);font-size:14px;font-weight:800;color:${score>=80?'var(--green)':score>=60?'var(--accent)':'var(--red)'}">${score}</span><span style="font-size:10px;color:var(--text3)">/100</span>`:'<span style="color:var(--text3);font-size:11px">—</span>'}</td>
+      <td><span class="badge bt">${gate}</span></td>
+      <td style="color:var(--text2);font-size:11px">${p.pm||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Budget snapshot
+  const portBudget=allProjects.map(p=>{
+    const spend=(p.contract_spend||0)+(fc[p.name]||0);
+    const pct=p.budget>0?Math.round(spend/p.budget*100):0;
+    const bc=pct>100?'var(--red)':pct>=75?'var(--accent)':'var(--green)';
+    return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:12px;font-weight:500">${p.name}</span><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3)">${fmt(spend)} / ${fmt(p.budget)}</span><span style="font-family:var(--font-d);font-size:13px;font-weight:700;color:${bc}">${pct}%</span></div></div><div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${Math.min(pct,100)}%;background:${bc};border-radius:4px${pct>100?';animation:pulse 1.5s infinite':''}"></div></div></div>`;
+  }).join('');
+  document.getElementById('port-budget').innerHTML=portBudget||'<p style="color:var(--text3);font-size:13px">No budget data.</p>';
+
+  // Risk heatmap
+  const riskLevels={1:0,2:0,3:0,4:0,6:0,9:0};
+  allRisks.filter(r=>r.status==='open').forEach(r=>{const s=r.risk_score||1;if(riskLevels[s]!==undefined)riskLevels[s]++;});
+  const total=Object.values(riskLevels).reduce((a,v)=>a+v,0);
+  document.getElementById('port-risk').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+      ${[[1,'Low','bg'],[2,'Low-Med','bg'],[3,'Med','ba'],[4,'Med-High','ba'],[6,'High','br'],[9,'Critical','bp']].map(([s,l,cls])=>`<div style="text-align:center;padding:10px;background:var(--bg3);border-radius:var(--r)"><div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:${s<=2?'var(--green)':s<=4?'var(--accent)':s<=6?'var(--red)':'var(--purple)'}">${riskLevels[s]}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">Score ${s}</div><span class="badge ${cls}" style="margin-top:3px">${l}</span></div>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--text2)">${total} open risk${total!==1?'s':''} across portfolio</div>`;
+}
+
+// ══ STAGE GATES ═══════════════════════════════════════════════════════════════
+function renderGates(){
+  const order=['Initiation','Planning','Execution','Monitoring','Closeout'];
+  const statusIcon={approved:'✅',in_review:'🔵',pending:'⏳',rejected:'❌'};
+  const statusClass={approved:'gc-done',in_review:'gc-review',pending:'gc-pending',rejected:'gc-rejected'};
+
+  document.getElementById('gates-container').innerHTML=allProjects.map(p=>{
+    const gates=allGates.filter(g=>g.project_name===p.name);
+    const byStage={};gates.forEach(g=>byStage[g.stage]=g);
+    return`<div class="card">
+      <div class="card-header">
+        <div class="card-title">${p.name}</div>
+        <span style="font-size:12px;color:var(--text2)">${p.client||''} — ${p.pm||''}</span>
+      </div>
+      <div class="card-body">
+        <div class="gate-pipeline">
+          ${order.map(stage=>{
+            const g=byStage[stage];
+            const cls=g?statusClass[g.status]:'gc-pending';
+            const icon=g?statusIcon[g.status]:'○';
+            return`<div class="gate-step">
+              <div class="gate-circle ${cls}">${icon}</div>
+              <div class="gate-label">${stage}</div>
+              ${g&&g.approved_date?`<div style="font-size:9px;color:var(--text3);margin-top:1px">${g.approved_date}</div>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+        ${gates.filter(g=>g.notes).slice(-1).map(g=>`<div style="margin-top:10px;font-size:12px;color:var(--text3);font-style:italic">📝 ${g.stage}: ${g.notes}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══ KPI BENCHMARKS ════════════════════════════════════════════════════════════
+function renderKPI(){
+  const latestKPIs=allProjects.map(p=>({...latestKPI(p.name),project:p})).filter(k=>k.spi||k.cpi);
+  const avgSPI=latestKPIs.length?parseFloat((latestKPIs.reduce((a,k)=>a+(k.spi||0),0)/latestKPIs.length).toFixed(2)):0;
+  const avgCPI=latestKPIs.length?parseFloat((latestKPIs.reduce((a,k)=>a+(k.cpi||0),0)/latestKPIs.length).toFixed(2)):0;
+  const avgSafety=latestKPIs.length?Math.round(latestKPIs.reduce((a,k)=>a+(k.safety_rating||0),0)/latestKPIs.length):0;
+  const avgCSAT=latestKPIs.length?parseFloat((latestKPIs.reduce((a,k)=>a+(k.client_satisfaction||0),0)/latestKPIs.length).toFixed(1)):0;
+
+  document.getElementById('kpi-portfolio-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:${avgSPI>=1?'var(--green)':avgSPI>=0.85?'var(--accent)':'var(--red)'}">${avgSPI.toFixed(2)}</div><div class="stat-l">Avg SPI</div><div class="stat-sub">${avgSPI>=1?'Ahead of schedule':avgSPI>=0.85?'Slightly behind':'Behind schedule'}</div></div>
+    <div class="stat sb"><div class="stat-n" style="color:${avgCPI>=1?'var(--green)':avgCPI>=0.85?'var(--accent)':'var(--red)'}">${avgCPI.toFixed(2)}</div><div class="stat-l">Avg CPI</div><div class="stat-sub">${avgCPI>=1?'Under budget':avgCPI>=0.85?'Near budget':'Over budget'}</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${avgSafety}</div><div class="stat-l">Avg Safety</div><div class="stat-sub">out of 100</div></div>
+    <div class="stat st"><div class="stat-n" style="color:var(--teal)">${avgCSAT.toFixed(1)}</div><div class="stat-l">Avg Client Sat.</div><div class="stat-sub">out of 10</div></div>`;
+
+  const spiC=v=>!v?'var(--text3)':v>=1?'var(--green)':v>=0.85?'var(--accent)':'var(--red)';
+  document.getElementById('kpi-table').innerHTML=allProjects.map(p=>{
+    const k=latestKPI(p.name);const score=kpiScore(k);
+    if(!k)return`<tr><td><div style="font-weight:500">${p.name}</div></td><td colspan="7" style="color:var(--text3);font-size:12px">No KPI data — click + Record KPIs</td></tr>`;
+    return`<tr>
+      <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${k.kpi_date}</div></td>
+      <td><div class="kpi-gauge"><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${Math.min((k.spi||0)*100,100)}%;background:${spiC(k.spi)}"></div></div><span class="kpi-val" style="color:${spiC(k.spi)}">${(k.spi||0).toFixed(2)}</span></div></td>
+      <td><div class="kpi-gauge"><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${Math.min((k.cpi||0)*100,100)}%;background:${spiC(k.cpi)}"></div></div><span class="kpi-val" style="color:${spiC(k.cpi)}">${(k.cpi||0).toFixed(2)}</span></div></td>
+      <td style="font-family:var(--font-d);font-weight:700">${k.productivity_rate||'—'}<span style="font-size:10px;color:var(--text3);font-family:var(--font-b)"> u/wd</span></td>
+      <td><div class="kpi-gauge"><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${k.safety_rating||0}%;background:${(k.safety_rating||0)>=90?'var(--green)':(k.safety_rating||0)>=70?'var(--accent)':'var(--red)'}"></div></div><span class="kpi-val">${k.safety_rating||0}</span></div></td>
+      <td><div class="kpi-gauge"><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:${k.quality_score||0}%;background:${(k.quality_score||0)>=85?'var(--green)':(k.quality_score||0)>=70?'var(--accent)':'var(--red)'}"></div></div><span class="kpi-val">${k.quality_score||0}</span></div></td>
+      <td style="font-family:var(--font-d);font-weight:700;color:${(k.client_satisfaction||0)>=8?'var(--green)':(k.client_satisfaction||0)>=6?'var(--accent)':'var(--red)'}">${k.client_satisfaction||'—'}<span style="font-size:10px;color:var(--text3);font-family:var(--font-b)">/10</span></td>
+      <td>${score!==null?`<div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${score}%;background:${score>=80?'var(--green)':score>=60?'var(--accent)':'var(--red)'};border-radius:4px"></div></div><span style="font-family:var(--font-d);font-weight:800;font-size:14px;color:${score>=80?'var(--green)':score>=60?'var(--accent)':'var(--red)'}">${score}</span></div>`:'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // SPI vs CPI quadrant chart (SVG)
+  const W=380,H2=180,M=40;
+  let points='';let labels='';
+  allProjects.forEach(p=>{
+    const k=latestKPI(p.name);if(!k||!k.spi||!k.cpi)return;
+    const x=M+(k.spi||0)*(W-2*M);const y=H2-M-(k.cpi||0)*(H2-2*M);
+    const c=k.spi>=1&&k.cpi>=1?'#22c55e':k.spi<0.85||k.cpi<0.85?'#ef4444':'#f5a623';
+    points+=`<circle cx="${x}" cy="${y}" r="8" fill="${c}" opacity="0.85"/>`;
+    labels+=`<text x="${x}" y="${y-12}" text-anchor="middle" font-size="9" fill="rgba(232,234,240,0.7)" font-family="Barlow Condensed">${p.name.split(' ')[0]}</text>`;
+  });
+  document.getElementById('kpi-chart').innerHTML=`
+    <svg viewBox="0 0 ${W} ${H2}" style="width:100%;overflow:visible">
+      <line x1="${M}" y1="${H2-M}" x2="${W-M}" y2="${H2-M}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <line x1="${M}" y1="${M}" x2="${M}" y2="${H2-M}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <line x1="${M+(W-2*M)}" y1="${M}" x2="${M+(W-2*M)}" y2="${H2-M}" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="4"/>
+      <line x1="${M}" y1="${M+(H2-2*M)*0}" x2="${W-M}" y2="${M+(H2-2*M)*0}" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="4"/>
+      <text x="${M}" y="${H2-5}" font-size="9" fill="rgba(139,144,160,0.8)" font-family="Barlow Condensed">SPI 0</text>
+      <text x="${W-M-8}" y="${H2-5}" font-size="9" fill="rgba(139,144,160,0.8)" font-family="Barlow Condensed">2.0</text>
+      <text x="${M-30}" y="${H2-M}" font-size="9" fill="rgba(139,144,160,0.8)" font-family="Barlow Condensed" text-anchor="middle">CPI 0</text>
+      <text x="${M-30}" y="${M+8}" font-size="9" fill="rgba(139,144,160,0.8)" font-family="Barlow Condensed" text-anchor="middle">2.0</text>
+      <text x="${M+(W-2*M)/2}" y="${H2+14}" font-size="9" fill="rgba(139,144,160,0.6)" font-family="Barlow Condensed" text-anchor="middle">← SPI (Schedule) →</text>
+      ${points}${labels}
+      <text x="${M+(W-2*M)*0.75}" y="${M+12}" font-size="8" fill="rgba(34,197,94,0.6)" font-family="Barlow Condensed">AHEAD + UNDER</text>
+      <text x="${M+(W-2*M)*0.1}" y="${H2-M-8}" font-size="8" fill="rgba(239,68,68,0.6)" font-family="Barlow Condensed">BEHIND + OVER</text>
+    </svg>`;
+}
+
+// ══ CAPACITY PLANNING ═════════════════════════════════════════════════════════
+function renderCapacity(){
+  // Calculate total allocation per worker
+  const workerAlloc={};
+  allAllocations.forEach(a=>{
+    if(!workerAlloc[a.worker_name])workerAlloc[a.worker_name]={total:0,projects:[]};
+    workerAlloc[a.worker_name].total+=parseFloat(a.allocation_pct||0);
+    workerAlloc[a.worker_name].projects.push(a.project_name);
+  });
+  const overAllocated=Object.values(workerAlloc).filter(w=>w.total>100).length;
+  const fullyAlloc=Object.values(workerAlloc).filter(w=>w.total===100).length;
+  const underAlloc=Object.values(workerAlloc).filter(w=>w.total<100).length;
+
+  document.getElementById('cap-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Total Workers</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${overAllocated}</div><div class="stat-l">Over-allocated</div><div class="stat-sub">&gt;100% allocated</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${fullyAlloc}</div><div class="stat-l">Fully Allocated</div></div>
+    <div class="stat st"><div class="stat-n" style="color:var(--teal)">${underAlloc}</div><div class="stat-l">Available Capacity</div></div>`;
+
+  document.getElementById('cap-table').innerHTML=allWorkers.map(w=>{
+    const wa=workerAlloc[w.name]||{total:0,projects:[]};
+    const pct=wa.total;
+    const bc=pct>100?'var(--red)':pct>=100?'var(--green)':'var(--accent)';
+    const unique=[...new Set(wa.projects)];
+    return`<tr>
+      <td><div style="font-weight:500">${w.name}</div></td>
+      <td style="color:var(--text2);font-size:11px">${w.role||'—'}</td>
+      <td><span class="badge ${w.type==='Telecoms'?'bb':w.type==='Electrical'?'bp':w.type==='Supervisor'?'bt':'ba'}">${w.type}</span></td>
+      <td style="min-width:150px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="cap-bar-wrap" style="flex:1"><div class="cap-bar${pct>100?' over':''}" style="width:${Math.min(pct,100)}%;background:${bc}"></div></div>
+          <span style="font-family:var(--font-d);font-size:14px;font-weight:800;color:${bc};min-width:40px;text-align:right">${pct}%</span>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--text2)">${unique.join(', ')||'None'}</td>
+      <td><span class="badge ${pct>100?'br':pct>=100?'bg':'ba'}">${pct>100?'Over-allocated':pct>=100?'Fully allocated':pct>0?'Partially allocated':'Unallocated'}</span></td>
+    </tr>`;
+  }).join('');
+
+  const statB={'approved':'bg','pending':'ba','rejected':'br'};
+  document.getElementById('cap-detail-table').innerHTML=allAllocations.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:2rem">No allocations yet. Click <strong style="color:var(--accent)">+ Add Allocation</strong>.</td></tr>`:allAllocations.map(a=>`<tr>
+    <td style="font-weight:500">${a.worker_name}</td>
+    <td style="color:var(--text2);font-size:11px">${a.project_name}</td>
+    <td style="color:var(--text2);font-size:11px">${a.role_on_project||'—'}</td>
+    <td><span style="font-family:var(--font-d);font-size:15px;font-weight:700;color:${(a.allocation_pct||0)>=100?'var(--accent)':'var(--text2)'}">${a.allocation_pct||0}%</span></td>
+    <td style="color:var(--text2);font-size:11px">${a.start_date||'—'}</td>
+    <td style="color:var(--text2);font-size:11px">${a.end_date||'—'}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="delAllocation(${a.id})">Del</button></td>
+  </tr>`).join('');
+}
+
+// ══ LESSONS LEARNED ════════════════════════════════════════════════════════════
+function renderLessons(){
+  const catF=document.getElementById('ll-cat-filter').value;
+  const typeF=document.getElementById('ll-type-filter').value;
+  let ll=allLessons;
+  if(catF)ll=ll.filter(l=>l.category===catF);
+  if(typeF)ll=ll.filter(l=>l.type===typeF);
+  const succ=ll.filter(l=>l.type==='success').length;
+  const impr=ll.filter(l=>l.type==='improvement').length;
+  const warn=ll.filter(l=>l.type==='warning').length;
+  document.getElementById('ll-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${ll.length}</div><div class="stat-l">Lessons</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${succ}</div><div class="stat-l">Successes</div></div>
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${impr}</div><div class="stat-l">Improvements</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${warn}</div><div class="stat-l">Warnings</div></div>`;
+  const typeIcon={success:'✅',improvement:'🔶',warning:'🔴'};
+  const impB={High:'br',Medium:'ba',Low:'bg'};
+  document.getElementById('lessons-container').innerHTML=ll.length===0?`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:3rem;text-align:center;color:var(--text3)">No lessons found. Click <strong style="color:var(--accent)">+ Add Lesson</strong>.</div>`:ll.map(l=>`
+    <div class="lesson-card ${l.type}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:14px">${typeIcon[l.type]||'📝'}</span>
+            <span style="font-weight:600;font-size:13px">${l.title}</span>
+            <span class="badge ${impB[l.impact]||'bgr'}">${l.impact} impact</span>
+            <span class="badge bt">${l.category}</span>
+            <span style="font-size:11px;color:var(--text3)">${l.project_name}</span>
+          </div>
+          ${l.description?`<div style="font-size:12px;color:var(--text2);margin-bottom:6px">${l.description}</div>`:''}
+          ${l.recommendations?`<div style="font-size:12px;color:var(--teal);background:rgba(20,184,166,0.06);border-radius:4px;padding:6px 8px;margin-top:4px">💡 <strong>Recommendation:</strong> ${l.recommendations}</div>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" onclick="openEditLesson(${l.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delLesson(${l.id})">Del</button>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3)">${l.submitted_by||''} ${l.phase?' — '+l.phase:''} — ${new Date(l.created_at).toLocaleDateString('en-ZA')}</div>
+    </div>`).join('');
+}
+
+// ══ DOCUMENT REGISTER ═════════════════════════════════════════════════════════
+function renderDocuments(){
+  const projF=document.getElementById('doc-proj-filter').value;
+  const catF=document.getElementById('doc-cat-filter').value;
+  let docs=allDocuments;
+  if(projF)docs=docs.filter(d=>d.project_name===projF);
+  if(catF)docs=docs.filter(d=>d.category===catF);
+  const current=docs.filter(d=>d.status==='current').length;
+  const expiring=docs.filter(d=>d.expiry_date&&new Date(d.expiry_date)<new Date(Date.now()+30*86400000)).length;
+  const cats={};docs.forEach(d=>{cats[d.category]=(cats[d.category]||0)+1;});
+  document.getElementById('doc-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${docs.length}</div><div class="stat-l">Documents</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${current}</div><div class="stat-l">Current</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${expiring}</div><div class="stat-l">Expiring Soon</div></div>
+    <div class="stat sb"><div class="stat-n" style="color:var(--blue)">${Object.keys(cats).length}</div><div class="stat-l">Categories</div></div>`;
+  const statB={draft:'ba',current:'bg',superseded:'bgr',archived:'bgr'};
+  const catIcon={Contract:'📄',Drawing:'📐',Permit:'🏛',Specification:'📋',Report:'📊',HSE:'⛑',Financial:'💰',General:'📁'};
+  document.getElementById('docs-table').innerHTML=docs.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No documents. Click <strong style="color:var(--accent)">+ Add Document</strong>.</td></tr>`:docs.map(d=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:6px"><span style="font-size:15px">${catIcon[d.category]||'📁'}</span><div><div style="font-weight:500">${d.title}</div>${d.description?`<div style="font-size:10px;color:var(--text3)">${d.description.slice(0,50)}${d.description.length>50?'...':''}</div>`:''}</div></div></td>
+    <td style="color:var(--text2);font-size:11px">${d.project_name}</td>
+    <td><span class="badge bt">${d.category}</span></td>
+    <td style="color:var(--text2);font-size:11px;font-family:var(--font-d);font-weight:600">${d.doc_number||'—'}</td>
+    <td style="color:var(--text2);font-size:11px">${d.revision||'—'}</td>
+    <td><span class="badge ${statB[d.status]||'bgr'}">${d.status}</span></td>
+    <td style="color:${d.expiry_date&&new Date(d.expiry_date)<new Date(Date.now()+30*86400000)?'var(--red)':'var(--text2)'};font-size:11px">${d.expiry_date||'—'}</td>
+    <td style="color:var(--text2);font-size:11px">${d.uploaded_by||'—'}</td>
+    <td><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="openEditDoc(${d.id})">Edit</button><button class="btn btn-danger btn-sm" onclick="delDoc(${d.id})">Del</button></div></td>
+  </tr>`).join('');
+}
+
+// ══ SAVE FUNCTIONS ════════════════════════════════════════════════════════════
+async function saveGate(){
+  const project=document.getElementById('gate-project').value;
+  const stage=document.getElementById('gate-stage').value;
+  if(!project){showToast('Select a project','err');return;}
+  const btn=document.getElementById('gate-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const payload={project_name:project,stage,status:document.getElementById('gate-status').value,submitted_date:document.getElementById('gate-submitted').value||null,approved_date:document.getElementById('gate-approved-date').value||null,approved_by:document.getElementById('gate-approved-by').value.trim(),notes:document.getElementById('gate-notes').value.trim(),active:true};
+  try{
+    const existing=allGates.find(g=>g.project_name===project&&g.stage===stage);
+    if(existing){await sbPatch('stage_gates',existing.id,payload);}
+    else{await sbPost('stage_gates',payload);}
+    showToast('Stage gate updated');closeModal('gate');await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Gate';
+}
+
+async function saveKPI(){
+  const project=document.getElementById('kpi-project').value;
+  const date=document.getElementById('kpi-date').value;
+  if(!project||!date){showToast('Project and date required','err');return;}
+  const btn=document.getElementById('kpi-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  try{
+    await sbPost('project_kpis',{project_name:project,kpi_date:date,spi:parseFloat(document.getElementById('kpi-spi').value)||null,cpi:parseFloat(document.getElementById('kpi-cpi').value)||null,productivity_rate:parseFloat(document.getElementById('kpi-productivity').value)||null,safety_rating:parseFloat(document.getElementById('kpi-safety').value)||null,quality_score:parseFloat(document.getElementById('kpi-quality').value)||null,client_satisfaction:parseFloat(document.getElementById('kpi-csat').value)||null,notes:document.getElementById('kpi-notes').value.trim()});
+    showToast('KPIs recorded');closeModal('kpi');await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save KPIs';
+}
+
+async function saveLesson(){
+  const title=document.getElementById('ll-title').value.trim();
+  if(!title){showToast('Title required','err');return;}
+  const btn=document.getElementById('ll-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const id=document.getElementById('ll-id').value;
+  const payload={project_name:document.getElementById('ll-project').value,category:document.getElementById('ll-category').value,type:document.getElementById('ll-type').value,impact:document.getElementById('ll-impact').value,phase:document.getElementById('ll-phase').value.trim(),submitted_by:document.getElementById('ll-submitted-by').value.trim(),title,description:document.getElementById('ll-description').value.trim(),recommendations:document.getElementById('ll-recommendations').value.trim(),active:true};
+  try{
+    if(id){await sbPatch('lessons_learned',id,payload);showToast('Lesson updated');}
+    else{await sbPost('lessons_learned',payload);showToast('Lesson added');}
+    closeModal('lesson');await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Lesson';
+}
+
+async function saveAllocation(){
+  const worker=document.getElementById('alloc-worker').value;
+  const project=document.getElementById('alloc-project').value;
+  const pct=parseFloat(document.getElementById('alloc-pct').value)||0;
+  if(!worker||!project||!pct){showToast('Worker, project and allocation % required','err');return;}
+  const btn=document.getElementById('alloc-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  try{
+    await sbPost('resource_allocations',{worker_name:worker,project_name:project,allocation_pct:pct,role_on_project:document.getElementById('alloc-role').value.trim(),start_date:document.getElementById('alloc-start').value||null,end_date:document.getElementById('alloc-end').value||null,notes:document.getElementById('alloc-notes').value.trim()});
+    showToast('Allocation saved');closeModal('allocation');await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Allocation';
+}
+
+async function saveDocument(){
+  const title=document.getElementById('doc-title').value.trim();
+  if(!title){showToast('Document title required','err');return;}
+  const btn=document.getElementById('doc-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const id=document.getElementById('doc-id').value;
+  const payload={project_name:document.getElementById('doc-project').value,title,category:document.getElementById('doc-category').value,doc_number:document.getElementById('doc-number').value.trim(),revision:document.getElementById('doc-revision').value.trim()||'Rev 0',status:document.getElementById('doc-status').value,expiry_date:document.getElementById('doc-expiry').value||null,uploaded_by:document.getElementById('doc-uploaded-by').value.trim(),description:document.getElementById('doc-description').value.trim(),active:true};
+  try{
+    if(id){await sbPatch('documents',id,payload);showToast('Document updated');}
+    else{await sbPost('documents',payload);showToast('Document added');}
+    closeModal('document');await loadAll();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Document';
+}
+
+// ── Edit helpers ──────────────────────────────────────────────────────────────
+function openEditLesson(id){
+  const l=allLessons.find(x=>x.id===id);if(!l)return;
+  document.getElementById('ll-id').value=l.id;
+  document.getElementById('ll-modal-title').textContent='Edit Lesson';
+  document.getElementById('ll-project').value=l.project_name;
+  document.getElementById('ll-category').value=l.category;
+  document.getElementById('ll-type').value=l.type;
+  document.getElementById('ll-impact').value=l.impact||'Medium';
+  document.getElementById('ll-phase').value=l.phase||'';
+  document.getElementById('ll-submitted-by').value=l.submitted_by||'';
+  document.getElementById('ll-title').value=l.title;
+  document.getElementById('ll-description').value=l.description||'';
+  document.getElementById('ll-recommendations').value=l.recommendations||'';
+  document.getElementById('modal-lesson').classList.add('open');
+}
+function openEditDoc(id){
+  const d=allDocuments.find(x=>x.id===id);if(!d)return;
+  document.getElementById('doc-id').value=d.id;
+  document.getElementById('doc-modal-title').textContent='Edit Document';
+  document.getElementById('doc-project').value=d.project_name;
+  document.getElementById('doc-title').value=d.title;
+  document.getElementById('doc-category').value=d.category;
+  document.getElementById('doc-number').value=d.doc_number||'';
+  document.getElementById('doc-revision').value=d.revision||'';
+  document.getElementById('doc-status').value=d.status;
+  document.getElementById('doc-expiry').value=d.expiry_date||'';
+  document.getElementById('doc-uploaded-by').value=d.uploaded_by||'';
+  document.getElementById('doc-description').value=d.description||'';
+  document.getElementById('modal-document').classList.add('open');
+}
+
+// ── Delete helpers ────────────────────────────────────────────────────────────
+async function delLesson(id){if(!confirm('Delete this lesson?'))return;try{await sbPatch('lessons_learned',id,{active:false});showToast('Deleted');await loadAll();}catch(e){showToast('Delete failed','err');}}
+async function delDoc(id){if(!confirm('Delete this document record?'))return;try{await sbPatch('documents',id,{active:false});showToast('Deleted');await loadAll();}catch(e){showToast('Delete failed','err');}}
+async function delAllocation(id){if(!confirm('Remove this allocation?'))return;try{const r=await fetch(`${SB}/rest/v1/resource_allocations?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error();showToast('Allocation removed');await loadAll();}catch(e){showToast('Delete failed','err');}}
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+function dlDocsCSV(){
+  const rows=[['Title','Project','Category','Doc No.','Revision','Status','Expiry','Uploaded By','Description'].join(',')];
+  allDocuments.forEach(d=>{const e=v=>String(v||'').includes(',')?'"'+String(v||'').replace(/"/g,'""')+'"':String(v||'');rows.push([e(d.title),e(d.project_name),e(d.category),e(d.doc_number),e(d.revision),e(d.status),e(d.expiry_date),e(d.uploaded_by),e(d.description)].join(','));});
+  const b=new Blob(['\uFEFF'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='SiteCommand_Documents_'+new Date().toISOString().split('T')[0]+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+function printPDF(){window.print();} // also triggers portfolio print
+
+// ══ DEPENDENCIES ════════════════════════════════════════════════════════════
+let allDependencies=[];
+
+async function loadDeps(){
+  try{allDependencies=await sbGet('task_dependencies','order=id.asc');}
+  catch(e){allDependencies=[];}
+}
+
+function openDepModal(){
+  const taskOpts=allTasks.map(t=>`<option value="${t.id}" data-proj="${t.project_name}" data-title="${t.title}" data-progress="${t.progress||0}" data-status="${t.status}">${t.project_name} — ${t.title}</option>`).join('');
+  document.getElementById('dep-predecessor').innerHTML='<option value="">— Select predecessor —</option>'+taskOpts;
+  document.getElementById('dep-successor').innerHTML='<option value="">— Select successor —</option>'+taskOpts;
+  document.getElementById('modal-dependency').classList.add('open');
+}
+
+async function saveDependency(){
+  const predId=document.getElementById('dep-predecessor').value;
+  const succId=document.getElementById('dep-successor').value;
+  const dtype=document.getElementById('dep-type').value;
+  if(!predId||!succId){showToast('Select both tasks','err');return;}
+  if(predId===succId){showToast('A task cannot depend on itself','err');return;}
+  const btn=document.getElementById('dep-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  try{
+    await sbPost('task_dependencies',{task_id:parseInt(succId),depends_on_task_id:parseInt(predId),dependency_type:dtype});
+    showToast('Dependency added');closeModal('dependency');
+    await loadDeps();renderDependencies();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Add Dependency';
+}
+
+async function delDependency(id){
+  if(!confirm('Remove this dependency?'))return;
+  try{
+    await fetch(`${SB}/rest/v1/task_dependencies?id=eq.${id}`,{method:'DELETE',headers:H});
+    showToast('Dependency removed');await loadDeps();renderDependencies();
+  }catch(e){showToast('Delete failed','err');}
+}
+
+function renderDependencies(){
+  // Update project filter
+  const pf=document.getElementById('dep-proj-filter');
+  if(pf.options.length<=1){
+    allProjects.forEach(p=>{const o=new Option(p.name,p.name);pf.appendChild(o);});
+  }
+  const projF=pf.value;
+
+  const taskMap={};allTasks.forEach(t=>taskMap[t.id]=t);
+  let deps=allDependencies.filter(d=>taskMap[d.task_id]&&taskMap[d.depends_on_task_id]);
+  if(projF)deps=deps.filter(d=>(taskMap[d.task_id]?.project_name===projF)||(taskMap[d.depends_on_task_id]?.project_name===projF));
+
+  // Stats
+  const blocked=deps.filter(d=>{
+    const pred=taskMap[d.depends_on_task_id];
+    const succ=taskMap[d.task_id];
+    return pred&&succ&&parseFloat(pred.progress||0)<100&&succ.status!=='complete';
+  }).length;
+  const critical=deps.filter(d=>{
+    const pred=taskMap[d.depends_on_task_id];
+    return pred&&parseFloat(pred.progress||0)<50;
+  }).length;
+  document.getElementById('dep-stats').innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${deps.length}</div><div class="stat-l">Dependencies</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${blocked}</div><div class="stat-l">Active Blockers</div></div>
+    <div class="stat sp"><div class="stat-n" style="color:var(--purple)">${critical}</div><div class="stat-l">Critical Path</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${deps.length-blocked}</div><div class="stat-l">Clear</div></div>`;
+
+  const depTypeLabel={finish_to_start:'F→S',start_to_start:'S→S',finish_to_finish:'F→F'};
+  const statB={'not-started':'bgr','in-progress':'bb',complete:'bg',blocked:'br'};
+  const progC=p=>parseFloat(p)>=90?'var(--green)':parseFloat(p)>=50?'var(--blue)':'var(--accent)';
+
+  document.getElementById('dep-table').innerHTML=deps.length===0
+    ?`<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:2rem">No dependencies yet. Click <strong style="color:var(--accent)">+ Add Dependency</strong>.</td></tr>`
+    :deps.map(d=>{
+      const pred=taskMap[d.depends_on_task_id];
+      const succ=taskMap[d.task_id];
+      if(!pred||!succ)return'';
+      const predPct=parseFloat(pred.progress||0);
+      const isBlocking=predPct<100&&succ.status!=='complete';
+      const isCritical=predPct<50;
+      return`<tr style="${isBlocking?'background:rgba(239,68,68,0.04)':''}">
+        <td><div style="font-weight:500;${isCritical?'color:var(--red)':''}">${pred.title}</div></td>
+        <td style="color:var(--text2);font-size:11px">${pred.project_name}</td>
+        <td><div style="display:flex;align-items:center;gap:5px"><div style="width:50px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${predPct}%;background:${progC(predPct)};border-radius:3px"></div></div><span style="font-family:var(--font-d);font-size:11px;font-weight:700;color:${progC(predPct)}">${predPct}%</span></div></td>
+        <td><span class="badge ${statB[pred.status]||'bgr'}">${pred.status}</span></td>
+        <td style="font-size:16px;text-align:center;color:${isBlocking?'var(--red)':'var(--green)'}">→</td>
+        <td><div style="font-weight:500">${succ.title}</div></td>
+        <td style="color:var(--text2);font-size:11px">${succ.project_name}</td>
+        <td><div style="display:flex;align-items:center;gap:5px"><div style="width:50px;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${parseFloat(succ.progress||0)}%;background:${progC(succ.progress)};border-radius:3px"></div></div><span style="font-family:var(--font-d);font-size:11px;font-weight:700;color:${progC(succ.progress)}">${succ.progress||0}%</span></div></td>
+        <td><span class="badge ${statB[succ.status]||'bgr'}">${succ.status}</span></td>
+        <td><span class="badge bb" style="font-size:9px">${depTypeLabel[d.dependency_type]||'F→S'}</span></td>
+        <td>${isBlocking?`<span style="font-size:11px;font-weight:600;color:${isCritical?'var(--red)':'var(--accent)'}">⚠ ${isCritical?'CRITICAL — pred &lt;50%':'Blocking — not complete'}</span>`:'<span style="color:var(--green);font-size:11px">✓ Clear</span>'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="delDependency(${d.id})">Del</button></td>
+      </tr>`;
+    }).join('');
+
+  // Blocked tasks summary
+  const blocking=deps.filter(d=>{
+    const pred=taskMap[d.depends_on_task_id];
+    const succ=taskMap[d.task_id];
+    return pred&&succ&&parseFloat(pred.progress||0)<100&&succ.status!=='complete';
+  });
+  document.getElementById('dep-blocked-table').innerHTML=blocking.length===0
+    ?`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:1.5rem">✅ No blocked tasks</td></tr>`
+    :blocking.map(d=>{
+      const pred=taskMap[d.depends_on_task_id];
+      const succ=taskMap[d.task_id];
+      const predPct=parseFloat(pred.progress||0);
+      const remaining=100-predPct;
+      return`<tr>
+        <td><div style="font-weight:500;color:var(--red)">${succ.title}</div><div style="font-size:10px;color:var(--text3)">${succ.project_name}</div></td>
+        <td><div style="font-weight:500">${pred.title}</div><div style="font-size:10px;color:var(--text3)">${pred.project_name}</div></td>
+        <td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:100%;width:${predPct}%;background:${predPct<50?'var(--red)':'var(--accent)'};border-radius:4px"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${predPct<50?'var(--red)':'var(--accent)'}">${predPct}%</span></div></td>
+        <td style="font-size:11px;color:var(--text2)">${remaining.toFixed(0)}% remaining on predecessor</td>
+        <td><span style="font-size:11px;padding:3px 8px;border-radius:4px;background:${predPct<50?'rgba(239,68,68,0.1)':'rgba(245,166,35,0.1)'};color:${predPct<50?'#f87171':'var(--accent)'};">${predPct<50?'🔴 Critical':'🟡 Monitor'}</span></td>
+      </tr>`;
+    }).join('');
+}
+
+// ══ STAKEHOLDER REPORT PDF ════════════════════════════════════════════════════
+function onSHProjChange(){
+  const pname=document.getElementById('sh-project').value;
+  if(!pname){document.getElementById('sh-preview').innerHTML='<p style="color:var(--text3)">Select a project to preview</p>';return;}
+  const p=allProjects.find(x=>x.name===pname);
+  if(!p)return;
+  const fc={};allReports.forEach(r=>{fc[r.project]=(fc[r.project]||0)+(r.total_cost||0);});
+  const tasks=allTasks.filter(t=>t.project_name===pname);
+  const avg=tasks.length?Math.round(tasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/tasks.length):0;
+  const totalSpend=(p.contract_spend||0)+(fc[pname]||0);
+  const bp=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+  const rev=allRevenue.filter(r=>r.project_name===pname);
+  const billed=rev.reduce((a,r)=>a+(r.amount||0),0);
+  const received=rev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const kpi=allKPIs.filter(k=>k.project_name===pname).sort((a,b)=>b.kpi_date.localeCompare(a.kpi_date))[0];
+  const risks=allRisks.filter(r=>r.project_name===pname&&r.status==='open');
+  const fmt2=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+  const bc=bp>100?'#ef4444':bp>=75?'#f5a623':'#22c55e';
+
+  document.getElementById('sh-preview').innerHTML=`
+    <div style="text-align:left">
+      <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent);text-transform:uppercase;margin-bottom:12px">${p.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="background:var(--bg3);border-radius:var(--r);padding:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Task Progress</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)">${avg}%</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Budget Used</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:${bc}">${bp}%</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Revenue Billed</div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--accent)">${fmt2(billed)}</div></div>
+        <div style="background:var(--bg3);border-radius:var(--r);padding:8px"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Received</div><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--green)">${fmt2(received)}</div></div>
+      </div>
+      ${kpi?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">SPI: <strong style="color:${(kpi.spi||0)>=1?'var(--green)':'var(--accent)'}">${(kpi.spi||0).toFixed(2)}</strong> &nbsp;|&nbsp; CPI: <strong style="color:${(kpi.cpi||0)>=1?'var(--green)':'var(--accent)'}">${(kpi.cpi||0).toFixed(2)}</strong> &nbsp;|&nbsp; Safety: <strong>${kpi.safety_rating||'—'}</strong>/100</div>`:''}
+      <div style="font-size:11px;color:${risks.length>0?'var(--red)':'var(--green)'}">⚠ ${risks.length} open risk${risks.length!==1?'s':''}</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--teal)">✅ Click Generate PDF to create the full stakeholder report</div>
+    </div>`;
+}
+
+function generateStakeholderPDF(){
+  const pname=document.getElementById('sh-project').value;
+  if(!pname){showToast('Select a project first','err');return;}
+  const p=allProjects.find(x=>x.name===pname);
+  if(!p){showToast('Project not found','err');return;}
+
+  const author=document.getElementById('sh-author').value||'Project Manager';
+  const recipient=document.getElementById('sh-recipient').value||'Client';
+  const period=document.getElementById('sh-period').value;
+  const rdate=document.getElementById('sh-date').value||new Date().toISOString().split('T')[0];
+  const execSummary=document.getElementById('sh-summary').value;
+  const nextActions=document.getElementById('sh-next-actions').value;
+  const incOverview=document.getElementById('sh-inc-overview').checked;
+  const incProgress=document.getElementById('sh-inc-progress').checked;
+  const incBudget=document.getElementById('sh-inc-budget').checked;
+  const incFinancial=document.getElementById('sh-inc-financial').checked;
+  const incRisk=document.getElementById('sh-inc-risk').checked;
+  const incHSE=document.getElementById('sh-inc-hse').checked;
+  const incKPI=document.getElementById('sh-inc-kpi').checked;
+  const incNext=document.getElementById('sh-inc-next').checked;
+
+  // Data
+  const fc={};allReports.forEach(r=>{fc[r.project]=(fc[r.project]||0)+(r.total_cost||0);});
+  const tasks=allTasks.filter(t=>t.project_name===pname);
+  const rpts=allReports.filter(r=>r.project===pname).slice(0,10);
+  const risks=allRisks.filter(r=>r.project_name===pname);
+  const rev=allRevenue.filter(r=>r.project_name===pname);
+  const kpi=allKPIs.filter(k=>k.project_name===pname).sort((a,b)=>b.kpi_date.localeCompare(a.kpi_date))[0];
+  const gates=allGates.filter(g=>g.project_name===pname);
+  const lessons=allLessons.filter(l=>l.project_name===pname);
+
+  const avg=tasks.length?Math.round(tasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/tasks.length):0;
+  const complete=tasks.filter(t=>t.status==='complete').length;
+  const fieldCost=fc[pname]||0;
+  const totalSpend=(p.contract_spend||0)+fieldCost;
+  const bp=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+  const cv=p.contract_value||p.budget||0;
+  const grossProfit=cv-p.budget;
+  const margin=cv>0?Math.round(grossProfit/cv*100):0;
+  const revBilled=rev.reduce((a,r)=>a+(r.amount||0),0);
+  const revReceived=rev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const hseInc=rpts.filter(r=>r.hse&&r.hse!=='none');
+  const fmt2=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
+  const formatDate=d=>{if(!d)return'—';try{return new Date(d).toLocaleDateString('en-ZA',{day:'numeric',month:'long',year:'numeric'});}catch{return d;}};
+
+  const ragColor=bp>100?'#ef4444':bp>=75?'#f59e0b':'#22c55e';
+  const ragText=bp>100?'OVER BUDGET':bp>=75?'AT RISK':'ON TRACK';
+
+  const ORDER=['Initiation','Planning','Execution','Monitoring','Closeout'];
+  const gateByStage={};gates.forEach(g=>gateByStage[g.stage]=g);
+
+  // ── Build HTML ───────────────────────────────────────────────────────────
+  const html=`<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>${p.name} — ${period} Report — ${rdate}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',Arial,sans-serif;font-size:11pt;color:#1a1a2e;background:#fff;padding:0}
+  .page{width:210mm;min-height:297mm;padding:16mm 18mm;margin:0 auto}
+  @media print{.page{padding:12mm 14mm;margin:0}.no-print{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  /* Header */
+  .report-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:3px solid #f5a623;margin-bottom:20px}
+  .company-name{font-family:'Barlow Condensed',sans-serif;font-size:22pt;font-weight:800;color:#0d0f14;text-transform:uppercase;letter-spacing:0.04em}
+  .company-name span{color:#f5a623}
+  .report-meta{text-align:right;font-size:9pt;color:#555}
+  .report-meta strong{display:block;font-size:11pt;color:#1a1a2e;font-weight:700}
+  /* Sections */
+  h2{font-family:'Barlow Condensed',sans-serif;font-size:13pt;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#0d0f14;border-bottom:2px solid #f5a623;padding-bottom:4px;margin:20px 0 10px}
+  h3{font-family:'Barlow Condensed',sans-serif;font-size:11pt;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#444;margin:14px 0 6px}
+  /* Stats */
+  .stats-row{display:grid;gap:8px;margin-bottom:16px}
+  .sg-4{grid-template-columns:repeat(4,1fr)}
+  .sg-3{grid-template-columns:repeat(3,1fr)}
+  .sg-2{grid-template-columns:repeat(2,1fr)}
+  .stat-box{border:1px solid #e5e7eb;border-radius:6px;padding:10px 12px;position:relative;overflow:hidden}
+  .stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:#f5a623}
+  .stat-box.green::before{background:#22c55e}
+  .stat-box.blue::before{background:#3b82f6}
+  .stat-box.red::before{background:#ef4444}
+  .stat-box.teal::before{background:#14b8a6}
+  .stat-box.purple::before{background:#a855f7}
+  .stat-num{font-family:'Barlow Condensed',sans-serif;font-size:20pt;font-weight:700;line-height:1;margin-bottom:2px}
+  .stat-lbl{font-size:8pt;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#666}
+  /* RAG badge */
+  .rag-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;font-size:11pt;font-weight:700;letter-spacing:0.04em}
+  /* Table */
+  table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:9.5pt}
+  th{background:#0d0f14;color:#fff;padding:6px 8px;text-align:left;font-size:8pt;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
+  td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+  tr:nth-child(even) td{background:#f9fafb}
+  /* Progress bar */
+  .bar-wrap{background:#e5e7eb;border-radius:4px;height:7px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px}
+  /* Gate pipeline */
+  .gate-row{display:flex;align-items:center;gap:0;margin:10px 0}
+  .gate-step{flex:1;text-align:center;position:relative}
+  .gate-step:not(:last-child)::after{content:'';position:absolute;top:13px;left:60%;width:80%;height:2px;background:#e5e7eb}
+  .gate-circle{width:26px;height:26px;border-radius:50%;margin:0 auto 3px;display:flex;align-items:center;justify-content:center;font-size:10pt;border:2px solid #e5e7eb}
+  .gc-done{background:#22c55e;border-color:#22c55e;color:#fff}
+  .gc-review{background:#3b82f6;border-color:#3b82f6;color:#fff}
+  .gc-pending{background:#f3f4f6;border-color:#d1d5db;color:#9ca3af}
+  .gate-lbl{font-size:7.5pt;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:0.04em}
+  /* Summary box */
+  .summary-box{background:#fff8ed;border:1px solid #f5a623;border-left:4px solid #f5a623;border-radius:6px;padding:12px 16px;margin-bottom:16px}
+  .summary-box h3{color:#92400e;border:none;margin:0 0 6px;font-size:10pt}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:14px}
+  .info-row{display:flex;justify-content:space-between;font-size:9.5pt;padding:3px 0;border-bottom:1px solid #f3f4f6}
+  .info-key{color:#555}
+  .info-val{font-weight:600;text-align:right}
+  /* Badge */
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:0.03em}
+  .badge-g{background:#dcfce7;color:#166534}
+  .badge-a{background:#fef3c7;color:#92400e}
+  .badge-r{background:#fee2e2;color:#991b1b}
+  .badge-b{background:#dbeafe;color:#1e40af}
+  .badge-gray{background:#f3f4f6;color:#374151}
+  /* Footer */
+  .report-footer{margin-top:24px;padding-top:10px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:8pt;color:#9ca3af}
+  .confidential{font-weight:700;color:#666;font-size:9pt}
+  /* KPI row */
+  .kpi-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6}
+  .kpi-label{width:140px;font-size:9pt;color:#444;font-weight:500}
+  .kpi-bar-w{flex:1;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+  .kpi-bar-f{height:100%;border-radius:4px}
+  .kpi-value{width:50px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:11pt;font-weight:700}
+  .page-break{page-break-before:always}
+  .no-print-btn{display:block;text-align:center;padding:16px;background:#0d0f14;color:#f5a623;font-family:'Barlow Condensed',sans-serif;font-size:14pt;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;border:none;width:100%}
+  @media screen{.page{box-shadow:0 4px 40px rgba(0,0,0,0.15);margin:20px auto}}
+</style>
+</head>
+<body>
+
+<button class="no-print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF &nbsp; (Ctrl+P)</button>
+
+<div class="page">
+  <!-- Header -->
+  <div class="report-header">
+    <div>
+      <div class="company-name">Site<span>Command</span></div>
+      <div style="font-size:9pt;color:#555;margin-top:2px">Construction &amp; Telecoms Project Management</div>
+    </div>
+    <div class="report-meta">
+      <strong>${period} Project Report</strong>
+      ${formatDate(rdate)}<br>
+      Prepared by: ${author}<br>
+      Prepared for: ${recipient}<br>
+      <span class="confidential">CONFIDENTIAL</span>
+    </div>
+  </div>
+
+  <!-- Project title and RAG -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:20pt;font-weight:800;color:#0d0f14;text-transform:uppercase">${p.name}</div>
+      <div style="font-size:10pt;color:#555;margin-top:3px">${p.client||''} &nbsp;|&nbsp; PM: ${p.pm||''} &nbsp;|&nbsp; ${p.start_date||''} → ${p.end_date||''}</div>
+    </div>
+    <div class="rag-badge" style="background:${ragColor}20;color:${ragColor};border:2px solid ${ragColor}">
+      <div style="width:10px;height:10px;border-radius:50%;background:${ragColor}"></div>
+      ${ragText}
+    </div>
+  </div>
+
+  <!-- Stage Gate -->
+  <div class="gate-row">
+    ${ORDER.map(stage=>{
+      const g=gateByStage[stage];
+      const cls=g?g.status==='approved'?'gc-done':g.status==='in_review'?'gc-review':'gc-pending':'gc-pending';
+      const icon=g?g.status==='approved'?'✓':g.status==='in_review'?'●':'○':'○';
+      return`<div class="gate-step"><div class="gate-circle ${cls}">${icon}</div><div class="gate-lbl">${stage}</div></div>`;
+    }).join('')}
+  </div>
+
+  ${execSummary?`<div class="summary-box"><h3>Executive Summary</h3><p style="font-size:10pt;color:#374151;line-height:1.6">${execSummary.replace(/
+/g,'<br>')}</p></div>`:''}
+
+  <!-- Key Metrics -->
+  <div class="stats-row sg-4">
+    <div class="stat-box blue"><div class="stat-num" style="color:#3b82f6">${avg}%</div><div class="stat-lbl">Task Progress</div><div style="margin-top:6px" class="bar-wrap"><div class="bar-fill" style="width:${avg}%;background:#3b82f6"></div></div></div>
+    <div class="stat-box ${bp>100?'red':bp>=75?'':'green'}"><div class="stat-num" style="color:${ragColor}">${bp}%</div><div class="stat-lbl">Budget Used</div><div style="margin-top:6px" class="bar-wrap"><div class="bar-fill" style="width:${Math.min(bp,100)}%;background:${ragColor}"></div></div></div>
+    <div class="stat-box teal"><div class="stat-num" style="color:#14b8a6;font-size:13pt">${fmt2(revBilled)}</div><div class="stat-lbl">Revenue Billed</div></div>
+    <div class="stat-box green"><div class="stat-num" style="color:#22c55e;font-size:13pt">${fmt2(revReceived)}</div><div class="stat-lbl">Revenue Received</div></div>
+  </div>
+
+  ${incOverview?`
+  <h2>Project Overview</h2>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-key">Client</span><span class="info-val">${p.client||'—'}</span></div>
+    <div class="info-row"><span class="info-key">Contract Value</span><span class="info-val">${fmt2(cv)}</span></div>
+    <div class="info-row"><span class="info-key">Project Manager</span><span class="info-val">${p.pm||'—'}</span></div>
+    <div class="info-row"><span class="info-key">Total Budget</span><span class="info-val">${fmt2(p.budget)}</span></div>
+    <div class="info-row"><span class="info-key">Location</span><span class="info-val">${p.location||'—'}</span></div>
+    <div class="info-row"><span class="info-key">Target Margin</span><span class="info-val">${margin}%</span></div>
+    <div class="info-row"><span class="info-key">Start Date</span><span class="info-val">${p.start_date||'—'}</span></div>
+    <div class="info-row"><span class="info-key">End Date</span><span class="info-val">${p.end_date||'—'}</span></div>
+    <div class="info-row" style="grid-column:1/-1"><span class="info-key">Risk Level</span><span class="info-val"><span class="badge ${p.risk_level==='low'?'badge-g':p.risk_level==='medium'?'badge-a':'badge-r'}">${p.risk_level||'—'}</span></span></div>
+  </div>
+  `:''}
+
+  ${incProgress?`
+  <h2>Task Progress (${complete}/${tasks.length} complete)</h2>
+  <table><thead><tr><th>Task</th><th>Type</th><th>Done / Total</th><th>Unit</th><th>Progress</th><th>Status</th></tr></thead><tbody>
+  ${tasks.map(t=>{const pct=parseFloat(t.progress||0);const bc=pct>=90?'#22c55e':pct>=50?'#3b82f6':'#f5a623';return`<tr><td>${t.title}</td><td>${t.type}</td><td>${(t.qty_done||0).toLocaleString('en-ZA')} / ${(t.qty_total||0).toLocaleString('en-ZA')}</td><td>${t.unit}</td><td style="min-width:90px"><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${bc}"></div></div><div style="font-size:8pt;font-weight:700;color:${bc};margin-top:2px">${pct}%</div></td><td><span class="badge ${t.status==='complete'?'badge-g':t.status==='blocked'?'badge-r':t.status==='in-progress'?'badge-b':'badge-gray'}">${t.status}</span></td></tr>`;}).join('')}
+  </tbody></table>
+  `:''}
+
+  ${incBudget?`
+  <h2>Budget &amp; Costs</h2>
+  <div class="stats-row sg-3" style="margin-bottom:12px">
+    <div class="stat-box"><div class="stat-num" style="color:#f5a623;font-size:13pt">${fmt2(p.budget)}</div><div class="stat-lbl">Total Budget</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#3b82f6;font-size:13pt">${fmt2(p.contract_spend||0)}</div><div class="stat-lbl">Contracted</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#14b8a6;font-size:13pt">${fmt2(fieldCost)}</div><div class="stat-lbl">Field Reported</div></div>
+  </div>
+  <div class="info-row"><span class="info-key">Total Spend to Date</span><span class="info-val" style="color:${ragColor}">${fmt2(totalSpend)} (${bp}% of budget)</span></div>
+  <div style="margin:8px 0 12px" class="bar-wrap"><div class="bar-fill" style="width:${Math.min(bp,100)}%;background:${ragColor};height:10px"></div></div>
+  <div class="info-row"><span class="info-key">Remaining Budget</span><span class="info-val" style="color:${totalSpend<p.budget?'#22c55e':'#ef4444'}">${fmt2(Math.abs(p.budget-totalSpend))} ${totalSpend>p.budget?'OVER':''}</span></div>
+  `:''}
+
+  ${incFinancial?`
+  <h2>Revenue &amp; Profitability</h2>
+  <div class="stats-row sg-4" style="margin-bottom:10px">
+    <div class="stat-box"><div class="stat-num" style="color:#f5a623;font-size:12pt">${fmt2(cv)}</div><div class="stat-lbl">Contract Value</div></div>
+    <div class="stat-box green"><div class="stat-num" style="color:#22c55e;font-size:12pt">${fmt2(grossProfit)}</div><div class="stat-lbl">Gross Profit (${margin}%)</div></div>
+    <div class="stat-box teal"><div class="stat-num" style="color:#14b8a6;font-size:12pt">${fmt2(revBilled)}</div><div class="stat-lbl">Billed</div></div>
+    <div class="stat-box blue"><div class="stat-num" style="color:#3b82f6;font-size:12pt">${fmt2(revReceived)}</div><div class="stat-lbl">Received</div></div>
+  </div>
+  ${rev.length?`<table><thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+  ${rev.slice(0,8).map(r=>`<tr><td>${r.entry_date}</td><td>${r.description}</td><td>${r.type}</td><td style="font-weight:600">${fmt2(r.amount)}</td><td><span class="badge ${r.status==='received'?'badge-g':r.status==='outstanding'?'badge-r':'badge-a'}">${r.status}</span></td></tr>`).join('')}
+  </tbody></table>`:'<p style="color:#9ca3af;font-size:9.5pt">No revenue entries recorded.</p>'}
+  `:''}
+
+  ${incRisk&&risks.length?`
+  <h2>Risk Register (${risks.filter(r=>r.status==='open').length} open)</h2>
+  <table><thead><tr><th>Risk</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Status</th></tr></thead><tbody>
+  ${risks.map(r=>`<tr><td>${r.title}${r.mitigation?`<div style="font-size:8pt;color:#555;margin-top:2px">Mitigation: ${r.mitigation}</div>`:''}</td><td>${r.category}</td><td><span class="badge ${r.likelihood==='low'?'badge-g':r.likelihood==='medium'?'badge-a':'badge-r'}">${r.likelihood}</span></td><td><span class="badge ${r.impact==='low'?'badge-g':r.impact==='medium'?'badge-a':'badge-r'}">${r.impact}</span></td><td style="font-weight:700;text-align:center">${r.risk_score||'—'}</td><td><span class="badge ${r.status==='open'?'badge-r':r.status==='mitigated'?'badge-a':'badge-g'}">${r.status}</span></td></tr>`).join('')}
+  </tbody></table>
+  `:''}
+
+  ${incHSE?`
+  <h2>HSE Summary</h2>
+  <div class="stats-row sg-3">
+    <div class="stat-box green"><div class="stat-num" style="color:#22c55e">${rpts.length}</div><div class="stat-lbl">Field Reports</div></div>
+    <div class="stat-box ${hseInc.length>0?'red':'green'}"><div class="stat-num" style="color:${hseInc.length>0?'#ef4444':'#22c55e'}">${hseInc.length}</div><div class="stat-lbl">HSE Incidents</div></div>
+    <div class="stat-box"><div class="stat-num">${rpts.reduce((a,r)=>a+(r.workers||0),0)}</div><div class="stat-lbl">Worker Days</div></div>
+  </div>
+  ${hseInc.length?`<table><thead><tr><th>Date</th><th>Reporter</th><th>Type</th><th>Details</th></tr></thead><tbody>${hseInc.map(r=>`<tr><td>${r.report_date}</td><td>${r.reporter||'—'}</td><td><span class="badge badge-r">${r.hse}</span></td><td style="font-size:9pt">${r.hse_detail||'—'}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#166534;font-weight:600">✅ No HSE incidents reported in this period.</p>'}
+  `:''}
+
+  ${incKPI&&kpi?`
+  <h2>KPI Scorecard</h2>
+  <div class="kpi-row"><span class="kpi-label">Schedule (SPI)</span><div class="kpi-bar-w"><div class="kpi-bar-f" style="width:${Math.min((kpi.spi||0)*100,100)}%;background:${(kpi.spi||0)>=1?'#22c55e':(kpi.spi||0)>=0.85?'#f5a623':'#ef4444'}"></div></div><span class="kpi-value" style="color:${(kpi.spi||0)>=1?'#22c55e':(kpi.spi||0)>=0.85?'#f5a623':'#ef4444'}">${(kpi.spi||0).toFixed(2)}</span></div>
+  <div class="kpi-row"><span class="kpi-label">Cost (CPI)</span><div class="kpi-bar-w"><div class="kpi-bar-f" style="width:${Math.min((kpi.cpi||0)*100,100)}%;background:${(kpi.cpi||0)>=1?'#22c55e':(kpi.cpi||0)>=0.85?'#f5a623':'#ef4444'}"></div></div><span class="kpi-value" style="color:${(kpi.cpi||0)>=1?'#22c55e':(kpi.cpi||0)>=0.85?'#f5a623':'#ef4444'}">${(kpi.cpi||0).toFixed(2)}</span></div>
+  <div class="kpi-row"><span class="kpi-label">Safety Rating</span><div class="kpi-bar-w"><div class="kpi-bar-f" style="width:${kpi.safety_rating||0}%;background:${(kpi.safety_rating||0)>=90?'#22c55e':'#f5a623'}"></div></div><span class="kpi-value">${kpi.safety_rating||0}</span></div>
+  <div class="kpi-row"><span class="kpi-label">Quality Score</span><div class="kpi-bar-w"><div class="kpi-bar-f" style="width:${kpi.quality_score||0}%;background:${(kpi.quality_score||0)>=85?'#22c55e':'#f5a623'}"></div></div><span class="kpi-value">${kpi.quality_score||0}</span></div>
+  <div class="kpi-row"><span class="kpi-label">Client Satisfaction</span><div class="kpi-bar-w"><div class="kpi-bar-f" style="width:${(kpi.client_satisfaction||0)*10}%;background:${(kpi.client_satisfaction||0)>=8?'#22c55e':(kpi.client_satisfaction||0)>=6?'#f5a623':'#ef4444'}"></div></div><span class="kpi-value">${kpi.client_satisfaction||0}/10</span></div>
+  `:''}
+
+  ${incNext&&nextActions?`
+  <h2>Next Period Plan</h2>
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:4px solid #22c55e;border-radius:6px;padding:12px 16px;font-size:10pt;color:#166534;line-height:1.6">${nextActions.replace(/
+/g,'<br>')}</div>
+  `:''}
+
+  <!-- Footer -->
+  <div class="report-footer">
+    <span>SiteCommand PMO &mdash; ${p.name}</span>
+    <span>${period} Report &mdash; ${formatDate(rdate)}</span>
+    <span class="confidential">CONFIDENTIAL</span>
+  </div>
+</div>
+</body></html>`;
+
+  // Open in new tab
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  showToast('PDF report generated — print from the new tab');
+}
+
+// ── Update showPage + loadAll to include dependencies ─────────────────────────
+// ── Modal close on overlay ────────────────────────────────────────────────────
+// ── Modal close on overlay ────────────────────────────────────────────────────
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('kpi-date').value=new Date().toISOString().split('T')[0];
+loadAll();
+</script>
+</body>
+</html>
