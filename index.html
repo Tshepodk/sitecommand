@@ -477,9 +477,15 @@ tr:hover td{background:var(--bg3)}
       <!-- Revenue tab -->
       <div class="pmo-tab-content" id="pmotab-revenue" style="display:none">
         <div class="stats-grid" id="pmo-rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
-        <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div></div>
+        <div class="card"><div class="card-header">
+          <div class="card-title">Revenue Register</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select class="form-select" id="pmo-rev-proj-filter" style="font-size:12px;padding:4px 8px" onchange="renderPMORevenue()"><option value="">All Projects</option></select>
+            <button class="btn btn-primary btn-sm" onclick="openRevModal()">+ Add Entry</button>
+          </div>
+        </div>
           <div class="card-body" style="padding:0"><div class="table-wrap">
-            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Ref No.</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="pmo-rev-table"></tbody></table>
           </div></div>
         </div>
@@ -749,6 +755,68 @@ tr:hover td{background:var(--bg3)}
     </div>
     <div class="form-group"><label class="form-label">Sort Order</label><input class="form-input" type="number" id="cost-cat-order" placeholder="e.g. 9" min="1"/></div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('cost-cat')">Cancel</button><button class="btn btn-primary" id="cost-cat-save-btn" onclick="saveRecord('cost-cat')">Save Category</button></div>
+  </div>
+</div>
+
+<!-- Revenue Entry Modal -->
+<div class="modal-bg" id="modal-pmo-rev">
+  <div class="modal" style="width:540px">
+    <div class="modal-title">
+      <span id="pmo-rev-modal-title">Add Revenue Entry</span>
+      <button class="modal-close" onclick="closeRevModal()">&#10005;</button>
+    </div>
+    <input type="hidden" id="pmo-rev-id"/>
+    <div class="form-group">
+      <label class="form-label">Project <span style="color:var(--accent)">*</span></label>
+      <select class="form-select" id="pmo-rev-project"></select>
+    </div>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Description <span style="color:var(--accent)">*</span></label>
+        <input class="form-input" id="pmo-rev-desc" placeholder="e.g. Progress Claim #1 — Earthworks complete"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="pmo-rev-type">
+          <option value="Claim">Claim</option>
+          <option value="Invoice">Invoice</option>
+          <option value="Payment">Payment</option>
+          <option value="Variation">Variation</option>
+          <option value="Retention">Retention</option>
+          <option value="Advance">Advance</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="pmo-rev-status">
+          <option value="outstanding">Outstanding — not yet submitted</option>
+          <option value="billed">Billed — submitted, awaiting payment</option>
+          <option value="received">Received — payment confirmed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount (R) <span style="color:var(--accent)">*</span></label>
+        <input class="form-input" type="number" id="pmo-rev-amount" min="0" placeholder="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entry Date</label>
+        <input class="form-input" type="date" id="pmo-rev-date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reference Number</label>
+        <input class="form-input" id="pmo-rev-ref" placeholder="e.g. PC-001, INV-003"/>
+      </div>
+    </div>
+    <!-- Status helper -->
+    <div id="pmo-rev-status-hint" style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+      <strong style="color:var(--text)">Outstanding</strong> — planned but not yet submitted to client<br>
+      <strong style="color:var(--text)">Billed</strong> — invoice/claim submitted, waiting for payment<br>
+      <strong style="color:var(--text)">Received</strong> — payment confirmed in your account
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeRevModal()">Cancel</button>
+      <button class="btn btn-primary" id="pmo-rev-save-btn" onclick="saveRevEntry()">Save Entry</button>
+    </div>
   </div>
 </div>
 
@@ -2177,27 +2245,49 @@ function renderPMORisks(){
 
 // ── Revenue & Profitability ────────────────────────────────────────
 function renderPMORevenue(){
+  // Populate project filter
+  const pf=document.getElementById('pmo-rev-proj-filter');
+  if(pf){
+    const cur=pf.value;
+    pf.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+  }
+  const projFilter=pf?pf.value:'';
+  const filtRev=projFilter?allRevenue.filter(r=>r.project_name===projFilter):allRevenue;
+
   const fc=pmoFC();
-  const tBilled=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
-  const tReceived=allRevenue.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
-  const tOutstanding=allRevenue.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
-  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const tBilled=filtRev.reduce((a,r)=>a+(r.amount||0),0);
+  const tReceived=filtRev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const tOutstanding=filtRev.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
+  const tCV=allProjects.filter(p=>!projFilter||p.name===projFilter).reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
   document.getElementById('pmo-rev-stats').innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(tCV)}</div><div class="stat-l">Contract Value</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(tBilled)}</div><div class="stat-l">Revenue Billed</div></div>
     <div class="stat-card s-green"><div class="stat-n" style="color:var(--green);font-size:18px">${fmt(tReceived)}</div><div class="stat-l">Received</div></div>
     <div class="stat-card s-red"><div class="stat-n" style="color:var(--red);font-size:18px">${fmt(tOutstanding)}</div><div class="stat-l">Outstanding</div></div>`;
   const revStatB={billed:'badge-blue',received:'badge-green',outstanding:'badge-red'};
+  const revStatLabel={billed:'Billed',received:'Received',outstanding:'Outstanding'};
   const revTypeB={Invoice:'badge-blue',Payment:'badge-green',Claim:'badge-amber',Variation:'badge-purple',Retention:'badge-red',Advance:'badge-teal'};
-  document.getElementById('pmo-rev-table').innerHTML=allRevenue.length===0
-    ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet.</td></tr>`
-    :allRevenue.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
+  document.getElementById('pmo-rev-table').innerHTML=filtRev.length===0
+    ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet. Click <strong style="color:var(--accent)">+ Add Entry</strong> to get started.</td></tr>`
+    :filtRev.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
         <td style="font-family:var(--font-d);font-weight:600">${r.entry_date}</td>
         <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
         <td><div style="font-weight:500">${r.description}</div></td>
         <td><span class="badge ${revTypeB[r.type]||'badge-gray'}">${r.type}</span></td>
+        <td style="color:var(--text3);font-size:11px">${r.reference||'—'}</td>
         <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.amount)}</td>
-        <td><span class="badge ${revStatB[r.status]||'badge-gray'}">${r.status}</span></td>
+        <td>
+          <select style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:3px 6px;color:var(--text);font-size:11px;cursor:pointer;outline:none"
+            onchange="updateRevStatus(${r.id},this.value)">
+            <option value="outstanding"${r.status==='outstanding'?' selected':''}>Outstanding</option>
+            <option value="billed"${r.status==='billed'?' selected':''}>Billed</option>
+            <option value="received"${r.status==='received'?' selected':''}>Received</option>
+          </select>
+        </td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick='openRevModal(${JSON.stringify(r)})'>Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRevEntry(${r.id},'${(r.description||'').replace(/'/g,"\'").replace(/"/g,'\"')}')">Del</button>
+        </div></td>
       </tr>`).join('');
   document.getElementById('pmo-profit-table').innerHTML=allProjects.map(p=>{
     const cv=p.contract_value||p.budget||0;
@@ -2251,6 +2341,96 @@ function renderPMOLessons(){
 
 // Ensure PMO data loads when PMO page is shown
 // PMO tab logic merged into showPage below
+
+
+// ── Revenue Entry CRUD ────────────────────────────────────────────────────────
+function openRevModal(rec=null){
+  // Populate project dropdown
+  const psel=document.getElementById('pmo-rev-project');
+  psel.innerHTML=allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');
+
+  // Reset / populate form
+  document.getElementById('pmo-rev-id').value=rec?rec.id:'';
+  document.getElementById('pmo-rev-modal-title').textContent=rec?'Edit Revenue Entry':'Add Revenue Entry';
+  document.getElementById('pmo-rev-desc').value=rec?rec.description||'':'';
+  document.getElementById('pmo-rev-type').value=rec?rec.type||'Claim':'Claim';
+  document.getElementById('pmo-rev-status').value=rec?rec.status||'outstanding':'outstanding';
+  document.getElementById('pmo-rev-amount').value=rec?rec.amount||'':'';
+  document.getElementById('pmo-rev-date').value=rec?rec.entry_date||new Date().toISOString().split('T')[0]:new Date().toISOString().split('T')[0];
+  document.getElementById('pmo-rev-ref').value=rec?rec.reference||'':'';
+
+  document.getElementById('modal-pmo-rev').classList.add('open');
+  setTimeout(()=>document.getElementById('pmo-rev-desc').focus(),100);
+}
+
+function closeRevModal(){
+  document.getElementById('modal-pmo-rev').classList.remove('open');
+}
+
+async function saveRevEntry(){
+  const desc=document.getElementById('pmo-rev-desc').value.trim();
+  const project=document.getElementById('pmo-rev-project').value;
+  const amount=parseFloat(document.getElementById('pmo-rev-amount').value)||0;
+  if(!desc){showToast('Description is required','err');return;}
+  if(!project){showToast('Select a project','err');return;}
+  if(!amount){showToast('Enter an amount','err');return;}
+
+  const btn=document.getElementById('pmo-rev-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
+
+  const payload={
+    project_name:project,
+    description:desc,
+    type:document.getElementById('pmo-rev-type').value,
+    status:document.getElementById('pmo-rev-status').value,
+    amount:amount,
+    entry_date:document.getElementById('pmo-rev-date').value||new Date().toISOString().split('T')[0],
+    reference:document.getElementById('pmo-rev-ref').value.trim()
+  };
+
+  try{
+    const id=document.getElementById('pmo-rev-id').value;
+    if(id){
+      await sbPatch('revenue_entries',id,payload);
+      showToast('Entry updated');
+    }else{
+      await sbPost('revenue_entries',payload);
+      showToast('Revenue entry added');
+    }
+    closeRevModal();
+    // Reload revenue data and re-render
+    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
+    renderPMORevenue();
+  }catch(e){
+    showToast('Save failed: '+e.message,'err');
+    console.error(e);
+  }
+  btn.disabled=false;btn.textContent='Save Entry';
+}
+
+async function deleteRevEntry(id,desc){
+  if(!confirm(`Delete "${desc}"?\nThis cannot be undone.`))return;
+  try{
+    await fetch(`${SB}/rest/v1/revenue_entries?id=eq.${id}`,{method:'DELETE',headers:getH()});
+    showToast('Entry deleted');
+    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
+    renderPMORevenue();
+  }catch(e){showToast('Delete failed','err');}
+}
+
+async function updateRevStatus(id,newStatus){
+  try{
+    await sbPatch('revenue_entries',id,{status:newStatus});
+    showToast('Status updated to '+newStatus);
+    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
+    renderPMORevenue();
+  }catch(e){showToast('Update failed','err');}
+}
+
+// Close modal on overlay click
+document.getElementById('modal-pmo-rev').addEventListener('click',function(e){
+  if(e.target===this)closeRevModal();
+});
 
 setInterval(loadAllData,30000);
 setInterval(loadNotifications,60000);
