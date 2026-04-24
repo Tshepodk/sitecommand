@@ -833,7 +833,13 @@ async function sb(method,table,data=null,query=''){
   return txt?JSON.parse(txt):null;
 }
 const sbGet=(t,q)=>sb('GET',t,null,q);
-const sbPost=(t,d)=>sb('POST',t,d,'');
+const sbPost=(t,d)=>{
+  // Ensure all new daily_reports always land as 'pending'
+  if(t==='daily_reports'&&d&&!d.approval_status){
+    d=Object.assign({},d,{approval_status:'pending'});
+  }
+  return sb('POST',t,d,'');
+};
 const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
 // ── Auth guard ────────────────────────────────────────────────────────────────
@@ -1015,6 +1021,17 @@ function renderApprovalsPage(){
     <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${rejected}</div><div class="stat-l">Rejected</div></div>
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${total}</div><div class="stat-l">Total Reports</div></div>`;
 
+  // Show/hide bulk approve button
+  const bulkBtn=document.getElementById('bulk-approve-btn');
+  if(bulkBtn){
+    const hasPending=allReports.some(r=>!r.approval_status||r.approval_status==='pending');
+    const isPMorAdmin=getUserRole()==='admin'||getUserRole()==='pm';
+    const isFilterPending=statusFilter==='pending';
+    bulkBtn.style.display=(hasPending&&isPMorAdmin&&isFilterPending)?'':'none';
+    if(projFilter) bulkBtn.textContent='\u2713\u2713 Approve All Pending ('+(projFilter)+')';
+    else bulkBtn.textContent='\u2713\u2713 Approve All Pending ('+filtered.length+')';
+  }
+
   const labelMap={pending:'&#9651; Pending Review',approved:'&#10003; Approved',rejected:'&#10005; Rejected',all:'All Submissions'};
   const subMap={pending:'Oldest first — reports awaiting your review',approved:'Most recent first',rejected:'Most recent first — foreman can resubmit',all:'All report submissions'};
   const titleEl=document.getElementById('approval-queue-title');
@@ -1161,6 +1178,54 @@ async function submitApprovalAction(){
     renderApprovalsPage();
   }catch(e){showToast('Action failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;
+}
+
+
+async function bulkApproveAll(){
+  const statusFilter=document.getElementById('approval-filter-status')?.value||'pending';
+  const projFilter=document.getElementById('approval-filter-project')?.value||'';
+  const toApprove=allReports.filter(r=>{
+    const s=r.approval_status||'pending';
+    if(s!=='pending') return false;
+    if(projFilter&&r.project!==projFilter) return false;
+    return true;
+  });
+  if(!toApprove.length){showToast('No pending reports to approve','err');return;}
+  const label=projFilter?`all ${toApprove.length} pending reports for ${projFilter}`:`all ${toApprove.length} pending reports`;
+  if(!confirm(`Approve ${label}?\n\nThis will mark them all as approved and notify submitters.`))return;
+
+  const btn=document.getElementById('bulk-approve-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span style="display:inline-block;width:10px;height:10px;border:2px solid rgba(0,0,0,0.1);border-top-color:#4ade80;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px"></span>Approving...';}
+
+  const reviewerName=getUserName();
+  const now=new Date().toISOString();
+  let successCount=0;let failCount=0;
+
+  await Promise.all(toApprove.map(async r=>{
+    try{
+      await sbPatch('daily_reports',r.id,{
+        approval_status:'approved',
+        reviewed_by:reviewerName,
+        reviewer_comment:null,
+        reviewed_at:now
+      });
+      // Notification
+      try{
+        await sbPost('notifications',{
+          type:'report_approved',
+          title:'Report Approved',
+          message:`Your report for ${r.project} on ${r.report_date} was approved by ${reviewerName}.`,
+          project_name:r.project,severity:'info',read:false,created_at:now
+        });
+      }catch(e){}
+      successCount++;
+    }catch(e){failCount++;console.error('Bulk approve failed for',r.id,e);}
+  }));
+
+  if(btn){btn.disabled=false;btn.innerHTML='\u2713\u2713 Approve All Pending';}
+  showToast(`${successCount} report${successCount!==1?'s':''} approved${failCount?', '+failCount+' failed':''}`,failCount?'err':'ok');
+  await loadAllData();
+  renderApprovalsPage();
 }
 
 
@@ -1419,6 +1484,37 @@ function renderDashboard(){
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${avgAll}%</div><div class="stat-l">Avg Task Progress</div><div style="margin-top:8px"><div class="progress"><div class="progress-fill" style="width:${avgAll}%;background:var(--blue)"></div></div></div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today — ${tw} workers on site</div></div>
     <div class="stat-card ${budgetStatColor}" style="cursor:${alertProjects.length?'pointer':'default'}" onclick="${alertProjects.length?"showPage('budget',null)":''}"><div class="stat-n" style="color:${overBudget>0?'var(--red)':alertProjects.length>0?'var(--accent)':'var(--green)'}">${budgetStatVal||'✓'}</div><div class="stat-l">${budgetStatLabel}</div><div class="stat-sub">${alertProjects.length?'click to view budget':fmt(tf)+' field costs'}</div></div>`;
+
+  // Approval callout — show for admin/pm when pending reports exist
+  const pendingReports=allReports.filter(r=>!r.approval_status||r.approval_status==='pending');
+  const rejectedReports=allReports.filter(r=>r.approval_status==='rejected');
+  let approvalCallout=document.getElementById('dash-approval-callout');
+  if(!approvalCallout){
+    approvalCallout=document.createElement('div');
+    approvalCallout.id='dash-approval-callout';
+    const dashAll=document.getElementById('dash-all-view');
+    if(dashAll)dashAll.insertAdjacentElement('afterbegin',approvalCallout);
+  }
+  const role=getUserRole();
+  if((role==='admin'||role==='pm')&&(pendingReports.length>0||rejectedReports.length>0)){
+    const parts=[];
+    if(pendingReports.length>0) parts.push(`<span style="font-weight:700;color:var(--accent)">${pendingReports.length} report${pendingReports.length>1?'s':''} awaiting review</span>`);
+    if(rejectedReports.length>0) parts.push(`<span style="font-weight:700;color:var(--red)">${rejectedReports.length} rejected</span>`);
+    approvalCallout.innerHTML=`<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--rl);padding:12px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">📋</span>
+        <div>
+          <div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text)">Approval Queue</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px">${parts.join(' &nbsp;·&nbsp; ')}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="border-color:rgba(245,166,35,0.4);color:var(--accent)" onclick="showPage('approvals',document.getElementById('nav-approvals'))">Review Now →</button>
+    </div>`;
+    approvalCallout.style.display='';
+  } else {
+    approvalCallout.innerHTML='';
+    approvalCallout.style.display='none';
+  }
 
   document.getElementById('dash-projects').innerHTML=filtProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
   document.getElementById('dash-costs').innerHTML=filtProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
@@ -1789,6 +1885,42 @@ function openReportEdit(id){
         </div>
       </div>`).join('');
   }
+  // Show rejection banner if report was rejected
+  let rejBanner=document.getElementById('re-rejection-banner');
+  if(!rejBanner){
+    rejBanner=document.createElement('div');
+    rejBanner.id='re-rejection-banner';
+    const modalBody=document.querySelector('#modal-report-edit .modal');
+    if(modalBody)modalBody.insertAdjacentElement('afterbegin',rejBanner);
+  }
+  if(r.approval_status==='rejected'){
+    rejBanner.innerHTML=`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem">
+      <div style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#f87171;margin-bottom:4px">&#10005; Report Rejected</div>
+      ${r.reviewer_comment?`<div style="font-size:13px;color:var(--text2);margin-bottom:4px">"${r.reviewer_comment}"</div>`:''}
+      ${r.reviewed_by?`<div style="font-size:11px;color:var(--text3)">Reviewed by ${r.reviewed_by}${r.reviewed_at?' on '+new Date(r.reviewed_at).toLocaleDateString('en-ZA'):''}</div>`:''}
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">Make your corrections and save — it will be resubmitted for review automatically.</div>
+    </div>`;
+    rejBanner.style.display='';
+  } else {
+    rejBanner.innerHTML='';
+    rejBanner.style.display='none';
+  }
+  // Lock editing if approved (non-admin)
+  const isApproved=r.approval_status==='approved';
+  const canEdit2=getUserRole()==='admin'||!isApproved;
+  document.getElementById('re-save-btn').style.display=canEdit2?'':'none';
+  if(isApproved&&getUserRole()!=='admin'){
+    let lockNote=document.getElementById('re-approved-lock');
+    if(!lockNote){
+      lockNote=document.createElement('div');lockNote.id='re-approved-lock';
+      const footer=document.querySelector('#modal-report-edit .modal-footer');
+      if(footer)footer.insertAdjacentElement('beforebegin',lockNote);
+    }
+    lockNote.innerHTML=`<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:#4ade80;margin-bottom:0.75rem">&#10003; This report has been approved and is locked. Contact your admin to make changes.</div>`;
+  } else {
+    const lockNote=document.getElementById('re-approved-lock');
+    if(lockNote)lockNote.innerHTML='';
+  }
   document.getElementById('modal-report-edit').classList.add('open');
 }
 
@@ -2014,7 +2146,8 @@ function downloadCSV(){
     'Report ID','Project','Date','Reporter','Role','Location','Period',
     'Workers','Weather','Temperature (C)','HSE Status',
     ...costCols,'Total Cost (R)',
-    'Task Updates','Progress Note','Blockers','HSE Detail'
+    'Task Updates','Progress Note','Blockers','HSE Detail',
+    'Approval Status','Reviewed By','Reviewer Comment','Reviewed At'
   ];
   const esc = v => {
     const s = String(v===null||v===undefined?'':v);
@@ -2029,7 +2162,9 @@ function downloadCSV(){
       r.workers||0, r.weather||'', r.temp||'', r.hse||'',
       ...costCols.map(c=>costs[c]||0),
       r.total_cost||0,
-      taskSummary, r.progress_note||'', r.blockers||'', r.hse_detail||''
+      taskSummary, r.progress_note||'', r.blockers||'', r.hse_detail||'',
+      r.approval_status||'pending', r.reviewed_by||'', r.reviewer_comment||'',
+      r.reviewed_at?new Date(r.reviewed_at).toLocaleDateString('en-ZA'):''
     ].map(esc).join(',');
   });
   const csv = [headers.map(esc).join(','), ...rows].join('\r\n');
@@ -2089,6 +2224,13 @@ function downloadPDF(){
     <div class="stat"><div class="stat-n">${allReports.length}</div><div class="stat-l">Reports</div></div>
     <div class="stat"><div class="stat-n">${allTasks.length}</div><div class="stat-l">Tasks</div></div>
     <div class="stat"><div class="stat-n">R${Math.round(tf/1000)}k</div><div class="stat-l">Field Costs</div></div>
+  </div>
+
+  <h2>Approval Summary</h2>
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat"><div class="stat-n" style="color:#856404">${allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length}</div><div class="stat-l">Pending Review</div></div>
+    <div class="stat"><div class="stat-n" style="color:#155724">${allReports.filter(r=>r.approval_status==='approved').length}</div><div class="stat-l">Approved</div></div>
+    <div class="stat"><div class="stat-n" style="color:#721c24">${allReports.filter(r=>r.approval_status==='rejected').length}</div><div class="stat-l">Rejected</div></div>
   </div>
 
   <h2>Budget Status by Project</h2>
@@ -2162,6 +2304,9 @@ function downloadPDF(){
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:800;color:#f5a623">R${Math.round(r.total_cost||0).toLocaleString('en-ZA')}</div>
           <div style="font-size:10px;color:#aaa">total cost</div>
+          <div style="margin-top:4px"><span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;background:${r.approval_status==='approved'?'#d4edda':r.approval_status==='rejected'?'#f8d7da':'#fff3cd'};color:${r.approval_status==='approved'?'#155724':r.approval_status==='rejected'?'#721c24':'#856404'}">${r.approval_status==='approved'?'✓ Approved':r.approval_status==='rejected'?'✗ Rejected':'⏳ Pending'}</span></div>
+          ${r.reviewer_comment?`<div style="font-size:10px;color:#777;margin-top:3px;font-style:italic">"${r.reviewer_comment}"</div>`:''}
+          ${r.reviewed_by?`<div style="font-size:10px;color:#999">by ${r.reviewed_by}</div>`:''}
         </div>
       </div>
       ${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin:6px 0">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div class="task-line">\u2713 <strong>${t.title}</strong>: ${fmtN(t.qty_done)} ${t.unit||''} \u2014 <em>${t.status||''}</em></div>`).join('')}</div>`:''}
@@ -2541,6 +2686,7 @@ loadAllData().then(()=>renderDashboard());
           <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
             <option value="">All Projects</option>
           </select>
+          <button class="btn btn-sm" id="bulk-approve-btn" onclick="bulkApproveAll()" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#4ade80;display:none">&#10003;&#10003; Approve All Pending</button>
         </div>
       </div>
       <div class="stats-grid" id="approval-stats"></div>
