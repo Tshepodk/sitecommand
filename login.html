@@ -6,313 +6,265 @@
 <title>SiteCommand — Sign In</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:12px}
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:2rem;width:420px;max-width:100%}
-.logo{font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase;text-align:center;margin-bottom:4px}
-.logo span{color:var(--text2);font-weight:400}
-.tagline{text-align:center;font-size:11px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:2rem}
-.tabs{display:flex;background:var(--bg3);border-radius:var(--r);padding:3px;margin-bottom:1.5rem}
-.tab{flex:1;padding:8px;text-align:center;border-radius:4px;cursor:pointer;font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text3);transition:all 0.15s}
-.tab.active{background:var(--bg2);color:var(--accent);box-shadow:0 1px 6px rgba(0,0,0,0.4)}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;position:relative;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(245,166,35,0.07) 0%,transparent 70%);pointer-events:none;z-index:0}
+.login-wrap{position:relative;z-index:1;width:100%;max-width:420px}
+.brand{text-align:center;margin-bottom:2rem}
+.brand-logo{font-family:var(--font-d);font-size:36px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);line-height:1}
+.brand-logo span{color:var(--text2);font-weight:400}
+.brand-sub{font-size:12px;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;margin-top:4px;font-family:var(--font-d);font-weight:600}
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);overflow:hidden}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)}
+.tab{padding:13px;font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--text3);transition:all 0.15s;border:none;background:none;border-bottom:2px solid transparent}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);background:rgba(245,166,35,0.05);border-bottom-color:var(--accent)}
+.panel{display:none;padding:1.5rem}
+.panel.active{display:block}
 .form-group{margin-bottom:1rem}
 .form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:5px}
-.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:11px 12px;color:var(--text);font-family:var(--font-b);font-size:15px;outline:none;transition:border-color 0.15s}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;color:var(--text);font-family:var(--font-b);font-size:14px;outline:none;transition:border-color 0.15s}
 .form-input:focus{border-color:var(--accent)}
 .form-input::placeholder{color:var(--text3)}
-.btn{display:block;width:100%;padding:12px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:15px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;margin-top:1.25rem}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:14px;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.15s;margin-top:0.25rem}
 .btn-primary{background:var(--accent);color:#000}
 .btn-primary:hover{background:var(--accent2)}
 .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.msg{border-radius:var(--r);padding:11px 13px;font-size:13px;margin-top:1rem;display:none;line-height:1.5}
-.msg.err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171}
-.msg.ok{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80}
-.msg.info{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#60a5fa}
-.forgot{text-align:right;margin-top:-6px;margin-bottom:1rem}
-.forgot a{font-size:12px;color:var(--text3);cursor:pointer;text-decoration:none}
-.forgot a:hover{color:var(--accent)}
-.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.role-opt{background:var(--bg3);border:2px solid var(--border);border-radius:var(--r);padding:10px 8px;text-align:center;cursor:pointer;transition:all 0.15s}
-.role-opt:hover{border-color:var(--border2)}
-.role-opt.selected{border-color:var(--accent);background:rgba(245,166,35,0.07)}
-.role-opt input{display:none}
-.role-icon{font-size:20px;margin-bottom:3px}
-.role-name{font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
-.role-desc{font-size:10px;color:var(--text3);margin-top:1px}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+.viewer-notice{background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.2);border-radius:var(--r);padding:10px 12px;display:flex;gap:10px;align-items:flex-start;margin-bottom:1rem}
+.viewer-notice-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.viewer-notice-text{font-size:12px;color:var(--text2);line-height:1.5}
+.viewer-notice-text strong{color:var(--teal);font-family:var(--font-d);letter-spacing:0.04em;font-size:11px;text-transform:uppercase}
+.error-msg{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 12px;font-size:13px;color:#f87171;margin-bottom:1rem;display:none}
+.success-msg{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:var(--r);padding:10px 12px;font-size:13px;color:#4ade80;margin-bottom:1rem;display:none}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.divider{text-align:center;font-size:11px;color:var(--text3);margin:1rem 0;display:flex;align-items:center;gap:8px}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-@media(max-width:480px){body{align-items:flex-start;padding-top:2rem}.card{padding:1.5rem 1.25rem}}
+.footer-note{text-align:center;margin-top:1.25rem;font-size:11px;color:var(--text3)}
+.footer-note a{color:var(--text2);text-decoration:none}
+.footer-note a:hover{color:var(--accent)}
+.input-wrap{position:relative}
+.input-wrap .form-input{padding-right:40px}
+.pwd-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px;transition:color 0.15s}
+.pwd-toggle:hover{color:var(--text2)}
+.forgot-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.forgot-link{font-size:11px;color:var(--text3);text-decoration:none;transition:color 0.15s;font-family:var(--font-d);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.forgot-link:hover{color:var(--accent)}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">Site<span>Command</span></div>
-  <div class="tagline">Construction &amp; Telecoms PMO</div>
-
-  <div class="tabs">
-    <div class="tab active" id="tab-btn-login" onclick="switchTab('login')">Sign In</div>
-    <div class="tab" id="tab-btn-register" onclick="switchTab('register')">Register</div>
+<div class="login-wrap">
+  <div class="brand">
+    <div class="brand-logo">Site<span>Command</span></div>
+    <div class="brand-sub">Construction &amp; Telecoms PMO</div>
   </div>
 
-  <!-- ── SIGN IN ─────────────────────────────────────────────────── -->
-  <div id="tab-login">
-    <div class="form-group">
-      <label class="form-label">Email Address</label>
-      <input class="form-input" type="email" id="login-email" placeholder="you@company.com"
-             autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()"/>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Register</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="login-password" placeholder="••••••••"
-             autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
-    </div>
-    <div class="forgot"><a onclick="doForgot()">Forgot password?</a></div>
-    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="msg err" id="login-error"></div>
-    <div class="msg ok"  id="login-success"></div>
-  </div>
 
-  <!-- ── REGISTER ───────────────────────────────────────────────── -->
-  <div id="tab-register" style="display:none">
-    <div class="form-group">
-      <label class="form-label">Full Name</label>
-      <input class="form-input" type="text" id="reg-name" placeholder="e.g. John van der Merwe"
-             autocomplete="name"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Email Address</label>
-      <input class="form-input" type="email" id="reg-email" placeholder="you@company.com"
-             autocomplete="email"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Password</label>
-      <input class="form-input" type="password" id="reg-password" placeholder="Min 8 characters"
-             autocomplete="new-password"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Your Role</label>
-      <div class="role-grid">
-        <label class="role-opt selected" id="ro-admin">
-          <input type="radio" name="reg-role" value="admin" checked/>
-          <div class="role-icon">👑</div>
-          <div class="role-name" style="color:var(--accent)">Admin</div>
-          <div class="role-desc">Full access</div>
-        </label>
-        <label class="role-opt" id="ro-pm">
-          <input type="radio" name="reg-role" value="pm"/>
-          <div class="role-icon">📋</div>
-          <div class="role-name" style="color:var(--blue)">PM</div>
-          <div class="role-desc">Manage projects</div>
-        </label>
-        <label class="role-opt" id="ro-foreman">
-          <input type="radio" name="reg-role" value="foreman"/>
-          <div class="role-icon">👷</div>
-          <div class="role-name" style="color:var(--teal)">Foreman</div>
-          <div class="role-desc">Field reports</div>
-        </label>
-        <label class="role-opt" id="ro-viewer">
-          <input type="radio" name="reg-role" value="viewer"/>
-          <div class="role-icon">👁</div>
-          <div class="role-name">Viewer</div>
-          <div class="role-desc">Read only</div>
-        </label>
+    <!-- SIGN IN -->
+    <div class="panel active" id="panel-signin">
+      <div class="error-msg" id="signin-error"></div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="signin-email" placeholder="you@company.com" autocomplete="email"/>
       </div>
+      <div class="form-group">
+        <div class="forgot-row">
+          <label class="form-label" style="margin-bottom:0">Password</label>
+          <a href="#" class="forgot-link" onclick="showForgotPassword(event)">Forgot password?</a>
+        </div>
+        <div class="input-wrap">
+          <input class="form-input" type="password" id="signin-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')signIn()"/>
+          <button class="pwd-toggle" type="button" onclick="togglePwd('signin-password',this)" tabindex="-1">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="signin-btn" onclick="signIn()">Sign In</button>
     </div>
-    <button class="btn btn-primary" id="reg-btn" onclick="doRegister()">Create Account</button>
-    <div class="msg err"  id="reg-error"></div>
-    <div class="msg ok"   id="reg-success"></div>
-    <div class="msg info" id="reg-info" style="display:block;margin-top:1rem">
-      ℹ After registering, an admin can adjust your role and project access in User Management.
+
+    <!-- REGISTER — no role selector, always viewer -->
+    <div class="panel" id="panel-register">
+      <div class="viewer-notice">
+        <div class="viewer-notice-icon">&#128065;</div>
+        <div class="viewer-notice-text">
+          New accounts start as <strong>Viewer (read-only)</strong>. Your admin will assign the correct role once you're set up.
+        </div>
+      </div>
+      <div class="error-msg" id="reg-error"></div>
+      <div class="success-msg" id="reg-success"></div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" id="reg-name" placeholder="Your full name" autocomplete="name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" id="reg-email" placeholder="you@company.com" autocomplete="email"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="input-wrap">
+          <input class="form-input" type="password" id="reg-password" placeholder="Minimum 8 characters" autocomplete="new-password"/>
+          <button class="pwd-toggle" type="button" onclick="togglePwd('reg-password',this)" tabindex="-1">&#128065;</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <div class="input-wrap">
+          <input class="form-input" type="password" id="reg-confirm" placeholder="Repeat password" autocomplete="new-password" onkeydown="if(event.key==='Enter')register()"/>
+          <button class="pwd-toggle" type="button" onclick="togglePwd('reg-confirm',this)" tabindex="-1">&#128065;</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="reg-btn" onclick="register()">Create Account</button>
     </div>
   </div>
+
+  <div class="footer-note">SiteCommand &copy; 2025 &nbsp;&middot;&nbsp; <a href="index.html">Back to Dashboard</a></div>
 </div>
 
 <script>
-const SB  = 'https://dovdqmzyfgmkxvqdaeyr.supabase.co';
-const SK  = 'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-const AH  = {'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 
-// ── Tab switching ─────────────────────────────────────────────────
 function switchTab(t){
-  document.getElementById('tab-login').style.display    = t==='login'    ? 'block':'none';
-  document.getElementById('tab-register').style.display = t==='register' ? 'block':'none';
-  document.getElementById('tab-btn-login').classList.toggle('active',    t==='login');
-  document.getElementById('tab-btn-register').classList.toggle('active', t==='register');
-}
-
-// ── Role selector UI ─────────────────────────────────────────────
-document.querySelectorAll('.role-opt').forEach(opt=>{
-  opt.addEventListener('click',()=>{
-    document.querySelectorAll('.role-opt').forEach(o=>o.classList.remove('selected'));
-    opt.classList.add('selected');
-    opt.querySelector('input').checked=true;
+  ['signin','register'].forEach(id=>{
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+    document.getElementById('panel-'+id).classList.toggle('active',id===t);
   });
-});
-function getSelectedRole(){
-  const checked=document.querySelector('input[name="reg-role"]:checked');
-  return checked?checked.value:'viewer';
+  hideMessages();
 }
 
-// ── Message helpers ───────────────────────────────────────────────
-function showMsg(id,msg,type='err'){
-  const el=document.getElementById(id);
-  el.textContent=msg; el.className='msg '+type; el.style.display='block';
-}
-function hideMsg(id){
-  const el=document.getElementById(id);
-  if(el){el.style.display='none'; el.textContent='';}
+function hideMessages(){
+  ['signin-error','reg-error','reg-success'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
 }
 
-// ── Store session helper ─────────────────────────────────────────
-function storeSession(data){
-  localStorage.setItem('sc_session', JSON.stringify({
-    access_token  : data.access_token,
-    refresh_token : data.refresh_token,
-    user          : data.user,
-    expires_at    : Date.now() + ((data.expires_in||3600)*1000)
-  }));
+function showMsg(id,msg,type='error'){
+  const el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;
+  el.className=type==='ok'?'success-msg':'error-msg';
+  el.style.display='block';
 }
 
-// ── Create/update user_profiles record ──────────────────────────
-async function upsertProfile(userId, accessToken, name, role){
+function togglePwd(inputId,btn){
+  const inp=document.getElementById(inputId);
+  if(!inp)return;
+  inp.type=(inp.type==='password')?'text':'password';
+  btn.innerHTML=(inp.type==='text')?'&#128584;':'&#128065;';
+}
+
+function setLoading(btnId,loading,label){
+  const btn=document.getElementById(btnId);if(!btn)return;
+  btn.disabled=loading;
+  btn.innerHTML=loading?'<span class="spinner"></span>':label;
+}
+
+async function signIn(){
+  const email=document.getElementById('signin-email').value.trim();
+  const pwd=document.getElementById('signin-password').value;
+  hideMessages();
+  if(!email||!pwd){showMsg('signin-error','Please enter your email and password.');return;}
+  setLoading('signin-btn',true,'Sign In');
   try{
-    await fetch(`${SB}/rest/v1/user_profiles`, {
-      method  : 'POST',
-      headers : {
-        'Content-Type'  : 'application/json',
-        'apikey'        : SK,
-        'Authorization' : 'Bearer ' + accessToken,
-        'Prefer'        : 'resolution=merge-duplicates'   // upsert
-      },
-      body: JSON.stringify({id:userId, full_name:name, role:role, active:true})
+    const r=await fetch(`${SB}/auth/v1/token?grant_type=password`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SK},
+      body:JSON.stringify({email,password:pwd})
     });
-  }catch(e){ console.warn('Profile upsert failed:',e); }
-}
-
-// ── SIGN IN ──────────────────────────────────────────────────────
-async function doLogin(){
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  hideMsg('login-error'); hideMsg('login-success');
-  if(!email||!password){ showMsg('login-error','Please enter your email and password.'); return; }
-
-  const btn=document.getElementById('login-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Signing in...';
-
-  try{
-    const r = await fetch(`${SB}/auth/v1/token?grant_type=password`,{
-      method:'POST', headers:AH,
-      body:JSON.stringify({email,password})
-    });
-    const data = await r.json();
-
-    if(data.error||data.error_description){
-      showMsg('login-error', data.error_description||data.error||'Login failed.');
-      btn.disabled=false; btn.innerHTML='Sign In'; return;
-    }
-
-    // Store session immediately
-    storeSession(data);
-
-    // Ensure profile exists in user_profiles
-    const name = data.user?.user_metadata?.full_name || email.split('@')[0];
-    const role = data.user?.user_metadata?.role || 'viewer';
-    await upsertProfile(data.user.id, data.access_token, name, role);
-
-    showMsg('login-success','Signed in! Redirecting...','ok');
-    setTimeout(()=>{ window.location.href='index.html'; }, 700);
-
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error_description||d.msg||'Sign in failed. Check your email and password.');
+    const sess={access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(d.expires_in*1000),user:d.user};
+    // Fetch role profile
+    try{
+      const pr=await fetch(`${SB}/rest/v1/user_profiles?id=eq.${d.user.id}&limit=1`,{
+        headers:{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+d.access_token}
+      });
+      if(pr.ok){const pd=await pr.json();if(pd[0])sess.profile=pd[0];}
+    }catch(e){}
+    localStorage.setItem('sc_session',JSON.stringify(sess));
+    window.location.href='index.html';
   }catch(e){
-    showMsg('login-error','Connection error. Check your network.');
-    btn.disabled=false; btn.innerHTML='Sign In';
+    showMsg('signin-error',e.message||'Sign in failed.');
+    setLoading('signin-btn',false,'Sign In');
   }
 }
 
-// ── REGISTER ────────────────────────────────────────────────────
-async function doRegister(){
-  const name     = document.getElementById('reg-name').value.trim();
-  const email    = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const role     = getSelectedRole();
-  hideMsg('reg-error'); hideMsg('reg-success');
-
-  if(!name)             { showMsg('reg-error','Please enter your full name.'); return; }
-  if(!email)            { showMsg('reg-error','Please enter your email address.'); return; }
-  if(password.length<8) { showMsg('reg-error','Password must be at least 8 characters.'); return; }
-
-  const btn=document.getElementById('reg-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Creating account...';
-
+async function register(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pwd=document.getElementById('reg-password').value;
+  const confirm=document.getElementById('reg-confirm').value;
+  hideMessages();
+  if(!name){showMsg('reg-error','Please enter your full name.');return;}
+  if(!email||!email.includes('@')){showMsg('reg-error','Please enter a valid email address.');return;}
+  if(pwd.length<8){showMsg('reg-error','Password must be at least 8 characters.');return;}
+  if(pwd!==confirm){showMsg('reg-error','Passwords do not match.');return;}
+  setLoading('reg-btn',true,'Create Account');
   try{
-    // Step 1: Sign up
-    const r = await fetch(`${SB}/auth/v1/signup`,{
-      method:'POST', headers:AH,
-      body:JSON.stringify({
-        email, password,
-        data:{ full_name:name, role:role }
-      })
+    // Always register as viewer — no role selection on this form
+    const r=await fetch(`${SB}/auth/v1/signup`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SK},
+      body:JSON.stringify({email,password:pwd,data:{full_name:name,role:'viewer'}})
     });
-    const data = await r.json();
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error_description||d.msg||'Registration failed.');
 
-    if(data.error||data.error_description){
-      showMsg('reg-error', data.error_description||data.error||'Registration failed.');
-      btn.disabled=false; btn.innerHTML='Create Account'; return;
+    // Email confirmation required
+    if(d.user&&!d.session){
+      showMsg('reg-success','Account created! Check your email to confirm your address, then sign in.','ok');
+      document.getElementById('reg-btn').disabled=true;
+      return;
     }
 
-    // Step 2: If email confirmation is OFF, Supabase returns a full session
-    //         If it is ON, data.access_token will be null — handle both cases
-    if(data.access_token){
-      // Email confirmation is OFF — we have a live session, store it and log in
-      storeSession(data);
-      await upsertProfile(data.user.id, data.access_token, name, role);
-      showMsg('reg-success','Account created! Signing you in...','ok');
-      setTimeout(()=>{ window.location.href='index.html'; }, 900);
-
-    } else if(data.user && data.user.id){
-      // Email confirmation is ON — account created but not confirmed yet
-      showMsg('reg-success',
-        '✅ Account created! Check your email for a confirmation link, then sign in.',
-        'ok');
-      // Switch to login tab after a moment so they can sign in after confirming
-      setTimeout(()=>{
-        switchTab('login');
-        document.getElementById('login-email').value=email;
-      }, 2500);
-
-    } else {
-      showMsg('reg-error','Unexpected response from server. Please try again.');
+    // Auto-confirmed flow
+    if(d.session&&d.user){
+      // Upsert profile with viewer role
+      try{
+        await fetch(`${SB}/rest/v1/user_profiles`,{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json','apikey':SK,
+            'Authorization':'Bearer '+d.session.access_token,
+            'Prefer':'return=minimal,resolution=ignore-duplicates'
+          },
+          body:JSON.stringify({id:d.user.id,email:d.user.email,full_name:name,role:'viewer',active:true,created_at:new Date().toISOString()})
+        });
+      }catch(e){console.warn('Profile insert:',e);}
+      const sess={
+        access_token:d.session.access_token,refresh_token:d.session.refresh_token,
+        expires_at:Date.now()+(d.session.expires_in*1000),user:d.user,
+        profile:{id:d.user.id,email:d.user.email,full_name:name,role:'viewer'}
+      };
+      localStorage.setItem('sc_session',JSON.stringify(sess));
+      window.location.href='index.html';
+      return;
     }
-
+    showMsg('reg-success','Account created! You can now sign in.','ok');
+    setTimeout(()=>switchTab('signin'),1800);
   }catch(e){
-    showMsg('reg-error','Connection error. Check your network.');
+    showMsg('reg-error',e.message||'Registration failed. Please try again.');
   }
-
-  btn.disabled=false; btn.innerHTML='Create Account';
+  setLoading('reg-btn',false,'Create Account');
 }
 
-// ── FORGOT PASSWORD ──────────────────────────────────────────────
-async function doForgot(){
-  const email = document.getElementById('login-email').value.trim();
-  if(!email){ showMsg('login-error','Enter your email address above first.'); return; }
-  try{
-    await fetch(`${SB}/auth/v1/recover`,{
-      method:'POST', headers:AH,
-      body:JSON.stringify({email})
-    });
-    showMsg('login-success','Password reset email sent — check your inbox.','ok');
-  }catch(e){ showMsg('login-error','Could not send reset email.'); }
+function showForgotPassword(e){
+  e.preventDefault();
+  const email=document.getElementById('signin-email').value.trim()||prompt('Enter your registered email:');
+  if(!email)return;
+  fetch(`${SB}/auth/v1/recover`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SK},body:JSON.stringify({email})})
+    .then(()=>showMsg('signin-error','Password reset email sent — check your inbox.','ok'))
+    .catch(()=>showMsg('signin-error','Could not send reset email.'));
 }
 
-// ── Auto-redirect if already logged in ──────────────────────────
-(function checkExistingSession(){
+// Auto-redirect if already authenticated
+(function(){
   try{
-    const sess = JSON.parse(localStorage.getItem('sc_session')||'null');
-    if(sess && sess.access_token && sess.expires_at > Date.now()){
-      window.location.href = 'index.html';
-    }
+    const s=JSON.parse(localStorage.getItem('sc_session')||'null');
+    if(s&&s.access_token&&s.expires_at>Date.now())window.location.href='index.html';
   }catch(e){}
 })();
 </script>

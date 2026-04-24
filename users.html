@@ -208,9 +208,8 @@ const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textCo
 function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
 function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
 
-async function sbGet(t,q='',token=null){
-  
-  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:{...getH(),'Authorization':'Bearer '+authToken}});
+async function sbGet(t,q=""){
+  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:getH()});
   if(!r.ok)throw new Error(await r.text());return r.json();
 }
 async function sbPatch(t,id,d){
@@ -261,17 +260,47 @@ async function loadUsers(){
       :allProfiles.map(u=>{
         const access=allProjectAccess.filter(a=>a.user_id===u.id);
         const projList=access.length?access.map(a=>a.project_name).join(', '):'All projects';
+        const isSelf=(getSession()?.user?.id===u.id);
         return`<tr>
-          <td><div style="font-weight:500">${u.full_name||'—'}</div></td>
-          <td style="color:var(--text2);font-size:12px">${u.id.slice(0,8)}...</td>
-          <td><span class="badge ${roleBadge[u.role]||'b-viewer'}">${u.role||'viewer'}</span></td>
+          <td><div style="font-weight:500">${u.full_name||'—'}</div>${isSelf?'<div style="font-size:10px;color:var(--accent);font-family:var(--font-d);letter-spacing:0.05em">YOU</div>':''}</td>
+          <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
+          <td>
+            <select class="role-inline-select" data-uid="${u.id}" data-name="${(u.full_name||'').replace(/"/g,'&quot;')}" onchange="quickChangeRole(this)" ${isSelf?'disabled title="Cannot change your own role"':''} style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--text);font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;outline:none;cursor:pointer;${isSelf?'opacity:0.5;cursor:not-allowed':''}">
+              <option value="admin" ${(u.role||'viewer')==='admin'?'selected':''}>&#128081; Admin</option>
+              <option value="pm" ${(u.role||'viewer')==='pm'?'selected':''}>&#128203; PM</option>
+              <option value="foreman" ${(u.role||'viewer')==='foreman'?'selected':''}>&#128119; Foreman</option>
+              <option value="viewer" ${(u.role||'viewer')==='viewer'?'selected':''}>&#128065; Viewer</option>
+            </select>
+          </td>
           <td style="font-size:12px;color:var(--text2)">${projList}</td>
           <td style="font-size:11px;color:var(--text3)">${u.created_at?new Date(u.created_at).toLocaleDateString('en-ZA'):'—'}</td>
-          <td><button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}','${(u.full_name||'').replace(/'/g,"\\'")}','${u.role||'viewer'}')">Edit Role</button></td>
+          <td><button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}','${(u.full_name||'').replace(/'/g,"\\'")}','${u.role||'viewer'}')">&#9881; Manage</button></td>
         </tr>`;
       }).join('');
   }catch(e){showToast('Error loading users: '+e.message,'err');console.error(e);}
 }
+
+async function quickChangeRole(select){
+  const uid=select.dataset.uid;
+  const name=select.dataset.name;
+  const newRole=select.value;
+  const prev=select.querySelector('option[selected]')?.value||select.dataset.prev||'viewer';
+  if(!confirm(\`Change \${name||'this user'} to \${newRole.toUpperCase()}?\`)){
+    // revert
+    select.value=prev;return;
+  }
+  select.disabled=true;
+  try{
+    await sbPatch('user_profiles',uid,{role:newRole});
+    select.querySelectorAll('option').forEach(o=>{o.selected=(o.value===newRole);o.removeAttribute('selected');});
+    select.querySelector(\`option[value="\${newRole}"]\`).setAttribute('selected','');
+    select.dataset.prev=newRole;
+    showToast(\`\${name||'User'} role updated to \${newRole.toUpperCase()}\`);
+    await loadUsers();
+  }catch(e){showToast('Failed: '+e.message,'err');select.value=prev;}
+  select.disabled=false;
+}
+
 
 function selectRole(role){
   selectedRole=role;
