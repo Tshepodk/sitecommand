@@ -263,7 +263,7 @@ async function loadUsers(){
         const isSelf=(getSession()?.user?.id===u.id);
         return`<tr>
           <td><div style="font-weight:500">${u.full_name||'—'}</div>${isSelf?'<div style="font-size:10px;color:var(--accent);font-family:var(--font-d);letter-spacing:0.05em">YOU</div>':''}</td>
-          <td style="color:var(--text2);font-size:12px">${u.email||'—'}</td>
+          <td style="color:var(--text2);font-size:12px">${u.email||u.id?.slice(0,12)+'...'||'—'}</td>
           <td>
             <select class="role-inline-select" data-uid="${u.id}" data-name="${(u.full_name||'').replace(/"/g,'&quot;')}" onchange="quickChangeRole(this)" ${isSelf?'disabled title="Cannot change your own role"':''} style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--text);font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;outline:none;cursor:pointer;${isSelf?'opacity:0.5;cursor:not-allowed':''}">
               <option value="admin" ${(u.role||'viewer')==='admin'?'selected':''}>&#128081; Admin</option>
