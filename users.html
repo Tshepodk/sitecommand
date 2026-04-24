@@ -252,11 +252,12 @@ async function loadUsers(){
       <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${allProfiles.length}</div><div class="stat-l">Total Users</div></div>
       <div class="stat sb"><div class="stat-n" style="color:var(--blue)">${byRole.admin||0}</div><div class="stat-l">Admins</div></div>
       <div class="stat sg"><div class="stat-n" style="color:var(--green)">${byRole.pm||0}</div><div class="stat-l">Project Managers</div></div>
-      <div class="stat" style="border-top:3px solid var(--teal)"><div class="stat-n" style="color:var(--teal)">${(byRole.foreman||0)+(byRole.viewer||0)}</div><div class="stat-l">Foreman / Viewers</div></div>`;
+      <div class="stat" style="border-top:3px solid var(--teal)"><div class="stat-n" style="color:var(--teal)">${(byRole.foreman||0)}</div><div class="stat-l">Foremen</div></div>
+      <div class="stat" style="border-top:3px solid var(--text3)"><div class="stat-n" style="color:var(--text2)">${byRole.viewer||0}</div><div class="stat-l">Viewers</div></div>`;
 
     const roleBadge={admin:'b-admin',pm:'b-pm',foreman:'b-foreman',viewer:'b-viewer'};
     document.getElementById('users-table').innerHTML=allProfiles.length===0
-      ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">No user profiles found. Users appear here after they register.</td></tr>`
+      ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem"><div style="margin-bottom:12px">No user profiles found.</div><div style="font-size:12px;color:var(--text3)">Users appear here after registering via <strong style="color:var(--teal)">login.html</strong>. If users exist in Supabase Auth but not here, run the back-fill SQL in your migration.</div></td></tr>`
       :allProfiles.map(u=>{
         const access=allProjectAccess.filter(a=>a.user_id===u.id);
         const projList=access.length?access.map(a=>a.project_name).join(', '):'All projects';
