@@ -317,6 +317,7 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Field Data</div>
       <div class="nav-item" onclick="showPage('reports',this)"><span class="nav-icon">&#128203;</span>Daily Reports<span class="nav-badge nb-teal" id="report-badge">0</span></div>
+      <div class="nav-item" onclick="showPage('approvals',this)" id="nav-approvals" data-pm-link><span class="nav-icon">&#10003;&#10003;</span>Approvals<span class="nav-badge nb-amber" id="approval-badge" style="display:none">0</span></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">More</div>
@@ -477,15 +478,9 @@ tr:hover td{background:var(--bg3)}
       <!-- Revenue tab -->
       <div class="pmo-tab-content" id="pmotab-revenue" style="display:none">
         <div class="stats-grid" id="pmo-rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
-        <div class="card"><div class="card-header">
-          <div class="card-title">Revenue Register</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <select class="form-select" id="pmo-rev-proj-filter" style="font-size:12px;padding:4px 8px" onchange="renderPMORevenue()"><option value="">All Projects</option></select>
-            <button class="btn btn-primary btn-sm" onclick="openRevModal()">+ Add Entry</button>
-          </div>
-        </div>
+        <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div></div>
           <div class="card-body" style="padding:0"><div class="table-wrap">
-            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Ref No.</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody id="pmo-rev-table"></tbody></table>
           </div></div>
         </div>
@@ -758,65 +753,32 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
-<!-- Revenue Entry Modal -->
-<div class="modal-bg" id="modal-pmo-rev">
-  <div class="modal" style="width:540px">
+
+<!-- Modal: Approve / Reject Report -->
+<div class="modal-bg" id="modal-approval-action">
+  <div class="modal" style="max-width:500px">
     <div class="modal-title">
-      <span id="pmo-rev-modal-title">Add Revenue Entry</span>
-      <button class="modal-close" onclick="closeRevModal()">&#10005;</button>
+      <span id="approval-action-title">Review Report</span>
+      <button class="modal-close" onclick="closeModal('approval-action')">&#10005;</button>
     </div>
-    <input type="hidden" id="pmo-rev-id"/>
+    <input type="hidden" id="aa-report-id"/>
+    <input type="hidden" id="aa-action"/>
+
+    <!-- Report summary -->
+    <div id="aa-summary" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:1rem;font-size:13px;"></div>
+
+    <!-- Comment field -->
     <div class="form-group">
-      <label class="form-label">Project <span style="color:var(--accent)">*</span></label>
-      <select class="form-select" id="pmo-rev-project"></select>
+      <label class="form-label" id="aa-comment-label">Comment <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea class="form-textarea" id="aa-comment" rows="3" placeholder="Add a review comment or reason for rejection..."></textarea>
     </div>
-    <div class="fg2">
-      <div class="form-group" style="grid-column:1/-1">
-        <label class="form-label">Description <span style="color:var(--accent)">*</span></label>
-        <input class="form-input" id="pmo-rev-desc" placeholder="e.g. Progress Claim #1 — Earthworks complete"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Type</label>
-        <select class="form-select" id="pmo-rev-type">
-          <option value="Claim">Claim</option>
-          <option value="Invoice">Invoice</option>
-          <option value="Payment">Payment</option>
-          <option value="Variation">Variation</option>
-          <option value="Retention">Retention</option>
-          <option value="Advance">Advance</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select class="form-select" id="pmo-rev-status">
-          <option value="outstanding">Outstanding — not yet submitted</option>
-          <option value="billed">Billed — submitted, awaiting payment</option>
-          <option value="received">Received — payment confirmed</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Amount (R) <span style="color:var(--accent)">*</span></label>
-        <input class="form-input" type="number" id="pmo-rev-amount" min="0" placeholder="0"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Entry Date</label>
-        <input class="form-input" type="date" id="pmo-rev-date"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Reference Number</label>
-        <input class="form-input" id="pmo-rev-ref" placeholder="e.g. PC-001, INV-003"/>
-      </div>
+
+    <!-- Rejection warning -->
+    <div id="aa-reject-warning" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);padding:10px 12px;font-size:12px;color:#f87171;margin-bottom:1rem">
+      &#9888; Rejecting will unlock the report so the foreman can revise and resubmit.
     </div>
-    <!-- Status helper -->
-    <div id="pmo-rev-status-hint" style="background:var(--bg3);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-      <strong style="color:var(--text)">Outstanding</strong> — planned but not yet submitted to client<br>
-      <strong style="color:var(--text)">Billed</strong> — invoice/claim submitted, waiting for payment<br>
-      <strong style="color:var(--text)">Received</strong> — payment confirmed in your account
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeRevModal()">Cancel</button>
-      <button class="btn btn-primary" id="pmo-rev-save-btn" onclick="saveRevEntry()">Save Entry</button>
-    </div>
+
+    <div class="modal-footer" id="aa-footer"></div>
   </div>
 </div>
 
@@ -947,6 +909,7 @@ function applyRBAC(){
     });
     // Hide add/edit buttons in sidebars
     document.querySelectorAll('a[href*="project_intake"]').forEach(el=>el.style.display='none');
+    document.querySelectorAll('[data-pm-link]').forEach(el=>el.style.display='none');
     return;
   }
 
@@ -966,6 +929,7 @@ function applyRBAC(){
     ).forEach(el=>el.style.display='none');
     // Redirect away from restricted pages
     const page=window.location.pathname.split('/').pop();
+    document.querySelectorAll('[data-pm-link]').forEach(el=>el.style.display='none');
     if(['variations.html','pmo.html','users.html'].includes(page)){
       window.location.href='index.html';
     }
@@ -979,9 +943,226 @@ function applyRBAC(){
       if(txt.includes('cost categor')||txt.includes('user manage'))el.style.display='none';
     });
     document.querySelectorAll('[href*="users.html"]').forEach(el=>el.style.display='none');
+    // PMs can access approvals
+    document.querySelectorAll('[data-pm-link]').forEach(el=>el.style.display='');
     return;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// APPROVAL WORKFLOW
+// ═══════════════════════════════════════════════════════════════════
+
+function approvalStatusBadge(status){
+  if(!status||status==='pending') return '<span class="badge badge-amber" style="font-size:10px">&#9711; Pending</span>';
+  if(status==='approved') return '<span class="badge badge-green" style="font-size:10px">&#10003; Approved</span>';
+  if(status==='rejected') return '<span class="badge badge-red" style="font-size:10px">&#10005; Rejected</span>';
+  if(status==='draft') return '<span class="badge badge-gray" style="font-size:10px">&#9998; Draft</span>';
+  return '';
+}
+
+function canEditReport(r){
+  const role=getUserRole();
+  const status=r.approval_status||'pending';
+  // Admins can always edit
+  if(role==='admin') return true;
+  // PMs can edit pending/rejected
+  if(role==='pm') return status!=='approved';
+  // Foremen can only edit their own draft or rejected reports
+  if(role==='foreman'){
+    const myName=getUserName();
+    const isOwn=(r.reporter&&r.reporter.toLowerCase().includes(myName.toLowerCase()))||true;
+    return isOwn&&(status==='draft'||status==='rejected');
+  }
+  return false;
+}
+
+function renderApprovalsPage(){
+  const statusFilter=document.getElementById('approval-filter-status')?.value||'pending';
+  const projFilter=document.getElementById('approval-filter-project')?.value||'';
+
+  // Populate project filter
+  const pSel=document.getElementById('approval-filter-project');
+  if(pSel){
+    const cur=pSel.value;
+    pSel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+    pSel.value=cur;
+  }
+
+  // Filter reports
+  let filtered=allReports.filter(r=>{
+    const s=r.approval_status||'pending';
+    if(statusFilter==='pending'&&s!=='pending') return false;
+    if(statusFilter==='approved'&&s!=='approved') return false;
+    if(statusFilter==='rejected'&&s!=='rejected') return false;
+    if(projFilter&&r.project!==projFilter) return false;
+    return true;
+  });
+
+  // Sort: pending oldest first, others newest first
+  if(statusFilter==='pending') filtered.sort((a,b)=>new Date(a.created_at||a.report_date)-new Date(b.created_at||b.report_date));
+  else filtered.sort((a,b)=>new Date(b.created_at||b.report_date)-new Date(a.created_at||a.report_date));
+
+  // Stats
+  const total=allReports.length;
+  const pending=allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length;
+  const approved=allReports.filter(r=>r.approval_status==='approved').length;
+  const rejected=allReports.filter(r=>r.approval_status==='rejected').length;
+
+  document.getElementById('approval-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${pending}</div><div class="stat-l">Pending</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${approved}</div><div class="stat-l">Approved</div></div>
+    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${rejected}</div><div class="stat-l">Rejected</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${total}</div><div class="stat-l">Total Reports</div></div>`;
+
+  const labelMap={pending:'&#9651; Pending Review',approved:'&#10003; Approved',rejected:'&#10005; Rejected',all:'All Submissions'};
+  const subMap={pending:'Oldest first — reports awaiting your review',approved:'Most recent first',rejected:'Most recent first — foreman can resubmit',all:'All report submissions'};
+  const titleEl=document.getElementById('approval-queue-title');
+  const subEl=document.getElementById('approval-queue-sub');
+  if(titleEl)titleEl.innerHTML=labelMap[statusFilter]||'Reports';
+  if(subEl)subEl.textContent=subMap[statusFilter]||'';
+
+  const tbody=document.getElementById('approvals-table');
+  if(!filtered.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No ${statusFilter==='all'?'':statusFilter+' '}reports found.</td></tr>`;
+    return;
+  }
+
+  const role=getUserRole();
+  tbody.innerHTML=filtered.map(r=>{
+    const status=r.approval_status||'pending';
+    const hseOk=r.hse==='none'||!r.hse;
+    const canAct=(role==='admin'||role==='pm')&&status==='pending';
+    const canUndo=(role==='admin')&&status!=='pending';
+    return`<tr>
+      <td style="white-space:nowrap">
+        <div style="font-weight:500;font-size:13px">${r.report_date}</div>
+        <div style="font-size:10px;color:var(--text3)">${r.created_at?new Date(r.created_at).toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'}):''}</div>
+      </td>
+      <td>
+        <div style="font-weight:500">${r.project||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.location||'—'}</div>
+      </td>
+      <td>
+        <div>${r.reporter||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.role||''}</div>
+      </td>
+      <td style="text-align:center;font-family:var(--font-d);font-size:15px;font-weight:700">${r.workers||0}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--accent)">${fmt(r.total_cost||0)}</td>
+      <td>
+        <span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${hseOk?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${hseOk?'#4ade80':'#f87171'}">
+          ${hseOk?'Clear':r.hse||'—'}
+        </span>
+      </td>
+      <td>
+        ${approvalStatusBadge(status)}
+        ${r.reviewer_comment?`<div style="font-size:10px;color:var(--text3);margin-top:3px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.reviewer_comment.replace(/"/g,'&quot;')}">💬 ${r.reviewer_comment}</div>`:''}
+        ${r.reviewed_by?`<div style="font-size:10px;color:var(--text3)">by ${r.reviewed_by}</div>`:''}
+      </td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openReportEdit(${r.id})" title="View full report">&#128065; View</button>
+          ${canAct?`
+            <button class="btn btn-sm" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#4ade80" onclick="openApprovalAction(${r.id},'approve')">&#10003; Approve</button>
+            <button class="btn btn-sm" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171" onclick="openApprovalAction(${r.id},'reject')">&#10005; Reject</button>
+          `:''}
+          ${canUndo?`<button class="btn btn-ghost btn-sm" onclick="openApprovalAction(${r.id},'reset')" title="Reset to pending">&#8635; Reset</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openApprovalAction(reportId, action){
+  const r=allReports.find(x=>x.id===reportId);
+  if(!r){showToast('Report not found','err');return;}
+  if(!action){
+    const status=r.approval_status||'pending';
+    action=status==='pending'?'approve':'reset';
+  }
+  document.getElementById('aa-report-id').value=reportId;
+  document.getElementById('aa-action').value=action;
+  document.getElementById('aa-comment').value='';
+
+  // Summary
+  const hseOk=r.hse==='none'||!r.hse;
+  document.getElementById('aa-summary').innerHTML=`
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">Project</div><div style="font-weight:600">${r.project}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">Date</div><div style="font-weight:600">${r.report_date}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">By</div><div style="font-weight:600">${r.reporter||'—'}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">Cost</div><div style="font-weight:600;color:var(--accent)">${fmt(r.total_cost||0)}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">Workers</div><div style="font-weight:600">${r.workers||0}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:2px">HSE</div><div style="font-weight:600;color:${hseOk?'#4ade80':'#f87171'}">${hseOk?'Clear':r.hse}</div></div>
+    </div>
+    ${r.progress_note?`<div style="margin-top:8px;font-size:12px;color:var(--text2);font-style:italic">"${r.progress_note}"</div>`:''}
+    ${r.blockers?`<div style="margin-top:6px;font-size:12px;color:#f87171">&#9888; Blockers: ${r.blockers}</div>`:''}`;
+
+  const titleMap={approve:'Approve Report',reject:'Reject Report',reset:'Reset to Pending'};
+  document.getElementById('approval-action-title').textContent=titleMap[action]||'Review Report';
+  const rejectWarning=document.getElementById('aa-reject-warning');
+  if(rejectWarning)rejectWarning.style.display=action==='reject'?'block':'none';
+  const commentLabel=document.getElementById('aa-comment-label');
+  if(commentLabel)commentLabel.innerHTML=action==='reject'?'Reason for Rejection <span style="color:var(--red)">*</span>':'Comment <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span>';
+
+  const colorMap={approve:'var(--green)',reject:'var(--red)',reset:'var(--blue)'};
+  const iconMap={approve:'&#10003;',reject:'&#10005;',reset:'&#8635;'};
+  document.getElementById('aa-footer').innerHTML=`
+    <button class="btn btn-ghost" onclick="closeModal('approval-action')">Cancel</button>
+    <button class="btn" style="background:${colorMap[action]||'var(--accent)'};color:${action==='approve'?'#000':'#fff'}" id="aa-submit-btn" onclick="submitApprovalAction()">
+      ${iconMap[action]||''} ${titleMap[action]||'Submit'}
+    </button>`;
+
+  document.getElementById('modal-approval-action').classList.add('open');
+}
+
+async function submitApprovalAction(){
+  const reportId=document.getElementById('aa-report-id').value;
+  const action=document.getElementById('aa-action').value;
+  const comment=document.getElementById('aa-comment').value.trim();
+  if(action==='reject'&&!comment){showToast('Please enter a reason for rejection','err');return;}
+  const btn=document.getElementById('aa-submit-btn');
+  btn.disabled=true;btn.innerHTML='<span style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px"></span>Saving...';
+
+  const statusMap={approve:'approved',reject:'rejected',reset:'pending'};
+  const newStatus=statusMap[action]||'pending';
+  const reviewerName=getUserName();
+
+  try{
+    await sbPatch('daily_reports',reportId,{
+      approval_status:newStatus,
+      reviewed_by:reviewerName,
+      reviewer_comment:comment||null,
+      reviewed_at:new Date().toISOString()
+    });
+
+    // Post notification for the submitter
+    const r=allReports.find(x=>x.id==reportId);
+    if(r&&action!=='reset'){
+      try{
+        await sbPost('notifications',{
+          type:action==='approve'?'report_approved':'report_rejected',
+          title:action==='approve'?'Report Approved':'Report Rejected',
+          message:action==='approve'
+            ?`Your report for ${r.project} on ${r.report_date} was approved by ${reviewerName}.`
+            :`Your report for ${r.project} on ${r.report_date} was rejected. ${comment?'Reason: '+comment:''}`,
+          project_name:r.project,
+          severity:action==='approve'?'info':'warning',
+          read:false,
+          created_at:new Date().toISOString()
+        });
+      }catch(e){console.warn('Notification insert failed:',e);}
+    }
+
+    const labels={approve:'Report approved',reject:'Report rejected — foreman notified',reset:'Report reset to pending'};
+    showToast(labels[action]||'Updated');
+    closeModal('approval-action');
+    await loadAllData();
+    renderApprovalsPage();
+  }catch(e){showToast('Action failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;
+}
+
 
 function signOut(e){
   if(e)e.preventDefault();
@@ -1020,7 +1201,7 @@ function renderNotifications(){
   el.innerHTML=allNotifications.map(n=>`
     <div class="notif-item ${n.read?'':'unread'} ${n.severity}" onclick="markRead(${n.id})">
       <div style="display:flex;align-items:flex-start;gap:8px">
-        <span style="font-size:16px;flex-shrink:0">${n.type==='budget_alert'?'💰':n.type==='hse_incident'?'⚠️':n.type==='variation'?'📋':'🔔'}</span>
+        <span style="font-size:16px;flex-shrink:0">${n.type==='budget_alert'?'💰':n.type==='hse_incident'?'⚠️':n.type==='variation'?'📋':n.type==='approval_pending'?'📋':n.type==='report_approved'?'✅':n.type==='report_rejected'?'❌':'🔔'}</span>
         <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:600;color:${n.read?'var(--text2)':'var(--text)'}">${n.title}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${n.message||''}</div>
@@ -1103,6 +1284,10 @@ async function loadAllData(){
     document.getElementById('worker-badge').textContent=allWorkers.length;
     document.getElementById('equip-badge').textContent=allEquipment.length;
     document.getElementById('report-badge').textContent=allReports.length;
+    // Approval badge — pending count for PMs and admins
+    const pendingCount=allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length;
+    const aBadge=document.getElementById('approval-badge');
+    if(aBadge){aBadge.textContent=pendingCount;aBadge.style.display=pendingCount>0?'':'none';}
   }catch(e){
     document.getElementById('conn-dot').className='conn-dot err';
     document.getElementById('conn-label').textContent='Connection error';
@@ -1114,7 +1299,7 @@ async function loadAllData(){
 }
 
 function renderPage(id){
-  ({dashboard:renderDashboard,pmo:renderPMOPortfolio,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,costs:renderCostCats,reports:renderReportsPage}[id]||Function())();
+  ({dashboard:renderDashboard,pmo:renderPMOPortfolio,projects:renderProjects,tasks:renderTasksPage,issues:renderIssues,workforce:renderWorkforce,equipment:renderEquipment,budget:renderBudget,costs:renderCostCats,reports:renderReportsPage,approvals:renderApprovalsPage}[id]||Function())();
 }
 
 function showPage(id,el){
@@ -1503,7 +1688,7 @@ function renderReportsPage(){
   const filteredReports=projFilter?allReports.filter(r=>r.project===projFilter):allReports;
   const pc=bpc();
   const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=filteredReports.reduce((a,r)=>a+(r.workers||0),0);const tt=filteredReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
-  document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
+  document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length}</div><div class="stat-l">Pending Review</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allReports.filter(r=>r.approval_status==='approved').length}</div><div class="stat-l">Approved</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${allReports.filter(r=>r.approval_status==='rejected').length}</div><div class="stat-l">Rejected</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
   const c=document.getElementById('reports-list');
   if(filteredReports.length===0){c.innerHTML=`<p style="color:var(--text3);font-size:13px;padding:1rem 0">${projFilter?'No reports for '+projFilter+'. ':'No reports yet. '}<a href="intake.html" style="color:var(--teal)">Submit a daily report</a></p>`;return;}
   c.innerHTML=filteredReports.map(r=>`
@@ -1528,9 +1713,13 @@ function renderReportsPage(){
             <div style="font-family:var(--font-d);font-size:22px;font-weight:800;color:var(--accent)">${fmt(r.total_cost)}</div>
             <div style="font-size:11px;color:var(--text3)">total cost</div>
           </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick="openReportEdit(${r.id})">&#9998; Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteReport(${r.id},'${(r.project||'').replace(/'/g,"\\'")}','${r.report_date}')">&#10005;</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            ${approvalStatusBadge(r.approval_status)}
+            <div style="display:flex;gap:5px">
+              ${canEditReport(r)?`<button class="btn btn-ghost btn-sm" onclick="openReportEdit(${r.id})">&#9998; Edit</button>`:''}
+              ${isAdmin()||isPM()?`<button class="btn btn-ghost btn-sm" style="background:rgba(20,184,166,0.1);border-color:rgba(20,184,166,0.3);color:var(--teal)" onclick="openApprovalAction(${r.id})">&#10003; Review</button>`:''}
+              ${(isAdmin()&&(r.approval_status!=='approved'))||(!r.approval_status)?`<button class="btn btn-danger btn-sm" onclick="deleteReport(${r.id},'${(r.project||'').replace(/'/g,"\\'")}','${r.report_date}')">&#10005;</button>`:''}
+            </div>
           </div>
         </div>
       </div>
@@ -1650,6 +1839,14 @@ async function saveReportEdit(){
       total_cost:newTotal,
       tasks:newTasks
     };
+    // If foreman resubmitting a rejected report, reset to pending
+    const existingReport=allReports.find(x=>x.id==id);
+    if(existingReport&&existingReport.approval_status==='rejected'&&getUserRole()==='foreman'){
+      payload.approval_status='pending';
+      payload.reviewed_by=null;
+      payload.reviewer_comment=null;
+      payload.reviewed_at=null;
+    }
     await sbPatch('daily_reports',id,payload);
     // Recalculate task qty_done totals for affected tasks
     // For each task in this report: remove old qty, add new qty to project_tasks
@@ -2245,49 +2442,27 @@ function renderPMORisks(){
 
 // ── Revenue & Profitability ────────────────────────────────────────
 function renderPMORevenue(){
-  // Populate project filter
-  const pf=document.getElementById('pmo-rev-proj-filter');
-  if(pf){
-    const cur=pf.value;
-    pf.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
-  }
-  const projFilter=pf?pf.value:'';
-  const filtRev=projFilter?allRevenue.filter(r=>r.project_name===projFilter):allRevenue;
-
   const fc=pmoFC();
-  const tBilled=filtRev.reduce((a,r)=>a+(r.amount||0),0);
-  const tReceived=filtRev.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
-  const tOutstanding=filtRev.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
-  const tCV=allProjects.filter(p=>!projFilter||p.name===projFilter).reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const tBilled=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
+  const tReceived=allRevenue.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
+  const tOutstanding=allRevenue.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
+  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
   document.getElementById('pmo-rev-stats').innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(tCV)}</div><div class="stat-l">Contract Value</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(tBilled)}</div><div class="stat-l">Revenue Billed</div></div>
     <div class="stat-card s-green"><div class="stat-n" style="color:var(--green);font-size:18px">${fmt(tReceived)}</div><div class="stat-l">Received</div></div>
     <div class="stat-card s-red"><div class="stat-n" style="color:var(--red);font-size:18px">${fmt(tOutstanding)}</div><div class="stat-l">Outstanding</div></div>`;
   const revStatB={billed:'badge-blue',received:'badge-green',outstanding:'badge-red'};
-  const revStatLabel={billed:'Billed',received:'Received',outstanding:'Outstanding'};
   const revTypeB={Invoice:'badge-blue',Payment:'badge-green',Claim:'badge-amber',Variation:'badge-purple',Retention:'badge-red',Advance:'badge-teal'};
-  document.getElementById('pmo-rev-table').innerHTML=filtRev.length===0
-    ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet. Click <strong style="color:var(--accent)">+ Add Entry</strong> to get started.</td></tr>`
-    :filtRev.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
+  document.getElementById('pmo-rev-table').innerHTML=allRevenue.length===0
+    ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet.</td></tr>`
+    :allRevenue.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
         <td style="font-family:var(--font-d);font-weight:600">${r.entry_date}</td>
         <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
         <td><div style="font-weight:500">${r.description}</div></td>
         <td><span class="badge ${revTypeB[r.type]||'badge-gray'}">${r.type}</span></td>
-        <td style="color:var(--text3);font-size:11px">${r.reference||'—'}</td>
         <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.amount)}</td>
-        <td>
-          <select style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:3px 6px;color:var(--text);font-size:11px;cursor:pointer;outline:none"
-            onchange="updateRevStatus(${r.id},this.value)">
-            <option value="outstanding"${r.status==='outstanding'?' selected':''}>Outstanding</option>
-            <option value="billed"${r.status==='billed'?' selected':''}>Billed</option>
-            <option value="received"${r.status==='received'?' selected':''}>Received</option>
-          </select>
-        </td>
-        <td><div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-sm" onclick='openRevModal(${JSON.stringify(r)})'>Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteRevEntry(${r.id},'${(r.description||'').replace(/'/g,"\'").replace(/"/g,'\"')}')">Del</button>
-        </div></td>
+        <td><span class="badge ${revStatB[r.status]||'badge-gray'}">${r.status}</span></td>
       </tr>`).join('');
   document.getElementById('pmo-profit-table').innerHTML=allProjects.map(p=>{
     const cv=p.contract_value||p.budget||0;
@@ -2342,101 +2517,50 @@ function renderPMOLessons(){
 // Ensure PMO data loads when PMO page is shown
 // PMO tab logic merged into showPage below
 
-
-// ── Revenue Entry CRUD ────────────────────────────────────────────────────────
-function openRevModal(rec=null){
-  // Populate project dropdown
-  const psel=document.getElementById('pmo-rev-project');
-  psel.innerHTML=allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');
-
-  // Reset / populate form
-  document.getElementById('pmo-rev-id').value=rec?rec.id:'';
-  document.getElementById('pmo-rev-modal-title').textContent=rec?'Edit Revenue Entry':'Add Revenue Entry';
-  document.getElementById('pmo-rev-desc').value=rec?rec.description||'':'';
-  document.getElementById('pmo-rev-type').value=rec?rec.type||'Claim':'Claim';
-  document.getElementById('pmo-rev-status').value=rec?rec.status||'outstanding':'outstanding';
-  document.getElementById('pmo-rev-amount').value=rec?rec.amount||'':'';
-  document.getElementById('pmo-rev-date').value=rec?rec.entry_date||new Date().toISOString().split('T')[0]:new Date().toISOString().split('T')[0];
-  document.getElementById('pmo-rev-ref').value=rec?rec.reference||'':'';
-
-  document.getElementById('modal-pmo-rev').classList.add('open');
-  setTimeout(()=>document.getElementById('pmo-rev-desc').focus(),100);
-}
-
-function closeRevModal(){
-  document.getElementById('modal-pmo-rev').classList.remove('open');
-}
-
-async function saveRevEntry(){
-  const desc=document.getElementById('pmo-rev-desc').value.trim();
-  const project=document.getElementById('pmo-rev-project').value;
-  const amount=parseFloat(document.getElementById('pmo-rev-amount').value)||0;
-  if(!desc){showToast('Description is required','err');return;}
-  if(!project){showToast('Select a project','err');return;}
-  if(!amount){showToast('Enter an amount','err');return;}
-
-  const btn=document.getElementById('pmo-rev-save-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
-
-  const payload={
-    project_name:project,
-    description:desc,
-    type:document.getElementById('pmo-rev-type').value,
-    status:document.getElementById('pmo-rev-status').value,
-    amount:amount,
-    entry_date:document.getElementById('pmo-rev-date').value||new Date().toISOString().split('T')[0],
-    reference:document.getElementById('pmo-rev-ref').value.trim()
-  };
-
-  try{
-    const id=document.getElementById('pmo-rev-id').value;
-    if(id){
-      await sbPatch('revenue_entries',id,payload);
-      showToast('Entry updated');
-    }else{
-      await sbPost('revenue_entries',payload);
-      showToast('Revenue entry added');
-    }
-    closeRevModal();
-    // Reload revenue data and re-render
-    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
-    renderPMORevenue();
-  }catch(e){
-    showToast('Save failed: '+e.message,'err');
-    console.error(e);
-  }
-  btn.disabled=false;btn.textContent='Save Entry';
-}
-
-async function deleteRevEntry(id,desc){
-  if(!confirm(`Delete "${desc}"?\nThis cannot be undone.`))return;
-  try{
-    await fetch(`${SB}/rest/v1/revenue_entries?id=eq.${id}`,{method:'DELETE',headers:getH()});
-    showToast('Entry deleted');
-    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
-    renderPMORevenue();
-  }catch(e){showToast('Delete failed','err');}
-}
-
-async function updateRevStatus(id,newStatus){
-  try{
-    await sbPatch('revenue_entries',id,{status:newStatus});
-    showToast('Status updated to '+newStatus);
-    allRevenue=await sbGet('revenue_entries','order=entry_date.asc');
-    renderPMORevenue();
-  }catch(e){showToast('Update failed','err');}
-}
-
-// Close modal on overlay click
-document.getElementById('modal-pmo-rev').addEventListener('click',function(e){
-  if(e.target===this)closeRevModal();
-});
-
 setInterval(loadAllData,30000);
 setInterval(loadNotifications,60000);
 initRBAC();
 loadAllData().then(()=>renderDashboard());
 </script>
+
+
+    <!-- APPROVALS PAGE -->
+    <div class="page" id="page-approvals">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Approval Queue</div>
+          <div class="page-sub">Review and action daily report submissions</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select class="form-select" id="approval-filter-status" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All Submissions</option>
+          </select>
+          <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats-grid" id="approval-stats"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="approval-queue-title">&#9651; Pending Review</div>
+          <div style="font-size:12px;color:var(--text3)" id="approval-queue-sub">Oldest submissions first</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Project</th><th>Submitted By</th><th>Workers</th><th>Cost</th><th>HSE</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approvals-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
 <!-- Modal: Edit Daily Report -->
 <div class="modal-bg" id="modal-report-edit">
