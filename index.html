@@ -551,8 +551,12 @@ tr:hover td{background:var(--bg3)}
     <div class="page" id="page-workforce">
       <div class="page-header">
         <div><div class="page-title">Workforce</div><div class="page-sub">All crew, subcontractors and certifications — stored in Supabase</div></div>
-        <button class="btn btn-primary" onclick="openModal('worker')">+ Add Worker</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost" id="wf-view-toggle" onclick="toggleWFView()">&#128202; By Project</button>
+          <button class="btn btn-primary" onclick="openModal('worker')">+ Add Worker</button>
+        </div>
       </div>
+      <div id="wf-by-project" style="display:none"></div>
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)" id="wf-stats"></div>
       <div class="card mt1">
         <div class="card-header">
@@ -651,46 +655,6 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
-    <!-- APPROVALS PAGE -->
-    <div class="page" id="page-approvals">
-      <div class="page-header">
-        <div>
-          <div class="page-title">Approval Queue</div>
-          <div class="page-sub">Review and action daily report submissions</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <select class="form-select" id="approval-filter-status" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
-            <option value="pending">Pending Review</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">All Submissions</option>
-          </select>
-          <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
-            <option value="">All Projects</option>
-          </select>
-          <button class="btn btn-sm" id="bulk-approve-btn" onclick="bulkApproveAll()" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#4ade80;display:none">&#10003;&#10003; Approve All Pending</button>
-        </div>
-      </div>
-      <div class="stats-grid" id="approval-stats"></div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title" id="approval-queue-title">&#9651; Pending Review</div>
-          <div style="font-size:12px;color:var(--text3)" id="approval-queue-sub">Oldest submissions first</div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th><th>Project</th><th>Submitted By</th><th>Workers</th><th>Cost</th><th>HSE</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="approvals-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
   </div>
 </div>
 
@@ -748,7 +712,7 @@ tr:hover td{background:var(--bg3)}
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="worker-name" placeholder="e.g. J. Smith"/></div>
       <div class="form-group"><label class="form-label">Role / Job Title</label><input class="form-input" id="worker-role" placeholder="e.g. Site Foreman"/></div>
       <div class="form-group"><label class="form-label">Worker Type</label><select class="form-select" id="worker-type"><option>Civil</option><option>Telecoms</option><option>Electrical</option><option>Supervisor</option><option>Subcontractor</option><option>Plant Operator</option><option>Survey</option><option>HSE Officer</option></select></div>
-      <div class="form-group"><label class="form-label">Assigned Project</label><select class="form-select" id="worker-project"><option value="">— None —</option></select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Assigned Projects</label><div id="worker-project-list" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"><span style="color:var(--text3);font-size:12px">Loading projects...</span></div></div>
       <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="worker-phone" placeholder="e.g. 082 555 1234"/></div>
       <div class="form-group"><label class="form-label">ID / Employee No.</label><input class="form-input" id="worker-id-number" placeholder="e.g. 8001015009087"/></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Certifications</label><input class="form-input" id="worker-certs" placeholder="e.g. SACPCMP, OHSA, Work-at-Heights (comma separated)"/></div>
@@ -873,13 +837,7 @@ async function sb(method,table,data=null,query=''){
   return txt?JSON.parse(txt):null;
 }
 const sbGet=(t,q)=>sb('GET',t,null,q);
-const sbPost=(t,d)=>{
-  // Ensure all new daily_reports always land as 'pending'
-  if(t==='daily_reports'&&d&&!d.approval_status){
-    d=Object.assign({},d,{approval_status:'pending'});
-  }
-  return sb('POST',t,d,'');
-};
+const sbPost=(t,d)=>sb('POST',t,d,'');
 const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
 // ── Auth guard ────────────────────────────────────────────────────────────────
@@ -1061,17 +1019,6 @@ function renderApprovalsPage(){
     <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${rejected}</div><div class="stat-l">Rejected</div></div>
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${total}</div><div class="stat-l">Total Reports</div></div>`;
 
-  // Show/hide bulk approve button
-  const bulkBtn=document.getElementById('bulk-approve-btn');
-  if(bulkBtn){
-    const hasPending=allReports.some(r=>!r.approval_status||r.approval_status==='pending');
-    const isPMorAdmin=getUserRole()==='admin'||getUserRole()==='pm';
-    const isFilterPending=statusFilter==='pending';
-    bulkBtn.style.display=(hasPending&&isPMorAdmin&&isFilterPending)?'':'none';
-    if(projFilter) bulkBtn.textContent='\u2713\u2713 Approve All Pending ('+(projFilter)+')';
-    else bulkBtn.textContent='\u2713\u2713 Approve All Pending ('+filtered.length+')';
-  }
-
   const labelMap={pending:'&#9651; Pending Review',approved:'&#10003; Approved',rejected:'&#10005; Rejected',all:'All Submissions'};
   const subMap={pending:'Oldest first — reports awaiting your review',approved:'Most recent first',rejected:'Most recent first — foreman can resubmit',all:'All report submissions'};
   const titleEl=document.getElementById('approval-queue-title');
@@ -1218,54 +1165,6 @@ async function submitApprovalAction(){
     renderApprovalsPage();
   }catch(e){showToast('Action failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;
-}
-
-
-async function bulkApproveAll(){
-  const statusFilter=document.getElementById('approval-filter-status')?.value||'pending';
-  const projFilter=document.getElementById('approval-filter-project')?.value||'';
-  const toApprove=allReports.filter(r=>{
-    const s=r.approval_status||'pending';
-    if(s!=='pending') return false;
-    if(projFilter&&r.project!==projFilter) return false;
-    return true;
-  });
-  if(!toApprove.length){showToast('No pending reports to approve','err');return;}
-  const label=projFilter?`all ${toApprove.length} pending reports for ${projFilter}`:`all ${toApprove.length} pending reports`;
-  if(!confirm(`Approve ${label}?\n\nThis will mark them all as approved and notify submitters.`))return;
-
-  const btn=document.getElementById('bulk-approve-btn');
-  if(btn){btn.disabled=true;btn.innerHTML='<span style="display:inline-block;width:10px;height:10px;border:2px solid rgba(0,0,0,0.1);border-top-color:#4ade80;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px"></span>Approving...';}
-
-  const reviewerName=getUserName();
-  const now=new Date().toISOString();
-  let successCount=0;let failCount=0;
-
-  await Promise.all(toApprove.map(async r=>{
-    try{
-      await sbPatch('daily_reports',r.id,{
-        approval_status:'approved',
-        reviewed_by:reviewerName,
-        reviewer_comment:null,
-        reviewed_at:now
-      });
-      // Notification
-      try{
-        await sbPost('notifications',{
-          type:'report_approved',
-          title:'Report Approved',
-          message:`Your report for ${r.project} on ${r.report_date} was approved by ${reviewerName}.`,
-          project_name:r.project,severity:'info',read:false,created_at:now
-        });
-      }catch(e){}
-      successCount++;
-    }catch(e){failCount++;console.error('Bulk approve failed for',r.id,e);}
-  }));
-
-  if(btn){btn.disabled=false;btn.innerHTML='\u2713\u2713 Approve All Pending';}
-  showToast(`${successCount} report${successCount!==1?'s':''} approved${failCount?', '+failCount+' failed':''}`,failCount?'err':'ok');
-  await loadAllData();
-  renderApprovalsPage();
 }
 
 
@@ -1525,37 +1424,6 @@ function renderDashboard(){
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Field Reports</div><div class="stat-sub">${tr} today — ${tw} workers on site</div></div>
     <div class="stat-card ${budgetStatColor}" style="cursor:${alertProjects.length?'pointer':'default'}" onclick="${alertProjects.length?"showPage('budget',null)":''}"><div class="stat-n" style="color:${overBudget>0?'var(--red)':alertProjects.length>0?'var(--accent)':'var(--green)'}">${budgetStatVal||'✓'}</div><div class="stat-l">${budgetStatLabel}</div><div class="stat-sub">${alertProjects.length?'click to view budget':fmt(tf)+' field costs'}</div></div>`;
 
-  // Approval callout — show for admin/pm when pending reports exist
-  const pendingReports=allReports.filter(r=>!r.approval_status||r.approval_status==='pending');
-  const rejectedReports=allReports.filter(r=>r.approval_status==='rejected');
-  let approvalCallout=document.getElementById('dash-approval-callout');
-  if(!approvalCallout){
-    approvalCallout=document.createElement('div');
-    approvalCallout.id='dash-approval-callout';
-    const dashAll=document.getElementById('dash-all-view');
-    if(dashAll)dashAll.insertAdjacentElement('afterbegin',approvalCallout);
-  }
-  const role=getUserRole();
-  if((role==='admin'||role==='pm')&&(pendingReports.length>0||rejectedReports.length>0)){
-    const parts=[];
-    if(pendingReports.length>0) parts.push(`<span style="font-weight:700;color:var(--accent)">${pendingReports.length} report${pendingReports.length>1?'s':''} awaiting review</span>`);
-    if(rejectedReports.length>0) parts.push(`<span style="font-weight:700;color:var(--red)">${rejectedReports.length} rejected</span>`);
-    approvalCallout.innerHTML=`<div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--rl);padding:12px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px">📋</span>
-        <div>
-          <div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text)">Approval Queue</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:1px">${parts.join(' &nbsp;·&nbsp; ')}</div>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" style="border-color:rgba(245,166,35,0.4);color:var(--accent)" onclick="showPage('approvals',document.getElementById('nav-approvals'))">Review Now →</button>
-    </div>`;
-    approvalCallout.style.display='';
-  } else {
-    approvalCallout.innerHTML='';
-    approvalCallout.style.display='none';
-  }
-
   document.getElementById('dash-projects').innerHTML=filtProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td style="color:var(--text2)">${s.count} (${s.complete} done)</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${s.avg>=90?'var(--green)':s.avg>=50?'var(--blue)':'var(--accent)'}"></div></div><span style="font-size:11px;font-weight:600;min-width:36px;text-align:right">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td></tr>`;}).join('');
   document.getElementById('dash-costs').innerHTML=filtProjects.map(p=>{const fc=pc[p.name]||{totalCost:0,reports:0};return`<tr><td><div style="font-weight:500">${p.name}</div></td><td style="color:var(--text2)">${fc.reports}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(fc.totalCost)}</td></tr>`;}).join('');
   const ac={};allCostCats.forEach(cc=>{ac[cc.name]=filtProjects.reduce((a,p)=>{const ppc=pc[p.name]||{cb:{}};return a+(ppc.cb[cc.name]||0);},0);});
@@ -1673,7 +1541,7 @@ function renderDashboard(){
 // ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects(){
   document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' — Supabase';
-  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
+  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-ghost btn-sm" onclick='toggleProjCrew(${JSON.stringify(p.name)})' title="View crew">&#128119;</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr><tr id="proj-crew-${p.id}" style="display:none"><td colspan="10" style="padding:0;background:var(--bg3)"><div id="proj-crew-inner-${p.id}" style="padding:1rem"></div></td></tr>`;}).join('');
 }
 
 // ── Project Tasks ─────────────────────────────────────────────────────────────
@@ -1710,7 +1578,119 @@ function renderWorkforce(){
   const td=new Date().toISOString().split('T')[0];
   const todayW=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
   document.getElementById('wf-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Total Workers</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${active}</div><div class="stat-l">Active</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${expiring}</div><div class="stat-l">Cert Expiring</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayW}</div><div class="stat-l">On Site Today</div><div class="stat-sub">from field reports</div></div>`;
-  document.getElementById('workforce-table').innerHTML=f.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Click <strong style="color:var(--accent)">+ Add Worker</strong>.</td></tr>`:f.map(w=>`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role||'—'}</td><td><span class="badge ${TB[w.type]||'badge-gray'}">${w.type}</span></td><td style="color:var(--text2);font-size:12px">${w.project_name||'—'}</td><td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td><td style="font-size:12px;color:var(--text2)">${w.certifications||'—'}</td><td style="font-size:12px;color:${w.cert_expiry?'var(--text2)':'var(--text3)'}">${w.cert_expiry||'—'}</td><td><span class="badge ${WF_B[w.status]||'badge-gray'}">${w.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('workers',${w.id},'${w.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`).join('');
+  document.getElementById('workforce-table').innerHTML=f.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Click <strong style="color:var(--accent)">+ Add Worker</strong>.</td></tr>`:f.map(w=>{const projs=w.project_name?w.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];const projBadges=projs.length?projs.map(p=>`<span class="badge badge-blue" style="margin:1px 2px;font-size:10px">${p}</span>`).join(''):'<span style="color:var(--text3)">—</span>';return`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role||'—'}</td><td><span class="badge ${TB[w.type]||'badge-gray'}">${w.type}</span></td><td style="font-size:12px;min-width:120px">${projBadges}</td><td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td><td style="font-size:12px;color:var(--text2)">${w.certifications||'—'}</td><td style="font-size:12px;color:${w.cert_expiry?'var(--text2)':'var(--text3)'}">${w.cert_expiry||'—'}</td><td><span class="badge ${WF_B[w.status]||'badge-gray'}">${w.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('workers',${w.id},'${w.name.replace(/'/g,"\'")}')">Del</button></div></td></tr>`;}).join('');
+}
+
+// ── Project Crew Panel (Option A) ────────────────────────────────────────────
+function toggleProjCrew(projName){
+  // find the row — iterate all proj-crew- rows
+  const rows=document.querySelectorAll('[id^="proj-crew-"]');
+  rows.forEach(row=>{
+    const inner=document.getElementById(row.id.replace('proj-crew-','proj-crew-inner-'));
+    if(!inner)return;
+    const isThis=(inner.dataset.proj===projName);
+    if(isThis){
+      row.style.display=row.style.display==='none'?'table-row':'none';
+      if(row.style.display==='table-row')renderProjCrewPanel(projName,inner);
+    } else {
+      row.style.display='none';
+    }
+  });
+}
+function renderProjCrewPanel(projName,container){
+  container.dataset.proj=projName;
+  const workers=allWorkers.filter(w=>w.project_name&&w.project_name.split(',').map(s=>s.trim()).includes(projName));
+  const WF_B2={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
+  const TB2={Civil:'badge-teal',Telecoms:'badge-blue',Electrical:'badge-amber',Supervisor:'badge-purple',Subcontractor:'badge-gray','Plant Operator':'badge-green',Survey:'badge-teal','HSE Officer':'badge-red'};
+  container.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">&#128119; Crew on <span style="color:var(--accent)">${projName}</span> <span style="color:var(--text3)">(${workers.length})</span></div>
+      <button class="btn btn-ghost btn-sm" onclick='openModalWithProject("${projName.replace(/'/g,"\\'")}") '>+ Assign Worker</button>
+    </div>
+    ${workers.length===0
+      ?`<div style="color:var(--text3);font-size:13px;padding:8px 0">No workers assigned yet. Click <strong style="color:var(--accent)">+ Assign Worker</strong> to add crew.</div>`
+      :`<div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${workers.map(w=>`<div style="background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;min-width:160px;display:flex;flex-direction:column;gap:3px">
+          <div style="font-weight:600;font-size:13px">${w.name}</div>
+          <div style="font-size:11px;color:var(--text2)">${w.role||'—'}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">
+            <span class="badge ${TB2[w.type]||'badge-gray'}" style="font-size:10px">${w.type}</span>
+            <span class="badge ${WF_B2[w.status]||'badge-gray'}" style="font-size:10px">${w.status}</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:6px;font-size:10px" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button>
+        </div>`).join('')}
+      </div>`
+    }`;
+}
+function openModalWithProject(projName){
+  openModal('worker');
+  // after modal opens, pre-check the project checkbox
+  setTimeout(()=>{
+    const cb=document.querySelector(`.worker-proj-cb[value="${projName}"]`);
+    if(cb)cb.checked=true;
+  },50);
+}
+
+// ── Workforce By Project View (Option B) ─────────────────────────────────────
+let wfViewMode='list';
+function toggleWFView(){
+  wfViewMode=wfViewMode==='list'?'project':'list';
+  const btn=document.getElementById('wf-view-toggle');
+  const byProjEl=document.getElementById('wf-by-project');
+  const tableCard=byProjEl.nextElementSibling; // the card with the table
+  if(wfViewMode==='project'){
+    btn.textContent='☰ List View';
+    byProjEl.style.display='block';
+    tableCard.style.display='none';
+    renderWFByProject();
+  } else {
+    btn.textContent='📊 By Project';
+    byProjEl.style.display='none';
+    tableCard.style.display='block';
+  }
+}
+function renderWFByProject(){
+  const el=document.getElementById('wf-by-project');
+  const WF_B2={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
+  const TB2={Civil:'badge-teal',Telecoms:'badge-blue',Electrical:'badge-amber',Supervisor:'badge-purple',Subcontractor:'badge-gray','Plant Operator':'badge-green',Survey:'badge-teal','HSE Officer':'badge-red'};
+  // Build project buckets
+  const buckets={};
+  allProjects.forEach(p=>{buckets[p.name]=[];});
+  buckets['Unassigned']=[];
+  allWorkers.forEach(w=>{
+    const projs=w.project_name?w.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];
+    if(projs.length===0){buckets['Unassigned'].push(w);}
+    else{projs.forEach(pn=>{if(!buckets[pn])buckets[pn]=[];buckets[pn].push(w);});}
+  });
+  const html=Object.entries(buckets).map(([name,workers])=>{
+    if(name!=='Unassigned'&&workers.length===0)return'';
+    const color=name==='Unassigned'?'var(--text3)':'var(--accent)';
+    return`<div class="card mt1">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="card-title" style="color:${color}">${name==='Unassigned'?'⚠ '+name:name}</div>
+          <span style="background:var(--bg4);color:var(--text2);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">${workers.length} worker${workers.length!==1?'s':''}</span>
+        </div>
+        ${name!=='Unassigned'?`<button class="btn btn-ghost btn-sm" onclick='openModalWithProject("${name.replace(/'/g,"\\'")}") '>+ Assign Worker</button>`:''}
+      </div>
+      <div class="card-body" style="padding:${workers.length?'0':'1rem'}">
+        ${workers.length===0
+          ?`<div style="color:var(--text3);font-size:13px">No workers assigned. Click <strong style="color:var(--accent)">+ Assign Worker</strong>.</div>`
+          :`<div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Type</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+            ${workers.map(w=>`<tr>
+              <td><div style="font-weight:500">${w.name}</div></td>
+              <td style="color:var(--text2)">${w.role||'—'}</td>
+              <td><span class="badge ${TB2[w.type]||'badge-gray'}">${w.type}</span></td>
+              <td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td>
+              <td><span class="badge ${WF_B2[w.status]||'badge-gray'}">${w.status}</span></td>
+              <td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button></div></td>
+            </tr>`).join('')}
+          </tbody></table></div>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=html||'<div style="color:var(--text3);padding:2rem;text-align:center">No projects found.</div>';
 }
 
 // ── Equipment ─────────────────────────────────────────────────────────────────
@@ -1925,42 +1905,6 @@ function openReportEdit(id){
         </div>
       </div>`).join('');
   }
-  // Show rejection banner if report was rejected
-  let rejBanner=document.getElementById('re-rejection-banner');
-  if(!rejBanner){
-    rejBanner=document.createElement('div');
-    rejBanner.id='re-rejection-banner';
-    const modalBody=document.querySelector('#modal-report-edit .modal');
-    if(modalBody)modalBody.insertAdjacentElement('afterbegin',rejBanner);
-  }
-  if(r.approval_status==='rejected'){
-    rejBanner.innerHTML=`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem">
-      <div style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#f87171;margin-bottom:4px">&#10005; Report Rejected</div>
-      ${r.reviewer_comment?`<div style="font-size:13px;color:var(--text2);margin-bottom:4px">"${r.reviewer_comment}"</div>`:''}
-      ${r.reviewed_by?`<div style="font-size:11px;color:var(--text3)">Reviewed by ${r.reviewed_by}${r.reviewed_at?' on '+new Date(r.reviewed_at).toLocaleDateString('en-ZA'):''}</div>`:''}
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">Make your corrections and save — it will be resubmitted for review automatically.</div>
-    </div>`;
-    rejBanner.style.display='';
-  } else {
-    rejBanner.innerHTML='';
-    rejBanner.style.display='none';
-  }
-  // Lock editing if approved (non-admin)
-  const isApproved=r.approval_status==='approved';
-  const canEdit2=getUserRole()==='admin'||!isApproved;
-  document.getElementById('re-save-btn').style.display=canEdit2?'':'none';
-  if(isApproved&&getUserRole()!=='admin'){
-    let lockNote=document.getElementById('re-approved-lock');
-    if(!lockNote){
-      lockNote=document.createElement('div');lockNote.id='re-approved-lock';
-      const footer=document.querySelector('#modal-report-edit .modal-footer');
-      if(footer)footer.insertAdjacentElement('beforebegin',lockNote);
-    }
-    lockNote.innerHTML=`<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:var(--r);padding:10px 14px;font-size:12px;color:#4ade80;margin-bottom:0.75rem">&#10003; This report has been approved and is locked. Contact your admin to make changes.</div>`;
-  } else {
-    const lockNote=document.getElementById('re-approved-lock');
-    if(lockNote)lockNote.innerHTML='';
-  }
   document.getElementById('modal-report-edit').classList.add('open');
 }
 
@@ -2072,9 +2016,16 @@ function openModal(type, rec=null){
   });
   document.getElementById(mid).querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
   // populate project dropdowns in worker/equipment modals
-  if(type==='worker'||type==='equipment'){
-    const sel=document.getElementById(type+'-project');
-    if(sel){sel.innerHTML='<option value="">— None —</option>'+allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');}
+  if(type==='worker'){
+    const list=document.getElementById('worker-project-list');
+    if(list){
+      const selected=(rec&&rec.project_name)?rec.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];
+      list.innerHTML=allProjects.length===0?'<span style="color:var(--text3);font-size:12px">No projects yet</span>':allProjects.map(p=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0"><input type="checkbox" class="worker-proj-cb" value="${p.name}"${selected.includes(p.name)?' checked':''}  style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer"/><span style="font-size:13px;color:var(--text)">${p.name}</span></label>`).join('');
+    }
+  }
+  if(type==='equipment'){
+    const sel=document.getElementById('equipment-project');
+    if(sel){sel.innerHTML='<option value="">— None —</option>'+allProjects.map(p=>`<option value="${p.name}"${rec&&rec.assigned_project===p.name?' selected':''}>${p.name}</option>`).join('');}
   }
   if(type==='task'){
     const sel=document.getElementById('task-project');
@@ -2097,7 +2048,7 @@ function openModal(type, rec=null){
     });
     // handle project fields that set select values
     if(type==='task'){const tsel=document.getElementById('task-project');if(tsel&&rec.project_name)tsel.value=rec.project_name;}
-    if(type==='worker'){const wsel=document.getElementById('worker-project');if(wsel&&rec.project_name)wsel.value=rec.project_name;}
+    // worker projects populated via checkbox list above
     if(type==='equipment'){const esel=document.getElementById('equipment-project');if(esel&&rec.assigned_project)esel.value=rec.assigned_project;}
   } else {
     document.getElementById(type+'-modal-title').textContent=({project:'New Project',task:'New Project Task',worker:'Add Worker',equipment:'Add Equipment','cost-cat':'Add Cost Category'}[type]||'New');
@@ -2119,7 +2070,8 @@ async function saveRecord(type){
       payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
     } else if(type==='worker'){
       const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
-      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
+      const checkedProjs=[...document.querySelectorAll('.worker-proj-cb:checked')].map(cb=>cb.value);
+      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:checkedProjs.length?checkedProjs.join(', '):null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
     } else if(type==='equipment'){
       const name=document.getElementById('equipment-name').value.trim();if(!name){showToast('Item name required','err');btn.disabled=false;btn.textContent='Save Item';return;}
       payload={name,type:document.getElementById('equipment-type').value,make_model:document.getElementById('equipment-make').value.trim(),serial_number:document.getElementById('equipment-serial').value.trim(),assigned_project:document.getElementById('equipment-project').value||null,next_service:document.getElementById('equipment-service').value||null,status:document.getElementById('equipment-status').value,notes:document.getElementById('equipment-notes').value.trim(),active:true};table='equipment';
@@ -2186,8 +2138,7 @@ function downloadCSV(){
     'Report ID','Project','Date','Reporter','Role','Location','Period',
     'Workers','Weather','Temperature (C)','HSE Status',
     ...costCols,'Total Cost (R)',
-    'Task Updates','Progress Note','Blockers','HSE Detail',
-    'Approval Status','Reviewed By','Reviewer Comment','Reviewed At'
+    'Task Updates','Progress Note','Blockers','HSE Detail'
   ];
   const esc = v => {
     const s = String(v===null||v===undefined?'':v);
@@ -2202,9 +2153,7 @@ function downloadCSV(){
       r.workers||0, r.weather||'', r.temp||'', r.hse||'',
       ...costCols.map(c=>costs[c]||0),
       r.total_cost||0,
-      taskSummary, r.progress_note||'', r.blockers||'', r.hse_detail||'',
-      r.approval_status||'pending', r.reviewed_by||'', r.reviewer_comment||'',
-      r.reviewed_at?new Date(r.reviewed_at).toLocaleDateString('en-ZA'):''
+      taskSummary, r.progress_note||'', r.blockers||'', r.hse_detail||''
     ].map(esc).join(',');
   });
   const csv = [headers.map(esc).join(','), ...rows].join('\r\n');
@@ -2264,13 +2213,6 @@ function downloadPDF(){
     <div class="stat"><div class="stat-n">${allReports.length}</div><div class="stat-l">Reports</div></div>
     <div class="stat"><div class="stat-n">${allTasks.length}</div><div class="stat-l">Tasks</div></div>
     <div class="stat"><div class="stat-n">R${Math.round(tf/1000)}k</div><div class="stat-l">Field Costs</div></div>
-  </div>
-
-  <h2>Approval Summary</h2>
-  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
-    <div class="stat"><div class="stat-n" style="color:#856404">${allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length}</div><div class="stat-l">Pending Review</div></div>
-    <div class="stat"><div class="stat-n" style="color:#155724">${allReports.filter(r=>r.approval_status==='approved').length}</div><div class="stat-l">Approved</div></div>
-    <div class="stat"><div class="stat-n" style="color:#721c24">${allReports.filter(r=>r.approval_status==='rejected').length}</div><div class="stat-l">Rejected</div></div>
   </div>
 
   <h2>Budget Status by Project</h2>
@@ -2344,9 +2286,6 @@ function downloadPDF(){
         <div style="text-align:right">
           <div style="font-size:20px;font-weight:800;color:#f5a623">R${Math.round(r.total_cost||0).toLocaleString('en-ZA')}</div>
           <div style="font-size:10px;color:#aaa">total cost</div>
-          <div style="margin-top:4px"><span style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;background:${r.approval_status==='approved'?'#d4edda':r.approval_status==='rejected'?'#f8d7da':'#fff3cd'};color:${r.approval_status==='approved'?'#155724':r.approval_status==='rejected'?'#721c24':'#856404'}">${r.approval_status==='approved'?'✓ Approved':r.approval_status==='rejected'?'✗ Rejected':'⏳ Pending'}</span></div>
-          ${r.reviewer_comment?`<div style="font-size:10px;color:#777;margin-top:3px;font-style:italic">"${r.reviewer_comment}"</div>`:''}
-          ${r.reviewed_by?`<div style="font-size:10px;color:#999">by ${r.reviewed_by}</div>`:''}
         </div>
       </div>
       ${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin:6px 0">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div class="task-line">\u2713 <strong>${t.title}</strong>: ${fmtN(t.qty_done)} ${t.unit||''} \u2014 <em>${t.status||''}</em></div>`).join('')}</div>`:''}
@@ -2707,6 +2646,112 @@ setInterval(loadNotifications,60000);
 initRBAC();
 loadAllData().then(()=>renderDashboard());
 </script>
+
+
+    <!-- APPROVALS PAGE -->
+    <div class="page" id="page-approvals">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Approval Queue</div>
+          <div class="page-sub">Review and action daily report submissions</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select class="form-select" id="approval-filter-status" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All Submissions</option>
+          </select>
+          <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats-grid" id="approval-stats"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="approval-queue-title">&#9651; Pending Review</div>
+          <div style="font-size:12px;color:var(--text3)" id="approval-queue-sub">Oldest submissions first</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Project</th><th>Submitted By</th><th>Workers</th><th>Cost</th><th>HSE</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approvals-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<!-- Modal: Edit Daily Report -->
+<div class="modal-bg" id="modal-report-edit">
+  <div class="modal" style="width:680px;max-height:92vh">
+    <div class="modal-title">
+      <span>&#9998; Edit Daily Report</span>
+      <button class="modal-close" onclick="closeModal('report-edit')">&#10005;</button>
+    </div>
+    <input type="hidden" id="re-id"/>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Report Details</div>
+    <div class="fg2" style="margin-bottom:1rem">
+      <div class="form-group"><label class="form-label">Project</label><input class="form-input" id="re-project" placeholder="Project name"/></div>
+      <div class="form-group"><label class="form-label">Report Date</label><input class="form-input" type="date" id="re-date"/></div>
+      <div class="form-group"><label class="form-label">Reported By</label><input class="form-input" id="re-reporter" placeholder="Reporter name"/></div>
+      <div class="form-group"><label class="form-label">Role</label><input class="form-input" id="re-role" placeholder="e.g. Site Foreman"/></div>
+      <div class="form-group"><label class="form-label">Location / Zone</label><input class="form-input" id="re-location" placeholder="e.g. Sector 4"/></div>
+      <div class="form-group"><label class="form-label">Report Period</label>
+        <select class="form-select" id="re-period">
+          <option>Day shift (06:00-18:00)</option><option>Night shift (18:00-06:00)</option><option>Full day</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Workers on Site</label><input class="form-input" type="number" id="re-workers" min="0"/></div>
+      <div class="form-group"><label class="form-label">Weather</label>
+        <select class="form-select" id="re-weather">
+          <option value="">Not recorded</option><option value="Sunny">Sunny</option><option value="Cloudy">Cloudy</option><option value="Rain">Rain</option><option value="Storm">Storm</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Temperature (C)</label><input class="form-input" type="number" id="re-temp" placeholder="e.g. 28"/></div>
+      <div class="form-group"><label class="form-label">HSE Status</label>
+        <select class="form-select" id="re-hse">
+          <option value="none">None - all clear</option>
+          <option value="near-miss">Near miss reported</option>
+          <option value="first-aid">First aid incident</option>
+          <option value="medical">Medical treatment required</option>
+          <option value="lti">LTI - Lost Time Injury</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">HSE Details</label><textarea class="form-textarea" id="re-hse-detail" style="min-height:50px" placeholder="Incident details..."></textarea></div>
+    <div class="form-group" style="margin-bottom:1rem"><label class="form-label">Progress Note</label><textarea class="form-textarea" id="re-progress-note" style="min-height:50px" placeholder="Daily progress summary..."></textarea></div>
+    <div class="form-group" style="margin-bottom:1.25rem"><label class="form-label">Blockers / Issues</label><textarea class="form-textarea" id="re-blockers" style="min-height:50px" placeholder="Blockers or issues..."></textarea></div>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Cost Corrections</div>
+    <div class="fg2" id="re-costs-grid" style="margin-bottom:1.25rem"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem">
+      <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text2)">Recalculated Total</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--text3)">R</span>
+        <input class="form-input" type="number" id="re-total-cost" style="width:140px;font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent);text-align:right" readonly/>
+      </div>
+    </div>
+
+    <div style="font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)">Task Quantity Corrections</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Project task accumulated totals will be adjusted automatically when you save.</p>
+    <div class="fg2" id="re-tasks-grid" style="margin-bottom:1.25rem"></div>
+
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)">
+      &#9888; Correcting task quantities here will automatically adjust the accumulated totals on the Project Tasks page. If you delete this report entirely, task quantities will not be auto-reversed.
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('report-edit')">Cancel</button>
+      <button class="btn btn-primary" id="re-save-btn" onclick="saveReportEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
