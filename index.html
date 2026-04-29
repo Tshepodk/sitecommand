@@ -171,6 +171,21 @@ tr:hover td{background:var(--bg3)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+/* ── Worker Selector ──────────────────────────────────────────── */
+.worker-selector{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px;max-height:180px;overflow-y:auto}
+.worker-selector:focus-within{border-color:var(--accent)}
+.worker-check-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;transition:background 0.1s}
+.worker-check-item:hover{background:var(--bg4)}
+.worker-check-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer}
+.worker-check-item label{font-size:12px;cursor:pointer;flex:1;color:var(--text);line-height:1.3}
+.worker-check-item .wci-role{font-size:10px;color:var(--text3)}
+.worker-count-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.3);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;color:var(--accent);font-family:var(--font-d);letter-spacing:0.04em}
+.worker-selector-wrap{position:relative}
+.worker-search-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;color:var(--text);font-size:12px;font-family:var(--font-b);outline:none;margin-bottom:6px}
+.worker-search-input:focus{border-color:var(--accent)}
+.worker-search-input::placeholder{color:var(--text3)}
+.unregistered-row{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.unregistered-row label{font-size:11px;color:var(--text2);white-space:nowrap}
 .notif-bell{position:relative;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px;transition:all 0.15s}
 .notif-bell:hover{border-color:var(--accent);color:var(--accent)}
 .notif-count{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;display:none}
@@ -551,12 +566,8 @@ tr:hover td{background:var(--bg3)}
     <div class="page" id="page-workforce">
       <div class="page-header">
         <div><div class="page-title">Workforce</div><div class="page-sub">All crew, subcontractors and certifications — stored in Supabase</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost" id="wf-view-toggle" onclick="toggleWFView()">&#128202; By Project</button>
-          <button class="btn btn-primary" onclick="openModal('worker')">+ Add Worker</button>
-        </div>
+        <button class="btn btn-primary" onclick="openModal('worker')">+ Add Worker</button>
       </div>
-      <div id="wf-by-project" style="display:none"></div>
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)" id="wf-stats"></div>
       <div class="card mt1">
         <div class="card-header">
@@ -712,7 +723,7 @@ tr:hover td{background:var(--bg3)}
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="worker-name" placeholder="e.g. J. Smith"/></div>
       <div class="form-group"><label class="form-label">Role / Job Title</label><input class="form-input" id="worker-role" placeholder="e.g. Site Foreman"/></div>
       <div class="form-group"><label class="form-label">Worker Type</label><select class="form-select" id="worker-type"><option>Civil</option><option>Telecoms</option><option>Electrical</option><option>Supervisor</option><option>Subcontractor</option><option>Plant Operator</option><option>Survey</option><option>HSE Officer</option></select></div>
-      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Assigned Projects</label><div id="worker-project-list" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"><span style="color:var(--text3);font-size:12px">Loading projects...</span></div></div>
+      <div class="form-group"><label class="form-label">Assigned Project</label><select class="form-select" id="worker-project"><option value="">— None —</option></select></div>
       <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="worker-phone" placeholder="e.g. 082 555 1234"/></div>
       <div class="form-group"><label class="form-label">ID / Employee No.</label><input class="form-input" id="worker-id-number" placeholder="e.g. 8001015009087"/></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Certifications</label><input class="form-input" id="worker-certs" placeholder="e.g. SACPCMP, OHSA, Work-at-Heights (comma separated)"/></div>
@@ -1051,7 +1062,20 @@ function renderApprovalsPage(){
         <div>${r.reporter||'—'}</div>
         <div style="font-size:11px;color:var(--text3)">${r.role||''}</div>
       </td>
-      <td style="text-align:center;font-family:var(--font-d);font-size:15px;font-weight:700">${r.workers||0}</td>
+      <td style="text-align:center">
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:700">${r.workers||0}</div>
+        ${(()=>{
+          if(Array.isArray(r.worker_ids)&&r.worker_ids.length){
+            const extra=(r.workers||0)-r.worker_ids.length;
+            const extraStr=extra>0?`<div style="font-size:9px;color:var(--red);margin-top:1px">+${extra} unregistered</div>`:'';
+            return `<div style="font-size:9px;color:var(--teal);margin-top:1px">${r.worker_ids.length} named</div>${extraStr}`;
+          }
+          if((r.workers||0)>0){
+            return `<div style="font-size:9px;color:var(--accent);margin-top:1px">⚠ unverified count</div>`;
+          }
+          return '';
+        })()}
+      </td>
       <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--accent)">${fmt(r.total_cost||0)}</td>
       <td>
         <span style="font-size:11px;padding:2px 7px;border-radius:3px;font-weight:600;background:${hseOk?'rgba(34,197,94,0.12)':'rgba(239,68,68,0.12)'};color:${hseOk?'#4ade80':'#f87171'}">
@@ -1405,7 +1429,18 @@ function renderDashboard(){
   const tf=filtReports.reduce((a,r)=>a+(r.total_cost||0),0);
   const td=new Date().toISOString().split('T')[0];
   const tr=filtReports.filter(r=>r.report_date===td).length;
-  const tw=filtReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
+  const tw=(()=>{
+    const todayReps=filtReports.filter(r=>r.report_date===td);
+    const namedIds=new Set();let unnamedCount=0;
+    todayReps.forEach(r=>{
+      if(Array.isArray(r.worker_ids)&&r.worker_ids.length){
+        r.worker_ids.forEach(id=>namedIds.add(id));
+        const extra=(r.workers||0)-r.worker_ids.length;
+        if(extra>0)unnamedCount+=extra;
+      } else {unnamedCount+=r.workers||0;}
+    });
+    return namedIds.size+unnamedCount;
+  })();
   const avgAll=filtTasks.length?Math.round(filtTasks.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/filtTasks.length):0;
   const budgetData=getBudgetData();
   const filtBudget=isFiltered?budgetData.filter(p=>p.name===dashProjectFilter):budgetData;
@@ -1541,7 +1576,7 @@ function renderDashboard(){
 // ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects(){
   document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' — Supabase';
-  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-ghost btn-sm" onclick='toggleProjCrew(${JSON.stringify(p.name)})' title="View crew">&#128119;</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr><tr id="proj-crew-${p.id}" style="display:none"><td colspan="10" style="padding:0;background:var(--bg3)"><div id="proj-crew-inner-${p.id}" style="padding:1rem"></div></td></tr>`;}).join('');
+  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
 }
 
 // ── Project Tasks ─────────────────────────────────────────────────────────────
@@ -1576,121 +1611,24 @@ function renderWorkforce(){
   const expiring=allWorkers.filter(w=>w.status==='cert-expiring').length;
   const onLeave=allWorkers.filter(w=>w.status==='leave').length;
   const td=new Date().toISOString().split('T')[0];
-  const todayW=allReports.filter(r=>r.report_date===td).reduce((a,r)=>a+(r.workers||0),0);
+  const todayW=(()=>{
+    const todayReports=allReports.filter(r=>r.report_date===td);
+    // Use worker_ids deduplicated if available, fall back to workers count
+    const namedIds=new Set();
+    let unnamedCount=0;
+    todayReports.forEach(r=>{
+      if(Array.isArray(r.worker_ids)&&r.worker_ids.length){
+        r.worker_ids.forEach(id=>namedIds.add(id));
+        const extra=(r.workers||0)-r.worker_ids.length;
+        if(extra>0)unnamedCount+=extra;
+      } else {
+        unnamedCount+=r.workers||0;
+      }
+    });
+    return namedIds.size+unnamedCount;
+  })();
   document.getElementById('wf-stats').innerHTML=`<div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Total Workers</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${active}</div><div class="stat-l">Active</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${expiring}</div><div class="stat-l">Cert Expiring</div></div><div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayW}</div><div class="stat-l">On Site Today</div><div class="stat-sub">from field reports</div></div>`;
-  document.getElementById('workforce-table').innerHTML=f.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Click <strong style="color:var(--accent)">+ Add Worker</strong>.</td></tr>`:f.map(w=>{const projs=w.project_name?w.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];const projBadges=projs.length?projs.map(p=>`<span class="badge badge-blue" style="margin:1px 2px;font-size:10px">${p}</span>`).join(''):'<span style="color:var(--text3)">—</span>';return`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role||'—'}</td><td><span class="badge ${TB[w.type]||'badge-gray'}">${w.type}</span></td><td style="font-size:12px;min-width:120px">${projBadges}</td><td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td><td style="font-size:12px;color:var(--text2)">${w.certifications||'—'}</td><td style="font-size:12px;color:${w.cert_expiry?'var(--text2)':'var(--text3)'}">${w.cert_expiry||'—'}</td><td><span class="badge ${WF_B[w.status]||'badge-gray'}">${w.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('workers',${w.id},'${w.name.replace(/'/g,"\'")}')">Del</button></div></td></tr>`;}).join('');
-}
-
-// ── Project Crew Panel (Option A) ────────────────────────────────────────────
-function toggleProjCrew(projName){
-  // find the row — iterate all proj-crew- rows
-  const rows=document.querySelectorAll('[id^="proj-crew-"]');
-  rows.forEach(row=>{
-    const inner=document.getElementById(row.id.replace('proj-crew-','proj-crew-inner-'));
-    if(!inner)return;
-    const isThis=(inner.dataset.proj===projName);
-    if(isThis){
-      row.style.display=row.style.display==='none'?'table-row':'none';
-      if(row.style.display==='table-row')renderProjCrewPanel(projName,inner);
-    } else {
-      row.style.display='none';
-    }
-  });
-}
-function renderProjCrewPanel(projName,container){
-  container.dataset.proj=projName;
-  const workers=allWorkers.filter(w=>w.project_name&&w.project_name.split(',').map(s=>s.trim()).includes(projName));
-  const WF_B2={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
-  const TB2={Civil:'badge-teal',Telecoms:'badge-blue',Electrical:'badge-amber',Supervisor:'badge-purple',Subcontractor:'badge-gray','Plant Operator':'badge-green',Survey:'badge-teal','HSE Officer':'badge-red'};
-  container.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">&#128119; Crew on <span style="color:var(--accent)">${projName}</span> <span style="color:var(--text3)">(${workers.length})</span></div>
-      <button class="btn btn-ghost btn-sm" onclick='openModalWithProject("${projName.replace(/'/g,"\\'")}") '>+ Assign Worker</button>
-    </div>
-    ${workers.length===0
-      ?`<div style="color:var(--text3);font-size:13px;padding:8px 0">No workers assigned yet. Click <strong style="color:var(--accent)">+ Assign Worker</strong> to add crew.</div>`
-      :`<div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${workers.map(w=>`<div style="background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;min-width:160px;display:flex;flex-direction:column;gap:3px">
-          <div style="font-weight:600;font-size:13px">${w.name}</div>
-          <div style="font-size:11px;color:var(--text2)">${w.role||'—'}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">
-            <span class="badge ${TB2[w.type]||'badge-gray'}" style="font-size:10px">${w.type}</span>
-            <span class="badge ${WF_B2[w.status]||'badge-gray'}" style="font-size:10px">${w.status}</span>
-          </div>
-          <button class="btn btn-ghost btn-sm" style="margin-top:6px;font-size:10px" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button>
-        </div>`).join('')}
-      </div>`
-    }`;
-}
-function openModalWithProject(projName){
-  openModal('worker');
-  // after modal opens, pre-check the project checkbox
-  setTimeout(()=>{
-    const cb=document.querySelector(`.worker-proj-cb[value="${projName}"]`);
-    if(cb)cb.checked=true;
-  },50);
-}
-
-// ── Workforce By Project View (Option B) ─────────────────────────────────────
-let wfViewMode='list';
-function toggleWFView(){
-  wfViewMode=wfViewMode==='list'?'project':'list';
-  const btn=document.getElementById('wf-view-toggle');
-  const byProjEl=document.getElementById('wf-by-project');
-  const tableCard=byProjEl.nextElementSibling; // the card with the table
-  if(wfViewMode==='project'){
-    btn.textContent='☰ List View';
-    byProjEl.style.display='block';
-    tableCard.style.display='none';
-    renderWFByProject();
-  } else {
-    btn.textContent='📊 By Project';
-    byProjEl.style.display='none';
-    tableCard.style.display='block';
-  }
-}
-function renderWFByProject(){
-  const el=document.getElementById('wf-by-project');
-  const WF_B2={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
-  const TB2={Civil:'badge-teal',Telecoms:'badge-blue',Electrical:'badge-amber',Supervisor:'badge-purple',Subcontractor:'badge-gray','Plant Operator':'badge-green',Survey:'badge-teal','HSE Officer':'badge-red'};
-  // Build project buckets
-  const buckets={};
-  allProjects.forEach(p=>{buckets[p.name]=[];});
-  buckets['Unassigned']=[];
-  allWorkers.forEach(w=>{
-    const projs=w.project_name?w.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];
-    if(projs.length===0){buckets['Unassigned'].push(w);}
-    else{projs.forEach(pn=>{if(!buckets[pn])buckets[pn]=[];buckets[pn].push(w);});}
-  });
-  const html=Object.entries(buckets).map(([name,workers])=>{
-    if(name!=='Unassigned'&&workers.length===0)return'';
-    const color=name==='Unassigned'?'var(--text3)':'var(--accent)';
-    return`<div class="card mt1">
-      <div class="card-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="card-title" style="color:${color}">${name==='Unassigned'?'⚠ '+name:name}</div>
-          <span style="background:var(--bg4);color:var(--text2);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">${workers.length} worker${workers.length!==1?'s':''}</span>
-        </div>
-        ${name!=='Unassigned'?`<button class="btn btn-ghost btn-sm" onclick='openModalWithProject("${name.replace(/'/g,"\\'")}") '>+ Assign Worker</button>`:''}
-      </div>
-      <div class="card-body" style="padding:${workers.length?'0':'1rem'}">
-        ${workers.length===0
-          ?`<div style="color:var(--text3);font-size:13px">No workers assigned. Click <strong style="color:var(--accent)">+ Assign Worker</strong>.</div>`
-          :`<div class="table-wrap"><table><thead><tr><th>Name</th><th>Role</th><th>Type</th><th>Phone</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-            ${workers.map(w=>`<tr>
-              <td><div style="font-weight:500">${w.name}</div></td>
-              <td style="color:var(--text2)">${w.role||'—'}</td>
-              <td><span class="badge ${TB2[w.type]||'badge-gray'}">${w.type}</span></td>
-              <td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td>
-              <td><span class="badge ${WF_B2[w.status]||'badge-gray'}">${w.status}</span></td>
-              <td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button></div></td>
-            </tr>`).join('')}
-          </tbody></table></div>`
-        }
-      </div>
-    </div>`;
-  }).join('');
-  el.innerHTML=html||'<div style="color:var(--text3);padding:2rem;text-align:center">No projects found.</div>';
+  document.getElementById('workforce-table').innerHTML=f.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Click <strong style="color:var(--accent)">+ Add Worker</strong>.</td></tr>`:f.map(w=>`<tr><td><div style="font-weight:500">${w.name}</div></td><td style="color:var(--text2)">${w.role||'—'}</td><td><span class="badge ${TB[w.type]||'badge-gray'}">${w.type}</span></td><td style="color:var(--text2);font-size:12px">${w.project_name||'—'}</td><td style="color:var(--text2);font-size:12px">${w.phone||'—'}</td><td style="font-size:12px;color:var(--text2)">${w.certifications||'—'}</td><td style="font-size:12px;color:${w.cert_expiry?'var(--text2)':'var(--text3)'}">${w.cert_expiry||'—'}</td><td><span class="badge ${WF_B[w.status]||'badge-gray'}">${w.status}</span></td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("worker",${JSON.stringify(w)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('workers',${w.id},'${w.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`).join('');
 }
 
 // ── Equipment ─────────────────────────────────────────────────────────────────
@@ -1854,7 +1792,15 @@ function openReportEdit(id){
   document.getElementById('re-role').value=r.role||'';
   document.getElementById('re-location').value=r.location||'';
   document.getElementById('re-period').value=r.period||'Day shift (06:00–18:00)';
-  document.getElementById('re-workers').value=r.workers||0;
+  // ── Worker Selector ─────────────────────────────────
+  const reportProject = r.project||'';
+  const projectWorkers = allWorkers.filter(w => w.active !== false && (w.status === 'active' || w.status === 'cert-expiring'));
+  const checkedIds = Array.isArray(r.worker_ids) ? r.worker_ids.map(String) : [];
+  const unregistered = (r.workers||0) - checkedIds.length;
+  document.getElementById('re-unregistered').value = Math.max(0, unregistered);
+  document.getElementById('re-worker-search').value = '';
+  renderWorkerSelectorList(projectWorkers, checkedIds);
+  updateWorkerBadge();
   document.getElementById('re-weather').value=r.weather||'';
   document.getElementById('re-temp').value=r.temp||'';
   document.getElementById('re-hse').value=r.hse||'none';
@@ -1908,6 +1854,50 @@ function openReportEdit(id){
   document.getElementById('modal-report-edit').classList.add('open');
 }
 
+// ── Worker Selector Helpers ──────────────────────────────────────────────────
+function renderWorkerSelectorList(workers, checkedIds){
+  const el = document.getElementById('re-worker-list');
+  if(!workers.length){
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:6px">No active workers registered. Add workers in the Workforce module.</div>';
+    return;
+  }
+  el.innerHTML = workers.map(w => {
+    const checked = checkedIds.includes(String(w.id)) ? 'checked' : '';
+    const proj = w.project_name ? `<span class="wci-role"> — ${w.project_name}</span>` : '';
+    return `<div class="worker-check-item">
+      <input type="checkbox" id="wc-${w.id}" value="${w.id}" ${checked} onchange="updateWorkerBadge()"/>
+      <label for="wc-${w.id}"><strong>${w.name}</strong>${w.role ? ' · ' + w.role : ''}${proj}</label>
+    </div>`;
+  }).join('');
+}
+
+function filterWorkerSelector(){
+  const q = (document.getElementById('re-worker-search').value||'').toLowerCase();
+  document.querySelectorAll('#re-worker-list .worker-check-item').forEach(item => {
+    const txt = item.textContent.toLowerCase();
+    item.style.display = txt.includes(q) ? '' : 'none';
+  });
+}
+
+function getSelectedWorkerIds(){
+  return Array.from(document.querySelectorAll('#re-worker-list input[type=checkbox]:checked')).map(cb => parseInt(cb.value));
+}
+
+function getSelectedWorkerCount(){
+  const registered = document.querySelectorAll('#re-worker-list input[type=checkbox]:checked').length;
+  const extra = parseInt(document.getElementById('re-unregistered').value)||0;
+  return registered + extra;
+}
+
+function updateWorkerBadge(){
+  const count = getSelectedWorkerCount();
+  const badge = document.getElementById('re-workers-badge');
+  if(badge) badge.textContent = count + ' worker' + (count !== 1 ? 's' : '') + ' on site';
+  // Keep hidden field in sync
+  const hidden = document.getElementById('re-workers');
+  if(hidden) hidden.value = count;
+}
+
 function recalcReportTotal(){
   const total=allCostCats.reduce((sum,c)=>{
     const el=document.getElementById('re-cost-'+c.id);
@@ -1944,7 +1934,8 @@ async function saveReportEdit(){
       role:document.getElementById('re-role').value,
       location:document.getElementById('re-location').value,
       period:document.getElementById('re-period').value,
-      workers:parseInt(document.getElementById('re-workers').value)||0,
+      workers: getSelectedWorkerCount(),
+      worker_ids: getSelectedWorkerIds(),
       weather:document.getElementById('re-weather').value,
       temp:document.getElementById('re-temp').value,
       hse:document.getElementById('re-hse').value,
@@ -2016,16 +2007,9 @@ function openModal(type, rec=null){
   });
   document.getElementById(mid).querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
   // populate project dropdowns in worker/equipment modals
-  if(type==='worker'){
-    const list=document.getElementById('worker-project-list');
-    if(list){
-      const selected=(rec&&rec.project_name)?rec.project_name.split(',').map(s=>s.trim()).filter(Boolean):[];
-      list.innerHTML=allProjects.length===0?'<span style="color:var(--text3);font-size:12px">No projects yet</span>':allProjects.map(p=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0"><input type="checkbox" class="worker-proj-cb" value="${p.name}"${selected.includes(p.name)?' checked':''}  style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer"/><span style="font-size:13px;color:var(--text)">${p.name}</span></label>`).join('');
-    }
-  }
-  if(type==='equipment'){
-    const sel=document.getElementById('equipment-project');
-    if(sel){sel.innerHTML='<option value="">— None —</option>'+allProjects.map(p=>`<option value="${p.name}"${rec&&rec.assigned_project===p.name?' selected':''}>${p.name}</option>`).join('');}
+  if(type==='worker'||type==='equipment'){
+    const sel=document.getElementById(type+'-project');
+    if(sel){sel.innerHTML='<option value="">— None —</option>'+allProjects.map(p=>`<option value="${p.name}"${rec&&rec.project_name===p.name?' selected':''}>${p.name}</option>`).join('');}
   }
   if(type==='task'){
     const sel=document.getElementById('task-project');
@@ -2048,7 +2032,7 @@ function openModal(type, rec=null){
     });
     // handle project fields that set select values
     if(type==='task'){const tsel=document.getElementById('task-project');if(tsel&&rec.project_name)tsel.value=rec.project_name;}
-    // worker projects populated via checkbox list above
+    if(type==='worker'){const wsel=document.getElementById('worker-project');if(wsel&&rec.project_name)wsel.value=rec.project_name;}
     if(type==='equipment'){const esel=document.getElementById('equipment-project');if(esel&&rec.assigned_project)esel.value=rec.assigned_project;}
   } else {
     document.getElementById(type+'-modal-title').textContent=({project:'New Project',task:'New Project Task',worker:'Add Worker',equipment:'Add Equipment','cost-cat':'Add Cost Category'}[type]||'New');
@@ -2070,8 +2054,7 @@ async function saveRecord(type){
       payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
     } else if(type==='worker'){
       const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
-      const checkedProjs=[...document.querySelectorAll('.worker-proj-cb:checked')].map(cb=>cb.value);
-      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:checkedProjs.length?checkedProjs.join(', '):null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
+      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
     } else if(type==='equipment'){
       const name=document.getElementById('equipment-name').value.trim();if(!name){showToast('Item name required','err');btn.disabled=false;btn.textContent='Save Item';return;}
       payload={name,type:document.getElementById('equipment-type').value,make_model:document.getElementById('equipment-make').value.trim(),serial_number:document.getElementById('equipment-serial').value.trim(),assigned_project:document.getElementById('equipment-project').value||null,next_service:document.getElementById('equipment-service').value||null,status:document.getElementById('equipment-status').value,notes:document.getElementById('equipment-notes').value.trim(),active:true};table='equipment';
@@ -2707,7 +2690,23 @@ loadAllData().then(()=>renderDashboard());
           <option>Day shift (06:00-18:00)</option><option>Night shift (18:00-06:00)</option><option>Full day</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Workers on Site</label><input class="form-input" type="number" id="re-workers" min="0"/></div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Workers on Site</span>
+          <span class="worker-count-badge" id="re-workers-badge">0 selected</span>
+        </label>
+        <input class="worker-search-input" id="re-worker-search" placeholder="&#128269; Search workers..." oninput="filterWorkerSelector()"/>
+        <div class="worker-selector" id="re-worker-list">
+          <div style="color:var(--text3);font-size:12px;padding:6px">No workers registered.</div>
+        </div>
+        <div class="unregistered-row">
+          <label for="re-unregistered">+ Unregistered / visitors:</label>
+          <input class="form-input" type="number" id="re-unregistered" min="0" value="0" style="width:80px;font-size:13px;padding:5px 8px" oninput="updateWorkerBadge()"/>
+          <span style="font-size:11px;color:var(--text3)">workers not in the register</span>
+        </div>
+        <input type="hidden" id="re-workers"/>
+        <input type="hidden" id="re-worker-ids"/>
+      </div>
       <div class="form-group"><label class="form-label">Weather</label>
         <select class="form-select" id="re-weather">
           <option value="">Not recorded</option><option value="Sunny">Sunny</option><option value="Cloudy">Cloudy</option><option value="Rain">Rain</option><option value="Storm">Storm</option>
