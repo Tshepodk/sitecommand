@@ -90,6 +90,29 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .spinner-sm{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-placeholder{color:var(--text3);font-size:13px;text-align:center;padding:2rem}
+/* ── Worker Selector (Intake) ─────────────────────────────── */
+.ws-search{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 12px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;margin-bottom:8px;transition:border-color 0.15s}
+.ws-search:focus{border-color:var(--accent)}
+.ws-search::placeholder{color:var(--text3)}
+.ws-list{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);max-height:220px;overflow-y:auto}
+.ws-list:focus-within{border-color:var(--accent)}
+.ws-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.ws-item:last-child{border-bottom:none}
+.ws-item:hover{background:var(--bg4)}
+.ws-item input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;flex-shrink:0;cursor:pointer}
+.ws-item label{flex:1;cursor:pointer;font-size:13px;line-height:1.3}
+.ws-item .ws-role{font-size:11px;color:var(--text3);display:block;margin-top:1px}
+.ws-item .ws-badge{font-size:10px;font-weight:700;letter-spacing:0.04em;padding:2px 6px;border-radius:3px;flex-shrink:0;font-family:var(--font-d)}
+.ws-empty{color:var(--text3);font-size:13px;padding:1rem;text-align:center}
+.ws-count-bar{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:10px 14px;background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.2);border-radius:var(--r)}
+.ws-count-num{font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--teal);line-height:1}
+.ws-count-breakdown{font-size:11px;color:var(--text2);margin-top:3px}
+.ws-unreg-row{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r)}
+.ws-unreg-row label{font-size:12px;color:var(--text2);flex:1}
+.ws-unreg-row input{width:70px;text-align:center}
+.ws-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.ws-filter-btn{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text3);cursor:pointer;font-family:var(--font-d);transition:all 0.12s}
+.ws-filter-btn:hover,.ws-filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent)}
 .photo-drop{border:2px dashed var(--border2);border-radius:var(--rl);padding:2rem;text-align:center;cursor:pointer;transition:all 0.15s}
 .photo-drop:hover{border-color:var(--accent);background:rgba(245,166,35,0.04)}
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -251,13 +274,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
     <div class="section">
       <div class="section-label"><div class="section-num" style="background:var(--teal)">W</div>Workers on Site</div>
       <div class="card"><div class="card-inner">
-        <div class="workers-grid">
-          <div class="worker-cat"><div class="worker-cat-name">Civil / Labour</div><input class="form-input" type="number" id="w-civil" min="0" value="0" onchange="updateSummary()"/></div>
-          <div class="worker-cat"><div class="worker-cat-name">Telecoms Techs</div><input class="form-input" type="number" id="w-telecoms" min="0" value="0" onchange="updateSummary()"/></div>
-          <div class="worker-cat"><div class="worker-cat-name">Electrical</div><input class="form-input" type="number" id="w-elec" min="0" value="0" onchange="updateSummary()"/></div>
-          <div class="worker-cat"><div class="worker-cat-name">Plant Operators</div><input class="form-input" type="number" id="w-plant" min="0" value="0" onchange="updateSummary()"/></div>
-          <div class="worker-cat"><div class="worker-cat-name">Supervisors</div><input class="form-input" type="number" id="w-sup" min="0" value="0" onchange="updateSummary()"/></div>
-          <div class="worker-cat"><div class="worker-cat-name">Subcontractors</div><input class="form-input" type="number" id="w-sub" min="0" value="0" onchange="updateSummary()"/></div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Tick each worker who is on site today. Workers are filtered by project once you select one above.</p>
+        <!-- Filter tabs -->
+        <div class="ws-filter-row" id="ws-filter-row">
+          <button class="ws-filter-btn active" onclick="filterWorkerList('all',this)">All</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Civil',this)">Civil</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Telecoms',this)">Telecoms</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Electrical',this)">Electrical</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Plant Operator',this)">Plant</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Supervisor',this)">Supervisor</button>
+          <button class="ws-filter-btn" onclick="filterWorkerList('Subcontractor',this)">Sub</button>
+        </div>
+        <!-- Search -->
+        <input class="ws-search" id="ws-search" placeholder="&#128269; Search workers by name or role..." oninput="renderWorkerList()"/>
+        <!-- List -->
+        <div class="ws-list" id="ws-list">
+          <div class="ws-empty">Select a project first to see workers, or all active workers are listed here.</div>
+        </div>
+        <!-- Count + breakdown -->
+        <div class="ws-count-bar">
+          <div>
+            <div class="ws-count-num" id="ws-count-num">0</div>
+            <div class="ws-count-breakdown" id="ws-count-breakdown">workers on site today</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--text3)" id="ws-sel-names" style="max-width:200px"></div>
+        </div>
+        <!-- Unregistered -->
+        <div class="ws-unreg-row">
+          <label>&#43; Unregistered workers / visitors not in the system:</label>
+          <input class="form-input" type="number" id="w-unreg" min="0" value="0" oninput="updateWorkerCount()" style="width:70px;text-align:center"/>
+        </div>
+        <!-- Hidden legacy inputs kept for backward compat (auto-calculated) -->
+        <div style="display:none">
+          <input id="w-civil" value="0"/><input id="w-telecoms" value="0"/><input id="w-elec" value="0"/>
+          <input id="w-plant" value="0"/><input id="w-sup" value="0"/><input id="w-sub" value="0"/>
         </div>
       </div></div>
     </div>
@@ -518,6 +568,7 @@ async function init(){
     rs.innerHTML='<option value="">— Select worker —</option>'+allWorkers.map(w=>`<option value="${w.name}" data-role="${w.role||''}">${w.name}${w.role?' — '+w.role:''}</option>`).join('');
     // Render cost categories
     renderCostCats();
+    renderWorkerList();
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected';
     document.getElementById('conn-label').style.color='var(--green)';
@@ -567,6 +618,9 @@ async function onProjectChange(){
   updateSummary();
   const el=document.getElementById('f-project');
   const projId=el.value;
+  const projName=getProjectName();
+  // Refresh worker list filtered to this project
+  renderWorkerList(projName);
   if(!projId){projectTasks=[];renderTaskQtyRows();return;}
   try{
     projectTasks=await sbGet('project_tasks',`project_id=eq.${projId}&active=eq.true&order=created_at.asc`);
@@ -651,8 +705,7 @@ function selWeather(el){document.querySelectorAll('.weather-opt').forEach(w=>w.c
 function updateSummary(){
   document.getElementById('sum-project').textContent=getProjectName();
   document.getElementById('sum-tasks').textContent=getTaskUpdates().length;
-  const w=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
-  document.getElementById('sum-workers').textContent=w;
+  document.getElementById('sum-workers').textContent=getTotalWorkerCount();
   const{total}=getCosts();
   const fmtC='R '+Math.round(total).toLocaleString('en-ZA');
   document.getElementById('sum-cost').textContent=fmtC;
@@ -721,7 +774,9 @@ function buildReview(){
   const reporter=document.getElementById('f-reporter').value||'—';
   const location=document.getElementById('f-location').value||'—';
   const updates=getTaskUpdates();
-  const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  const workers=getTotalWorkerCount();
+  const namedWorkers=getCheckedWorkers();
+  const unregWorkers=parseInt(document.getElementById('w-unreg').value)||0;
   const weather=document.querySelector('input[name="weather"]:checked');
   const hse=document.getElementById('f-hse').value;
   const blockers=document.getElementById('f-blockers').value;
@@ -733,7 +788,9 @@ function buildReview(){
         <div><div class="form-label">Date</div><div style="font-weight:500;margin-top:3px">${date}</div></div>
         <div><div class="form-label">Reported by</div><div style="font-weight:500;margin-top:3px">${reporter}</div></div>
         <div><div class="form-label">Location</div><div style="font-weight:500;margin-top:3px">${location}</div></div>
-        <div><div class="form-label">Workers</div><div style="font-weight:500;margin-top:3px">${workers}</div></div>
+        <div style="grid-column:1/-1"><div class="form-label" style="margin-bottom:6px">Workers on Site — <strong style="color:var(--teal)">${workers} total</strong></div>
+          ${namedWorkers.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">${namedWorkers.map(w=>`<span style="background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.25);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--teal)">${w.name}${w.role?' · '+w.role:''}</span>`).join('')}${unregWorkers>0?`<span style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--accent)">+${unregWorkers} unregistered</span>`:''}</div>`:'<p style="color:var(--text3);font-size:12px;margin-top:4px">No registered workers selected. Total count: '+workers+'</p>'}
+        </div>
         <div><div class="form-label">Weather</div><div style="font-weight:500;margin-top:3px">${weather?weather.value:'Not set'}</div></div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:1rem"><div class="form-label" style="margin-bottom:6px">HSE</div><span class="status-pill ${hse==='none'?'sp-green':hse==='near-miss'?'sp-amber':'sp-red'}">${hse==='none'?'All clear':hse}</span></div>
@@ -759,7 +816,8 @@ async function submitForm(){
   if(!reporter){showToast('Please enter or select your name','err');goStep(0);return;}
   const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Saving...';
   const{costs,total}=getCosts();
-  const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+  const checkedWorkers=getCheckedWorkers();
+  const workers=getTotalWorkerCount();
   const weather=document.querySelector('input[name="weather"]:checked');
   const taskUpdates=getTaskUpdates();
   const projName=getProjectName();
@@ -767,8 +825,18 @@ async function submitForm(){
     project:projName,report_date:document.getElementById('f-date').value,
     reporter,role:document.getElementById('f-role').value.trim(),
     location:document.getElementById('f-location').value.trim(),
-    period:document.getElementById('f-period').value,workers,
-    worker_breakdown:{civil:parseInt(document.getElementById('w-civil').value)||0,telecoms:parseInt(document.getElementById('w-telecoms').value)||0,elec:parseInt(document.getElementById('w-elec').value)||0,plant:parseInt(document.getElementById('w-plant').value)||0,sup:parseInt(document.getElementById('w-sup').value)||0,sub:parseInt(document.getElementById('w-sub').value)||0},
+    period:document.getElementById('f-period').value,
+    workers,
+    worker_ids:checkedWorkers.map(w=>w.id),
+    worker_breakdown:{
+      civil:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('civil')).length,
+      telecoms:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('telecoms')).length,
+      elec:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('electr')).length,
+      plant:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('plant')).length,
+      sup:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('super')).length,
+      sub:checkedWorkers.filter(w=>(w.type||'').toLowerCase().includes('sub')).length,
+      unregistered:parseInt(document.getElementById('w-unreg').value)||0
+    },
     tasks:taskUpdates.map(t=>({task_id:t.task_id,title:t.title,type:t.type,unit:t.unit,qty_done:t.qty_done,status:t.status,notes:t.notes})),
     progress_note:document.getElementById('f-progress-note').value.trim(),
     costs,total_cost:total,
@@ -810,10 +878,137 @@ function resetForm(){
   document.getElementById('f-role').value='';document.getElementById('f-location').value='';
   document.getElementById('f-progress-note').value='';document.getElementById('f-blockers').value='';document.getElementById('f-hse-detail').value='';
   allCostCats.forEach(c=>{const i=document.getElementById('c-'+c.id);if(i)i.value='';const n=document.getElementById('cn-'+c.id);if(n)n.value='';});
-  ['civil','telecoms','elec','plant','sup','sub'].forEach(k=>{const el=document.getElementById('w-'+k);if(el)el.value=0;});
+  // Reset worker selector
+  document.querySelectorAll('#ws-list input[type=checkbox]').forEach(cb=>cb.checked=false);
+  const unreg=document.getElementById('w-unreg');if(unreg)unreg.value=0;
+  updateWorkerCount();
   document.querySelectorAll('input[name="weather"]').forEach(r=>r.checked=false);
   document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));
   projectTasks=[];selectedPhotos=[];renderPhotoGrid();renderTaskQtyRows();updateSummary();goStep(0);
+}
+
+// ══════════════════════════════════════════════════════════════
+// WORKER SELECTOR FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+
+let wsActiveFilter = 'all';
+
+const WS_TYPE_COLORS = {
+  'Civil':'rgba(245,166,35,0.15)','Telecoms':'rgba(59,130,246,0.15)',
+  'Electrical':'rgba(168,85,247,0.15)','Plant Operator':'rgba(20,184,166,0.15)',
+  'Supervisor':'rgba(239,68,68,0.15)','Subcontractor':'rgba(139,144,160,0.15)'
+};
+const WS_TYPE_TEXT = {
+  'Civil':'var(--accent)','Telecoms':'var(--blue)',
+  'Electrical':'var(--purple)','Plant Operator':'var(--teal)',
+  'Supervisor':'var(--red)','Subcontractor':'var(--text2)'
+};
+
+function filterWorkerList(type, btn){
+  wsActiveFilter = type;
+  document.querySelectorAll('.ws-filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderWorkerList();
+}
+
+function renderWorkerList(projectName){
+  const list = document.getElementById('ws-list');
+  if(!list) return;
+  if(!allWorkers.length){
+    list.innerHTML = '<div class="ws-empty">No workers registered. Add workers in Dashboard → Workforce first.</div>';
+    return;
+  }
+  const q = (document.getElementById('ws-search')?.value||'').toLowerCase();
+  const projName = projectName || getProjectName();
+
+  let workers = allWorkers.filter(w => w.status !== 'inactive');
+
+  // Filter by search
+  if(q) workers = workers.filter(w =>
+    (w.name||'').toLowerCase().includes(q) ||
+    (w.role||'').toLowerCase().includes(q) ||
+    (w.type||'').toLowerCase().includes(q)
+  );
+
+  // Filter by type tab
+  if(wsActiveFilter !== 'all'){
+    workers = workers.filter(w => (w.type||'').toLowerCase().includes(wsActiveFilter.toLowerCase()));
+  }
+
+  if(!workers.length){
+    list.innerHTML = '<div class="ws-empty">No workers match your search.</div>';
+    return;
+  }
+
+  // Sort: project-matching first
+  workers.sort((a,b)=>{
+    const aMatch = projName && (a.project_name||'').toLowerCase() === projName.toLowerCase();
+    const bMatch = projName && (b.project_name||'').toLowerCase() === projName.toLowerCase();
+    if(aMatch && !bMatch) return -1;
+    if(!aMatch && bMatch) return 1;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+
+  list.innerHTML = workers.map(w => {
+    const bg = WS_TYPE_COLORS[w.type] || 'rgba(139,144,160,0.1)';
+    const tc = WS_TYPE_TEXT[w.type] || 'var(--text2)';
+    const projMatch = projName && (w.project_name||'').toLowerCase() === projName.toLowerCase();
+    return `<div class="ws-item">
+      <input type="checkbox" id="wsi-${w.id}" value="${w.id}" data-name="${w.name}" data-role="${w.role||''}" data-type="${w.type||''}" onchange="updateWorkerCount()"/>
+      <label for="wsi-${w.id}">
+        <strong>${w.name}</strong>
+        <span class="ws-role">${w.role||''}${projMatch?' · <span style="color:var(--teal)">'+w.project_name+'</span>':''}</span>
+      </label>
+      <span class="ws-badge" style="background:${bg};color:${tc}">${w.type||'Worker'}</span>
+    </div>`;
+  }).join('');
+}
+
+function getCheckedWorkers(){
+  return Array.from(document.querySelectorAll('#ws-list input[type=checkbox]:checked')).map(cb=>({
+    id: parseInt(cb.value),
+    name: cb.dataset.name,
+    role: cb.dataset.role,
+    type: cb.dataset.type
+  }));
+}
+
+function getTotalWorkerCount(){
+  const named = document.querySelectorAll('#ws-list input[type=checkbox]:checked').length;
+  const unreg = parseInt(document.getElementById('w-unreg')?.value||0)||0;
+  return named + unreg;
+}
+
+function updateWorkerCount(){
+  const checked = getCheckedWorkers();
+  const unreg = parseInt(document.getElementById('w-unreg')?.value||0)||0;
+  const total = checked.length + unreg;
+
+  // Update badge
+  const num = document.getElementById('ws-count-num');
+  if(num) num.textContent = total;
+
+  // Build breakdown string
+  const byType = {};
+  checked.forEach(w=>{ byType[w.type] = (byType[w.type]||0)+1; });
+  let breakdown = Object.entries(byType).map(([t,c])=>`${c} ${t}`).join(' · ');
+  if(unreg>0) breakdown += (breakdown?` · `:'')+unreg+' unregistered';
+  if(!breakdown) breakdown = 'workers on site today';
+
+  const bd = document.getElementById('ws-count-breakdown');
+  if(bd) bd.textContent = breakdown;
+
+  // Names snippet on right
+  const names = document.getElementById('ws-sel-names');
+  if(names){
+    if(checked.length <= 5){
+      names.innerHTML = checked.map(w=>`<div style="font-size:10px;color:var(--text2)">${w.name}</div>`).join('');
+    } else {
+      names.innerHTML = `<div style="font-size:10px;color:var(--text2)">${checked.slice(0,4).map(w=>w.name).join(', ')} <span style="color:var(--text3)">+${checked.length-4} more</span></div>`;
+    }
+  }
+
+  updateSummary();
 }
 
 init();
