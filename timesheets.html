@@ -99,6 +99,20 @@ tr:hover td{background:var(--bg3)}
 .preview-row.phdr{background:var(--bg4);font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
 .preview-row:not(.phdr):hover{background:var(--bg3)}
 .preview-total{display:flex;gap:2rem;padding:12px 14px;background:rgba(245,166,35,0.06);border-top:1px solid rgba(245,166,35,0.2);flex-wrap:wrap;border-radius:0 0 var(--r) var(--r)}
+
+/* Approval workflow */
+.status-pending{background:rgba(245,166,35,0.12);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.status-submitted{background:rgba(59,130,246,0.12);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.status-approved{background:rgba(34,197,94,0.12);color:#4ade80;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.status-rejected{background:rgba(239,68,68,0.12);color:#f87171;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.status-locked{background:rgba(139,144,160,0.12);color:var(--text3);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.entry-locked{opacity:0.75;pointer-events:none}
+.entry-locked .btn{display:none}
+.approval-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:var(--r);margin-bottom:1rem;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.pending-badge{background:var(--accent);color:#000;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;font-family:var(--font-d);margin-left:4px}
+.approval-entry-row{display:grid;grid-template-columns:160px 80px 80px 60px 70px 90px 100px 110px auto;gap:8px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border)}
+.approval-entry-row:hover{background:var(--bg3)}
+.approval-hdr{display:grid;grid-template-columns:160px 80px 80px 60px 70px 90px 100px 110px auto;gap:8px;padding:6px 12px;background:var(--bg4);font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
 </style>
 </head>
 <body>
@@ -145,6 +159,7 @@ tr:hover td{background:var(--bg3)}
         <button class="tab-btn" onclick="switchTab('weekly',this)">📆 Weekly</button>
         <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly</button>
         <button class="tab-btn" onclick="switchTab('workers',this)">👷 Worker Rates</button>
+        <button class="tab-btn" onclick="switchTab('approvals',this)" id="tab-btn-approvals">✅ Approvals <span class="pending-badge" id="pending-badge" style="display:none">0</span></button>
       </div>
 
       <!-- DAILY -->
@@ -160,6 +175,11 @@ tr:hover td{background:var(--bg3)}
             </div>
           </div>
           <div id="daily-entries-list" style="padding:1rem"></div>
+          <!-- Submit day for approval -->
+          <div id="daily-submit-bar" style="display:none;padding:10px 1.25rem;border-top:1px solid var(--border);background:rgba(59,130,246,0.04);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text2)" id="daily-submit-label"></span>
+            <button class="btn btn-primary btn-sm" id="daily-submit-btn" onclick="submitDayForApproval(document.getElementById('daily-date').value)" style="margin-left:auto">📤 Submit for Approval</button>
+          </div>
           <div id="daily-totals" style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl);display:none">
             <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Workers</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--blue)" id="day-total-workers">0</div></div>
@@ -216,6 +236,55 @@ tr:hover td{background:var(--bg3)}
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="mo-total-hrs">0h</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="mo-total-ot">0h</div></div>
               <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Monthly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="mo-total-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- APPROVALS -->
+      <div class="tab-content" id="tab-approvals">
+        <!-- Pending banner -->
+        <div class="approval-bar" id="approval-banner" style="display:none">
+          <span>⏳</span>
+          <span id="approval-banner-text"></span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="renderApprovalsTab()">Refresh</button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+          <select class="form-select" id="appr-filter-status" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderApprovalsTab()">
+            <option value="submitted">Pending Approval</option>
+            <option value="pending">Draft (not submitted)</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="">All Entries</option>
+          </select>
+          <input type="month" class="form-input" id="appr-filter-month" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderApprovalsTab()"/>
+          <select class="form-select" id="appr-filter-worker" style="width:180px;font-size:12px;padding:5px 8px" onchange="renderApprovalsTab()">
+            <option value="">All Workers</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="approveAllVisible()">✓ Approve All Visible</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="appr-card-title">Timesheet Approvals</div>
+            <div style="font-size:12px;color:var(--text2)">Supervisor submits → Admin/PMO approves → entries lock</div>
+          </div>
+          <div class="approval-hdr">
+            <span>Worker</span><span>Date</span><span>Hours</span><span>OT Hrs</span><span>Day Type</span><span>Regular Pay</span><span>Total Pay</span><span>Status</span><span>Actions</span>
+          </div>
+          <div id="approvals-list" style="max-height:520px;overflow-y:auto"></div>
+          <!-- Totals bar -->
+          <div id="appr-totals" style="display:none;padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl)">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Entries</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="appr-count">0</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="appr-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="appr-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Approved Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--green)" id="appr-pay">R 0</div></div>
             </div>
           </div>
         </div>
@@ -419,6 +488,44 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+
+<!-- ══ MODAL: REJECT REASON ══════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-reject">
+  <div class="modal">
+    <div class="modal-title">
+      <span>Reject Entry</span>
+      <button class="modal-close" onclick="closeModal('reject')">✕</button>
+    </div>
+    <input type="hidden" id="reject-entry-id"/>
+    <div class="form-group">
+      <label class="form-label">Reason for rejection *</label>
+      <input class="form-input" type="text" id="reject-reason" placeholder="e.g. Clock-out time incorrect, please resubmit…"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reject')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: UNLOCK CONFIRM ══════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-unlock">
+  <div class="modal">
+    <div class="modal-title">
+      <span>🔓 Unlock Entry</span>
+      <button class="modal-close" onclick="closeModal('unlock')">✕</button>
+    </div>
+    <input type="hidden" id="unlock-entry-id"/>
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;font-size:13px;color:var(--text2)">
+      ⚠ Unlocking will set this entry back to <strong>Pending</strong> and allow edits. The entry will need to be re-submitted and re-approved.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('unlock')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmUnlock()">Unlock Entry</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -467,7 +574,10 @@ async function init(){
   }
   populateWorkerSelects();
   populateProjectFilter();
+  // Set approval month filter to current month
+  document.getElementById('appr-filter-month').value=new Date().toISOString().substring(0,7);
   renderStats();renderDailyTab();renderRatesTab();
+  updatePendingBadge();
 }
 
 function populateWorkerSelects(){
@@ -488,6 +598,7 @@ function switchTab(name,el){
   if(name==='weekly')renderWeeklyTab();
   if(name==='monthly')renderMonthlyTab();
   if(name==='workers')renderRatesTab();
+  if(name==='approvals')renderApprovalsTab();
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -572,26 +683,32 @@ function recalcMonthForWorker(workerEntries,hourlyRate){
   });
 }
 
-// ── Quick preview estimate (UI only — no month context needed) ─────────────────
+// ── Quick preview estimate (UI only — not saved directly) ─────────────────────
+// NOTE: This is DISPLAY ONLY. The authoritative pay is always set by
+// patchMonthRecalc() which runs the full month chronologically after every save.
+// Saturday is NEVER double-time — it accumulates toward 195hr threshold.
 function calcPayPreview(total,hourlyRate,dateStr,monthHoursSoFar){
   const rate=parseFloat(hourlyRate)||0;
   const THRESHOLD=195;
+  // Sunday and public holidays only → 2× always
   if(isDoubleTimeDay(dateStr)){
     const pay=Math.round(total*rate*2*100)/100;
     return{regularHours:0,otHours:total,regularPay:0,otPay:pay,totalPay:pay,
       dayType:getDayType(dateStr),note:'2× rate ('+getDayType(dateStr)+')'};
   }
+  // Mon–Sat: count toward 195hr threshold
   const soFar=parseFloat(monthHoursSoFar)||0;
   const remaining=Math.max(0,THRESHOLD-soFar);
   const regularHours=Math.min(total,remaining);
   const otHours=Math.max(0,total-remaining);
   const regularPay=Math.round(regularHours*rate*100)/100;
   const otPay=Math.round(otHours*rate*1.5*100)/100;
+  const hoursLeft=THRESHOLD-soFar-total;
   return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,
     dayType:getDayType(dateStr),
-    note:otHours>0?`${soFar.toFixed(0)}hrs in month → 1.5× on excess`:
-         soFar>=THRESHOLD?'Already past 195hrs — all at 1.5×':
-         `${(THRESHOLD-soFar-total).toFixed(0)}hrs before OT threshold`};
+    note:otHours>0?`${soFar.toFixed(0)}h in month — 1.5× on ${otHours.toFixed(2)}h excess`:
+         soFar>=THRESHOLD?'Already past 195h — all at 1.5×':
+         `${(THRESHOLD-soFar).toFixed(0)}h remaining before OT threshold`};
 }
 
 // ── Worker's Mon–Sat hours already in month (for preview estimate) ─────────────
@@ -666,7 +783,11 @@ function renderDailyTab(){
       <div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text2)">${fmtH(e.regular_hours||0)}</div>
       <div><div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">${e.day_type==="sunday"||e.day_type==="holiday"?"2× rate":"1.5× rate"}</div>`:''}</div>
       <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
-      <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})">✏</button><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        ${STATUS_LABELS[e.status||'pending']||''}
+        ${(e.status||'pending')==='pending'||e.status==='rejected'?`<button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})">✏</button><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button>`:''}
+        ${e.status==='approved'?`<button class="btn btn-ghost btn-sm" onclick="openUnlockModal(${e.id})">🔓</button>`:''}
+      </div>
     </div>`).join('')}`;
   const th=de.reduce((a,e)=>a+(e.total_hours||0),0);
   const tr=de.reduce((a,e)=>a+(e.regular_hours||0),0);
@@ -678,6 +799,29 @@ function renderDailyTab(){
   document.getElementById('day-total-ot').textContent=fmtH(to);
   document.getElementById('day-total-pay').textContent=fmt(tp);
   tot.style.display='flex';
+  // Submit bar — show only if there are pending/rejected entries
+  const submitBar=document.getElementById('daily-submit-bar');
+  const submitLabel=document.getElementById('daily-submit-label');
+  const submitBtn=document.getElementById('daily-submit-btn');
+  const pendingCount=de.filter(e=>!e.status||e.status==='pending'||e.status==='rejected').length;
+  const submittedCount=de.filter(e=>e.status==='submitted').length;
+  const approvedCount=de.filter(e=>e.status==='approved').length;
+  if(submitBar){
+    submitBar.style.display='flex';
+    if(approvedCount===de.length){
+      submitLabel.innerHTML=`<span style="color:var(--green)">✓ All ${de.length} entries approved</span>`;
+      if(submitBtn)submitBtn.style.display='none';
+    }else if(submittedCount>0&&pendingCount===0){
+      submitLabel.innerHTML=`<span style="color:#60a5fa">⏳ ${submittedCount} entr${submittedCount===1?'y':'ies'} awaiting approval</span>`;
+      if(submitBtn)submitBtn.style.display='none';
+    }else if(pendingCount>0){
+      submitLabel.innerHTML=`${pendingCount} draft entr${pendingCount===1?'y':'ies'} · ${submittedCount} submitted · ${approvedCount} approved`;
+      if(submitBtn)submitBtn.style.display='inline-flex';
+    }else{
+      submitBar.style.display='none';
+    }
+  }
+  updatePendingBadge();
 }
 
 // ── Weekly Tab ────────────────────────────────────────────────────────────────
@@ -998,15 +1142,18 @@ async function saveBatch(){
       const{total}=calcHours(td.in,td.out,td.break||30);
       const soFar=getWorkerMonthHours(w.id,yearMonth);
       const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
+      // Save raw hours only — patchMonthRecalc sets all pay fields
       payloads.push({
         worker_id:w.id,worker_name:w.name,entry_date:batchDate,
         clock_in:td.in,clock_out:td.out,break_minutes:td.break||30,
-        total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+        total_hours:total,
+        regular_hours:0,ot_hours:0,
         hourly_rate:parseFloat(w.hourly_rate||0),
         ot_rate:parseFloat(w.hourly_rate||0)*1.5,
         is_weekend:isDoubleTimeDay(batchDate),
         day_type:getDayType(batchDate),
-        regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
+        regular_pay:0,ot_pay:0,total_pay:0,
+        status:'pending',
         notes:td.notes||''
       });
     });
@@ -1103,15 +1250,18 @@ async function saveEntry(){
     const entryId=document.getElementById('entry-id').value;
     const soFar=getWorkerMonthHours(wid,yearMonth,entryId||null);
     const pay=calcPayPreview(total,w.hourly_rate||0,date,soFar);
+    // Save raw hours only — patchMonthRecalc sets all pay fields correctly
     const payload={
       worker_id:parseInt(wid),worker_name:w.name,entry_date:date,
       clock_in:ci,clock_out:co,break_minutes:brk,
-      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      total_hours:total,
+      regular_hours:0,ot_hours:0,
       hourly_rate:parseFloat(w.hourly_rate||0),
       ot_rate:parseFloat(w.hourly_rate||0)*1.5,
       is_weekend:isDoubleTimeDay(date),
       day_type:getDayType(date),
-      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
+      regular_pay:0,ot_pay:0,total_pay:0,
+      status:'pending',
       notes:document.getElementById('entry-notes').value.trim()
     };
     if(entryId){
@@ -1170,6 +1320,234 @@ async function saveRate(){
 }
 
 // ── Close on backdrop ─────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════════════════════
+// APPROVAL WORKFLOW
+// Status flow: pending → submitted → approved (locked) | rejected → pending
+// ══════════════════════════════════════════════════════════════════════════════
+
+const STATUS_LABELS={
+  pending:'<span class="status-pending">Draft</span>',
+  submitted:'<span class="status-submitted">⏳ Submitted</span>',
+  approved:'<span class="status-approved">✓ Approved</span>',
+  rejected:'<span class="status-rejected">✕ Rejected</span>',
+};
+
+function updatePendingBadge(){
+  const submitted=allEntries.filter(e=>e.status==='submitted').length;
+  const badge=document.getElementById('pending-badge');
+  const tabBtn=document.getElementById('tab-btn-approvals');
+  if(badge){badge.textContent=submitted;badge.style.display=submitted>0?'inline-flex':'none';}
+  // Approval banner on daily tab
+  const banner=document.getElementById('approval-banner');
+  const bannerTxt=document.getElementById('approval-banner-text');
+  if(banner&&bannerTxt){
+    if(submitted>0){
+      banner.style.display='flex';
+      bannerTxt.innerHTML=`<strong>${submitted} timesheet entr${submitted===1?'y':'ies'} awaiting approval.</strong> Switch to the <a href="#" onclick="switchTab('approvals',document.getElementById('tab-btn-approvals'));return false;" style="color:var(--accent)">Approvals tab →</a>`;
+    }else{
+      banner.style.display='none';
+    }
+  }
+}
+
+// ── Supervisor: submit a day's entries for approval ───────────────────────────
+async function submitDayForApproval(date){
+  const dayEntries=allEntries.filter(e=>e.entry_date===date&&(e.status==='pending'||!e.status));
+  if(!dayEntries.length){showToast('No draft entries to submit for '+date,'err');return;}
+  try{
+    await Promise.all(dayEntries.map(e=>sbPatch('timesheet_entries',e.id,{status:'submitted',submitted_at:new Date().toISOString()})));
+    dayEntries.forEach(e=>{
+      const idx=allEntries.findIndex(x=>x.id===e.id);
+      if(idx>=0)allEntries[idx]={...allEntries[idx],status:'submitted'};
+    });
+    showToast(`${dayEntries.length} entr${dayEntries.length===1?'y':'ies'} submitted for approval`);
+    updatePendingBadge();
+    renderDailyTab();
+    // Send email notification via Supabase edge function (if configured)
+    notifyApprovers(date, dayEntries.length).catch(()=>{});
+  }catch(e){showToast('Submit failed: '+e.message,'err');console.error(e);}
+}
+
+// ── Email notification (Supabase edge function or mailto fallback) ─────────────
+async function notifyApprovers(date, count){
+  // Try Supabase edge function first
+  try{
+    await fetch(`${SB}/functions/v1/notify-approver`,{
+      method:'POST',headers:{...getH(),'Content-Type':'application/json'},
+      body:JSON.stringify({date,count,type:'timesheet_submitted'})
+    });
+  }catch(e){
+    // Fallback: open mailto (will open email client)
+    console.log('Edge function not configured — email notification skipped');
+  }
+}
+
+// ── Admin: approve a single entry ─────────────────────────────────────────────
+async function approveEntry(id){
+  try{
+    const approvedAt=new Date().toISOString();
+    await sbPatch('timesheet_entries',id,{status:'approved',approved_at:approvedAt,rejection_reason:null});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};
+    showToast('Entry approved ✓');
+    updatePendingBadge();
+    renderApprovalsTab();
+    renderDailyTab();
+  }catch(e){showToast('Approve failed: '+e.message,'err');}
+}
+
+// ── Admin: approve all visible ─────────────────────────────────────────────────
+async function approveAllVisible(){
+  const status=document.getElementById('appr-filter-status').value;
+  const month=document.getElementById('appr-filter-month').value;
+  const worker=document.getElementById('appr-filter-worker').value;
+  let toApprove=allEntries.filter(e=>e.status==='submitted');
+  if(month)toApprove=toApprove.filter(e=>(e.entry_date||'').startsWith(month));
+  if(worker)toApprove=toApprove.filter(e=>e.worker_id==worker);
+  if(!toApprove.length){showToast('No submitted entries to approve','err');return;}
+  if(!confirm(`Approve ${toApprove.length} entr${toApprove.length===1?'y':'ies'}?`))return;
+  try{
+    const approvedAt=new Date().toISOString();
+    await Promise.all(toApprove.map(e=>sbPatch('timesheet_entries',e.id,{status:'approved',approved_at:approvedAt})));
+    toApprove.forEach(e=>{
+      const idx=allEntries.findIndex(x=>x.id===e.id);
+      if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};
+    });
+    showToast(`✓ ${toApprove.length} entries approved`);
+    updatePendingBadge();
+    renderApprovalsTab();
+    renderDailyTab();
+  }catch(e){showToast('Bulk approve failed: '+e.message,'err');}
+}
+
+// ── Admin: open reject modal ───────────────────────────────────────────────────
+function openRejectModal(id){
+  document.getElementById('reject-entry-id').value=id;
+  document.getElementById('reject-reason').value='';
+  document.getElementById('modal-reject').classList.add('open');
+}
+
+async function confirmReject(){
+  const id=document.getElementById('reject-entry-id').value;
+  const reason=document.getElementById('reject-reason').value.trim();
+  if(!reason){showToast('Enter a rejection reason','err');return;}
+  try{
+    await sbPatch('timesheet_entries',id,{status:'rejected',rejection_reason:reason,approved_at:null});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'rejected',rejection_reason:reason};
+    showToast('Entry rejected');
+    closeModal('reject');
+    updatePendingBadge();
+    renderApprovalsTab();
+    renderDailyTab();
+  }catch(e){showToast('Reject failed: '+e.message,'err');}
+}
+
+// ── Admin: unlock ──────────────────────────────────────────────────────────────
+function openUnlockModal(id){
+  document.getElementById('unlock-entry-id').value=id;
+  document.getElementById('modal-unlock').classList.add('open');
+}
+
+async function confirmUnlock(){
+  const id=document.getElementById('unlock-entry-id').value;
+  try{
+    await sbPatch('timesheet_entries',id,{status:'pending',approved_at:null,rejection_reason:null,submitted_at:null});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'pending',approved_at:null,rejection_reason:null};
+    showToast('Entry unlocked — back to Draft');
+    closeModal('unlock');
+    updatePendingBadge();
+    renderApprovalsTab();
+    renderDailyTab();
+  }catch(e){showToast('Unlock failed: '+e.message,'err');}
+}
+
+// ── Render approvals tab ───────────────────────────────────────────────────────
+function renderApprovalsTab(){
+  const statusFilter=document.getElementById('appr-filter-status').value;
+  const monthFilter=document.getElementById('appr-filter-month').value;
+  const workerFilter=document.getElementById('appr-filter-worker').value;
+
+  // Populate worker filter
+  const wSel=document.getElementById('appr-filter-worker');
+  const curVal=wSel.value;
+  wSel.innerHTML='<option value="">All Workers</option>'+allWorkers.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  wSel.value=curVal;
+
+  let entries=[...allEntries];
+  if(statusFilter)entries=entries.filter(e=>(e.status||'pending')===statusFilter);
+  if(monthFilter)entries=entries.filter(e=>(e.entry_date||'').startsWith(monthFilter));
+  if(workerFilter)entries=entries.filter(e=>e.worker_id==workerFilter);
+  entries.sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
+
+  const submitted=allEntries.filter(e=>e.status==='submitted').length;
+  const title=statusFilter==='submitted'?`⏳ Pending Approval (${entries.length})`
+    :statusFilter==='approved'?`✅ Approved Entries (${entries.length})`
+    :statusFilter==='rejected'?`✕ Rejected Entries (${entries.length})`
+    :`All Entries (${entries.length})`;
+  document.getElementById('appr-card-title').textContent=title;
+
+  const banner=document.getElementById('approval-banner');
+  const bannerTxt=document.getElementById('approval-banner-text');
+  if(submitted>0){
+    banner.style.display='flex';
+    bannerTxt.innerHTML=`<strong>${submitted} entr${submitted===1?'y':'ies'} awaiting your approval.</strong>`;
+  }else{
+    banner.style.display='none';
+  }
+
+  const list=document.getElementById('approvals-list');
+  if(!entries.length){
+    list.innerHTML=`<div style="padding:2rem;text-align:center;color:var(--text3)">No entries match this filter.</div>`;
+    document.getElementById('appr-totals').style.display='none';
+    return;
+  }
+
+  list.innerHTML=entries.map(e=>{
+    const st=e.status||'pending';
+    const locked=st==='approved';
+    const canApprove=st==='submitted';
+    const canReject=st==='submitted';
+    const rejNote=e.rejection_reason?`<div style="font-size:10px;color:#f87171;margin-top:2px">Reason: ${e.rejection_reason}</div>`:'';
+    const dayTag=dayTypeLabel(e.entry_date||'');
+    return`<div class="approval-entry-row${locked?' entry-locked':''}">
+      <div>
+        <div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${e.clock_in||'—'} → ${e.clock_out||'—'}${e.notes?' · '+e.notes:''}</div>
+        ${rejNote}
+      </div>
+      <div>
+        <div style="font-family:var(--font-d);font-size:13px;font-weight:600">${e.entry_date||'—'}</div>
+        <div style="margin-top:2px">${dayTag}</div>
+      </div>
+      <div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(e.total_hours||0)}</div>
+      <div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${(e.ot_hours||0)>0?fmtH(e.ot_hours):'—'}</div>
+      <div style="font-size:12px;color:var(--text2);text-transform:capitalize">${getDayType(e.entry_date||'')}</div>
+      <div style="color:var(--text2)">${fmt(e.regular_pay||0)}</div>
+      <div style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
+      <div>${STATUS_LABELS[st]||STATUS_LABELS.pending}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        ${canApprove?`<button class="btn btn-teal btn-sm" onclick="approveEntry(${e.id})">✓ Approve</button>`:''}
+        ${canReject?`<button class="btn btn-danger btn-sm" onclick="openRejectModal(${e.id})">✕ Reject</button>`:''}
+        ${locked?`<button class="btn btn-ghost btn-sm" onclick="openUnlockModal(${e.id})">🔓 Unlock</button>`:''}
+        ${st==='rejected'?`<button class="btn btn-ghost btn-sm" onclick="approveEntry(${e.id})">↩ Override</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Totals
+  const totH=entries.reduce((a,e)=>a+(e.total_hours||0),0);
+  const totOT=entries.reduce((a,e)=>a+(e.ot_hours||0),0);
+  const totPay=entries.filter(e=>e.status==='approved').reduce((a,e)=>a+(e.total_pay||0),0);
+  document.getElementById('appr-count').textContent=entries.length;
+  document.getElementById('appr-hrs').textContent=fmtH(totH);
+  document.getElementById('appr-ot').textContent=fmtH(totOT);
+  document.getElementById('appr-pay').textContent=fmt(totPay);
+  document.getElementById('appr-totals').style.display='flex';
+}
+
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 
 init();
