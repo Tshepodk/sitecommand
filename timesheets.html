@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Timesheets</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto}
+.main{background:var(--bg);overflow:auto;min-width:0}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.page{padding:1.5rem}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:14px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-teal{background:rgba(20,184,166,0.12);border:1px solid rgba(20,184,166,0.3);color:var(--teal)}
+.btn-teal:hover{background:rgba(20,184,166,0.2)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.stats-grid{display:grid;gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-amber::before{background:var(--accent)}
+.stat-card.s-blue::before{background:var(--blue)}
+.stat-card.s-green::before{background:var(--green)}
+.stat-card.s-teal::before{background:var(--teal)}
+.stat-card.s-purple::before{background:var(--purple)}
+.stat-n{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-l{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.badge-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.badge-red{background:rgba(239,68,68,0.12);color:#f87171}
+.badge-blue{background:rgba(59,130,246,0.12);color:#60a5fa}
+.badge-teal{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.badge-gray{background:rgba(139,144,160,0.12);color:var(--text2)}
+.badge-purple{background:rgba(168,85,247,0.12);color:#c084fc}
+.mt1{margin-top:1rem}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-wide{width:680px}
+.modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}
+.modal-close:hover{color:var(--text);background:var(--bg3)}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block}
+.form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:11px 18px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}
+.conn-dot.err{background:var(--red)}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:8px 16px;font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text2)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* Clock stamp button */
+.clock-btn{background:rgba(20,184,166,0.1);border:1px solid rgba(20,184,166,0.3);color:var(--teal);padding:6px 10px;border-radius:var(--r);cursor:pointer;font-size:12px;font-family:var(--font-d);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.15s;white-space:nowrap}
+.clock-btn:hover{background:rgba(20,184,166,0.2)}
+/* Worker row in daily entry */
+.worker-ts-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:180px 1fr 1fr 90px 100px 110px 100px auto;gap:10px;align-items:center}
+.worker-ts-row:hover{border-color:var(--border2)}
+.worker-name-cell{font-weight:500;font-size:13px}
+.worker-role-cell{font-size:11px;color:var(--text3);margin-top:2px}
+.ts-time-input{background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 8px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;width:85px}
+.ts-time-input:focus{border-color:var(--accent)}
+.ts-calc{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal);min-width:40px;text-align:right}
+.ts-earnings{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--accent);min-width:90px;text-align:right}
+/* Summary income card */
+.income-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.income-row:last-child{border-bottom:none}
+.income-name{font-weight:500}
+.income-role{font-size:11px;color:var(--text3)}
+.income-amount{font-family:var(--font-d);font-size:16px;font-weight:700}
+/* Period selector */
+.period-pill{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;font-family:var(--font-d);letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;color:var(--text2);transition:all 0.12s;border:none}
+.period-pill.active{background:var(--accent);color:#000}
+/* Rate badge */
+.rate-tag{font-size:11px;color:var(--text3);background:var(--bg4);border-radius:4px;padding:2px 7px;margin-left:6px}
+/* Spinner */
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* OT indicator */
+.ot-label{font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
+/* Empty state */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-state h3{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase}
+/* Summary table highlight */
+.total-row td{background:rgba(245,166,35,0.06);font-weight:700}
+/* Mobile */
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)!important}.worker-ts-row{grid-template-columns:1fr 1fr;gap:8px}.fg2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">Site<span>Command</span></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label" style="font-size:12px;color:var(--text3)">Connecting…</span>
+    </div>
+    <a href="index.html" class="btn btn-ghost btn-sm">← Back to App</a>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Navigation</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">👷</span>Workforce</a>
+      <a href="timesheets.html" class="nav-item active"><span class="nav-icon">⏱</span>Timesheets</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Field Data</div>
+      <a href="intake.html" class="nav-item"><span class="nav-icon">📋</span>Daily Report</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Reports</a>
+    </div>
+    <div style="margin-top:auto;padding:0.75rem;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);padding:0 0.5rem">Timesheets v1.0</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">⏱ Timesheets</div>
+          <div class="page-sub">Clock in/out — daily entries calculate to weekly & monthly income per employee</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
+          <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="ts-stats" style="grid-template-columns:repeat(5,1fr)"></div>
+
+      <!-- Tab Bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('daily',this)">📅 Daily Entry</button>
+        <button class="tab-btn" onclick="switchTab('weekly',this)">📆 Weekly Summary</button>
+        <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly Summary</button>
+        <button class="tab-btn" onclick="switchTab('workers',this)">👷 Worker Rates</button>
+      </div>
+
+      <!-- ── TAB: DAILY ENTRY ─────────────────────────────────────────── -->
+      <div class="tab-content active" id="tab-daily">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="daily-card-title">Today's Timesheet</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="date" class="form-input" id="daily-date" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderDailyTab()"/>
+              <button class="btn btn-ghost btn-sm" onclick="setToday()">Today</button>
+              <button class="btn btn-primary btn-sm" onclick="openEntryModal()">+ Add Entry</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="daily-entries-list" style="padding:1rem"></div>
+          </div>
+          <!-- Day totals -->
+          <div id="daily-totals" style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl);display:none">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--teal)" id="day-total-hours">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Regular</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text)" id="day-total-regular">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Overtime</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--purple)" id="day-total-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Day Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="day-total-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: WEEKLY SUMMARY ───────────────────────────────────────── -->
+      <div class="tab-content" id="tab-weekly">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="weekly-card-title">Weekly Income Summary</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <label style="font-size:12px;color:var(--text2)">Week of</label>
+              <input type="date" class="form-input" id="weekly-start" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderWeeklyTab()"/>
+              <button class="btn btn-ghost btn-sm" onclick="setThisWeek()">This Week</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th><th>Role</th><th>Rate</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th><th>Total Hrs</th><th>OT Hrs</th><th>Week Pay</th>
+                </tr>
+              </thead>
+              <tbody id="weekly-table"></tbody>
+            </table>
+          </div>
+          <div id="weekly-totals-bar" style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl);display:none">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="wk-total-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="wk-total-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Weekly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="wk-total-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: MONTHLY SUMMARY ──────────────────────────────────────── -->
+      <div class="tab-content" id="tab-monthly">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="monthly-card-title">Monthly Income Summary</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="month" class="form-input" id="monthly-month" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderMonthlyTab()"/>
+              <button class="btn btn-ghost btn-sm" onclick="setThisMonth()">This Month</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee</th><th>Role</th><th>Hourly Rate</th><th>OT Rate</th><th>Days Worked</th><th>Total Hours</th><th>OT Hours</th><th>Regular Pay</th><th>OT Pay</th><th>Monthly Total</th>
+                </tr>
+              </thead>
+              <tbody id="monthly-table"></tbody>
+            </table>
+          </div>
+          <div id="monthly-totals-bar" style="padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl);display:none">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Days Worked</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="mo-total-days">0</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="mo-total-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="mo-total-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Monthly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="mo-total-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: WORKER RATES ─────────────────────────────────────────── -->
+      <div class="tab-content" id="tab-workers">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Worker Rates Configuration</div>
+            <button class="btn btn-primary btn-sm" onclick="openWorkerRateModal()">+ Set / Edit Rate</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Role</th><th>Type</th><th>Hourly Rate (R)</th><th>OT Rate (R/hr)</th><th>OT Threshold</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="rates-table"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="margin-top:1rem;padding:1rem;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)">
+          ⚙ <strong>OT Calculation:</strong> Regular hours are worked up to the OT threshold per day. Hours beyond that threshold are billed at the worker's custom OT rate. Weekend days (Sat/Sun) are always treated as OT rate. Rates are stored against each worker profile.
+        </div>
+      </div>
+
+    </div><!-- end .page -->
+  </div><!-- end .main -->
+</div><!-- end .shell -->
+
+<!-- ════════════════════ MODAL: LOG TIME ENTRY ════════════════════ -->
+<div class="modal-bg" id="modal-entry">
+  <div class="modal modal-wide">
+    <div class="modal-title">
+      <span id="entry-modal-title">Log Time Entry</span>
+      <button class="modal-close" onclick="closeModal('entry')">✕</button>
+    </div>
+    <input type="hidden" id="entry-id"/>
+
+    <div class="fg2" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label class="form-label">Worker *</label>
+        <select class="form-select" id="entry-worker" onchange="onWorkerSelect()">
+          <option value="">— Select Worker —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="entry-date"/>
+      </div>
+    </div>
+
+    <!-- Rates preview -->
+    <div id="entry-rate-preview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
+      <span id="entry-rate-text"></span>
+    </div>
+
+    <div class="fg2" style="margin-bottom:1rem">
+      <div class="form-group">
+        <label class="form-label">Clock In</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="form-input ts-time-input" type="time" id="entry-clock-in" style="width:100%" oninput="recalcEntryHours()"/>
+          <button class="clock-btn" onclick="stampTime('entry-clock-in')">⏱ Now</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Clock Out</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="form-input ts-time-input" type="time" id="entry-clock-out" style="width:100%" oninput="recalcEntryHours()"/>
+          <button class="clock-btn" onclick="stampTime('entry-clock-out')">⏱ Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Break deduction -->
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">Break / Lunch Deduction (minutes)</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input class="form-input" type="number" id="entry-break" min="0" max="180" value="30" style="width:100px" oninput="recalcEntryHours()"/>
+        <span style="font-size:12px;color:var(--text3)">Subtract from total hours worked</span>
+      </div>
+    </div>
+
+    <!-- Live calculation preview -->
+    <div id="entry-calc-preview" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem">
+      <div style="display:flex;gap:2rem;flex-wrap:wrap">
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="ep-total">0.00h</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Regular</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700" id="ep-regular">0.00h</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Overtime</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="ep-ot">0.00h</div></div>
+        <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Earnings</div><div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:var(--accent)" id="ep-pay">R 0.00</div></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notes (optional)</label>
+      <input class="form-input" type="text" id="entry-notes" placeholder="e.g. Double shift, covering for sick leave…"/>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('entry')">Cancel</button>
+      <button class="btn btn-primary" id="entry-save-btn" onclick="saveEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ MODAL: WORKER RATE ════════════════════ -->
+<div class="modal-bg" id="modal-rate">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="rate-modal-title">Set Worker Rate</span>
+      <button class="modal-close" onclick="closeModal('rate')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Worker *</label>
+      <select class="form-select" id="rate-worker">
+        <option value="">— Select Worker —</option>
+      </select>
+    </div>
+    <div class="fg2">
+      <div class="form-group">
+        <label class="form-label">Hourly Rate (R/hr)</label>
+        <input class="form-input" type="number" id="rate-hourly" placeholder="e.g. 120" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">OT Rate (R/hr)</label>
+        <input class="form-input" type="number" id="rate-ot" placeholder="e.g. 180" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">OT Threshold (hrs/day)</label>
+        <input class="form-input" type="number" id="rate-ot-threshold" placeholder="e.g. 8" min="1" max="24" value="8" step="0.5"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Weekend Rate</label>
+        <select class="form-select" id="rate-weekend">
+          <option value="ot">Use OT Rate for weekends</option>
+          <option value="double">2× Hourly (double time)</option>
+          <option value="standard">Standard rate</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:10px 12px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--text3);margin-bottom:1rem">
+      💡 These rates will be saved to the worker's profile in Supabase and used for all future timesheet calculations.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('rate')">Cancel</button>
+      <button class="btn btn-primary" id="rate-save-btn" onclick="saveRate()">Save Rate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Supabase config (mirrors index.html) ──────────────────────────────────────
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+
+function getH(){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
+  }catch(e){
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+  }
+}
+
+async function sb(method,table,data=null,query=''){
+  const headers=getH();
+  const opts={method,headers};
+  if(data){opts.body=JSON.stringify(data);opts.headers['Prefer']='return=representation';}
+  const r=await fetch(`${SB}/rest/v1/${table}?${query}`,opts);
+  if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return null;}
+  if(!r.ok)throw new Error(await r.text());
+  if(r.status===204)return null;
+  const txt=await r.text();
+  return txt?JSON.parse(txt):null;
+}
+const sbGet=(t,q)=>sb('GET',t,null,q);
+const sbPost=(t,d)=>sb('POST',t,d,'');
+const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtH=h=>h%1===0?h+'h':h.toFixed(2)+'h';
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
+const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open');};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allWorkers=[];
+let allEntries=[];   // timesheet_entries table
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init(){
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('daily-date').value=today;
+  setThisWeek();
+  setThisMonth();
+  try{
+    [allWorkers,allEntries]=await Promise.all([
+      sbGet('workers','order=name.asc&active=eq.true'),
+      sbGet('timesheet_entries','order=entry_date.desc')
+    ]);
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
+    document.getElementById('conn-label').style.color='var(--green)';
+  }catch(e){
+    // If timesheet_entries table doesn't exist yet, workers still load
+    try{allWorkers=await sbGet('workers','order=name.asc&active=eq.true');}catch(e2){}
+    allEntries=[];
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
+    document.getElementById('conn-label').style.color='var(--green)';
+    if(e.message&&e.message.includes('timesheet_entries')){
+      showTableSetupBanner();
+    }
+  }
+  populateWorkerSelects();
+  renderStats();
+  renderDailyTab();
+  renderRatesTab();
+}
+
+function showTableSetupBanner(){
+  const banner=document.createElement('div');
+  banner.style.cssText='margin-bottom:1rem;padding:12px 16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:var(--r);font-size:13px;color:#93c5fd;line-height:1.6';
+  banner.innerHTML=`<strong>⚙ Supabase Table Setup Required</strong><br>
+  Create the <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">timesheet_entries</code> table with this SQL:<br>
+  <pre style="margin-top:8px;padding:10px;background:rgba(0,0,0,0.3);border-radius:4px;font-size:11px;overflow-x:auto">CREATE TABLE timesheet_entries (
+  id BIGSERIAL PRIMARY KEY,
+  worker_id BIGINT REFERENCES workers(id),
+  worker_name TEXT,
+  entry_date DATE NOT NULL,
+  clock_in TIME NOT NULL,
+  clock_out TIME NOT NULL,
+  break_minutes INT DEFAULT 30,
+  total_hours NUMERIC(5,2),
+  regular_hours NUMERIC(5,2),
+  ot_hours NUMERIC(5,2),
+  hourly_rate NUMERIC(10,2),
+  ot_rate NUMERIC(10,2),
+  ot_threshold NUMERIC(4,1) DEFAULT 8,
+  is_weekend BOOLEAN DEFAULT FALSE,
+  regular_pay NUMERIC(12,2),
+  ot_pay NUMERIC(12,2),
+  total_pay NUMERIC(12,2),
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Also add rate columns to workers table:
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS hourly_rate NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS ot_rate NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS ot_threshold NUMERIC(4,1) DEFAULT 8;
+ALTER TABLE workers ADD COLUMN IF NOT EXISTS weekend_rate TEXT DEFAULT 'ot';</pre>
+  Run this in your Supabase SQL Editor, then refresh this page.`;
+  document.querySelector('.page').insertBefore(banner,document.querySelector('.tab-bar'));
+}
+
+function populateWorkerSelects(){
+  const opts='<option value="">— Select Worker —</option>'+allWorkers.map(w=>`<option value="${w.id}">${w.name} ${w.role?'('+w.role+')':''}</option>`).join('');
+  document.getElementById('entry-worker').innerHTML=opts;
+  document.getElementById('rate-worker').innerHTML=opts;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name,el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='weekly')renderWeeklyTab();
+  if(name==='monthly')renderMonthlyTab();
+  if(name==='workers')renderRatesTab();
+}
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+function setToday(){
+  document.getElementById('daily-date').value=new Date().toISOString().split('T')[0];
+  renderDailyTab();
+}
+function setThisWeek(){
+  const d=new Date();
+  const day=d.getDay();
+  const mon=new Date(d);
+  mon.setDate(d.getDate()-(day===0?6:day-1));
+  document.getElementById('weekly-start').value=mon.toISOString().split('T')[0];
+}
+function setThisMonth(){
+  const d=new Date();
+  document.getElementById('monthly-month').value=d.toISOString().substring(0,7);
+}
+function addDays(dateStr,n){
+  const d=new Date(dateStr);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];
+}
+function isWeekend(dateStr){
+  const d=new Date(dateStr);const day=d.getDay();return day===0||day===6;
+}
+
+// ── Hour calculation ──────────────────────────────────────────────────────────
+function calcHours(clockIn,clockOut,breakMins){
+  if(!clockIn||!clockOut)return{total:0,raw:0};
+  const [ih,im]=clockIn.split(':').map(Number);
+  const [oh,om]=clockOut.split(':').map(Number);
+  let rawMins=(oh*60+om)-(ih*60+im);
+  if(rawMins<0)rawMins+=24*60; // overnight
+  const netMins=Math.max(0,rawMins-(breakMins||0));
+  return{total:Math.round(netMins/60*100)/100,raw:rawMins/60};
+}
+
+function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType){
+  const weekend=isWeekend(dateStr);
+  let regularHours,otHours,regularPay,otPay;
+  if(weekend){
+    // Full day at weekend rate
+    regularHours=0;
+    otHours=totalHours;
+    const wRate=weekendRateType==='double'?hourlyRate*2:weekendRateType==='standard'?hourlyRate:otRate;
+    regularPay=0;
+    otPay=Math.round(otHours*wRate*100)/100;
+  }else{
+    regularHours=Math.min(totalHours,otThreshold||8);
+    otHours=Math.max(0,totalHours-(otThreshold||8));
+    regularPay=Math.round(regularHours*(hourlyRate||0)*100)/100;
+    otPay=Math.round(otHours*(otRate||0)*100)/100;
+  }
+  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend:weekend};
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const today=new Date().toISOString().split('T')[0];
+  const todayEntries=allEntries.filter(e=>e.entry_date===today);
+  const thisMonth=today.substring(0,7);
+  const monthEntries=allEntries.filter(e=>(e.entry_date||'').startsWith(thisMonth));
+  const totalPay=monthEntries.reduce((a,e)=>a+(e.total_pay||0),0);
+  const totalOT=monthEntries.reduce((a,e)=>a+(e.ot_hours||0),0);
+  const uniqueWorkers=new Set(allEntries.map(e=>e.worker_id)).size;
+
+  document.getElementById('ts-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Workers</div><div class="stat-sub">with rate configs</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayEntries.length}</div><div class="stat-l">Today's Entries</div><div class="stat-sub">${todayEntries.reduce((a,e)=>a+(e.total_hours||0),0).toFixed(1)}h logged</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allEntries.length}</div><div class="stat-l">Total Entries</div><div class="stat-sub">${uniqueWorkers} employees</div></div>
+    <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
+}
+
+// ── DAILY TAB ─────────────────────────────────────────────────────────────────
+function renderDailyTab(){
+  const date=document.getElementById('daily-date').value;
+  const d=new Date(date);
+  document.getElementById('daily-card-title').textContent=
+    d.toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const dayEntries=allEntries.filter(e=>e.entry_date===date);
+  const container=document.getElementById('daily-entries-list');
+  const totalsEl=document.getElementById('daily-totals');
+
+  if(dayEntries.length===0){
+    container.innerHTML=`<div class="empty-state"><h3>No entries for this day</h3><p style="font-size:13px;margin-bottom:1rem">Click <strong>+ Add Entry</strong> to log clock in/out times</p><button class="btn btn-primary" onclick="openEntryModal()">+ Add Entry</button></div>`;
+    totalsEl.style.display='none';
+    return;
+  }
+
+  const dayWeekend=isWeekend(date);
+  container.innerHTML=`
+    <div style="display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 80px;gap:10px;align-items:center;padding:6px 4px;margin-bottom:4px">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Worker</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Clock In</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Clock Out</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Brk</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Total</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Regular</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Overtime</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Earnings</div>
+      <div></div>
+    </div>
+    ${dayEntries.map(e=>{
+      const isWknd=isWeekend(e.entry_date||date);
+      return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 10px;margin-bottom:6px;display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 80px;gap:10px;align-items:center">
+        <div>
+          <div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>
+          ${isWknd?'<span class="ot-label">Weekend</span>':''}
+          ${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}
+        </div>
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:600;color:var(--teal)">${e.clock_in||'—'}</div>
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:600;color:var(--blue)">${e.clock_out||'—'}</div>
+        <div style="font-size:12px;color:var(--text3)">${e.break_minutes||0}m</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text)">${fmtH(e.total_hours||0)}</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text2)">${fmtH(e.regular_hours||0)}</div>
+        <div>
+          <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>
+          ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${e.ot_rate||0}/hr</div>`:''}
+        </div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})" title="Edit">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})" title="Delete">✕</button>
+        </div>
+      </div>`;
+    }).join('')}`;
+
+  // Day totals
+  const dayTotalHrs=dayEntries.reduce((a,e)=>a+(e.total_hours||0),0);
+  const dayTotalReg=dayEntries.reduce((a,e)=>a+(e.regular_hours||0),0);
+  const dayTotalOT=dayEntries.reduce((a,e)=>a+(e.ot_hours||0),0);
+  const dayTotalPay=dayEntries.reduce((a,e)=>a+(e.total_pay||0),0);
+  document.getElementById('day-total-hours').textContent=fmtH(dayTotalHrs);
+  document.getElementById('day-total-regular').textContent=fmtH(dayTotalReg);
+  document.getElementById('day-total-ot').textContent=fmtH(dayTotalOT);
+  document.getElementById('day-total-pay').textContent=fmt(dayTotalPay);
+  totalsEl.style.display='flex';
+}
+
+// ── WEEKLY TAB ────────────────────────────────────────────────────────────────
+function renderWeeklyTab(){
+  const weekStart=document.getElementById('weekly-start').value;
+  if(!weekStart)return;
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dates=days.map((_,i)=>addDays(weekStart,i));
+  document.getElementById('weekly-card-title').textContent=
+    `Week: ${dates[0]} → ${dates[6]}`;
+
+  // Group entries by worker for this week
+  const weekEntries=allEntries.filter(e=>e.entry_date>=dates[0]&&e.entry_date<=dates[6]);
+  const byWorker={};
+  weekEntries.forEach(e=>{
+    if(!byWorker[e.worker_id])byWorker[e.worker_id]={name:e.worker_name,worker_id:e.worker_id,days:{},totalHrs:0,otHrs:0,totalPay:0};
+    byWorker[e.worker_id].days[e.entry_date]=(byWorker[e.worker_id].days[e.entry_date]||0)+(e.total_hours||0);
+    byWorker[e.worker_id].totalHrs+=(e.total_hours||0);
+    byWorker[e.worker_id].otHrs+=(e.ot_hours||0);
+    byWorker[e.worker_id].totalPay+=(e.total_pay||0);
+  });
+
+  // Also add workers who have no entries this week (show zero)
+  allWorkers.forEach(w=>{
+    if(!byWorker[w.id])byWorker[w.id]={name:w.name,role:w.role,worker_id:w.id,days:{},totalHrs:0,otHrs:0,totalPay:0};
+  });
+
+  const workers=Object.values(byWorker).sort((a,b)=>a.name.localeCompare(b.name));
+
+  if(workers.length===0){
+    document.getElementById('weekly-table').innerHTML=`<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:2rem">No entries yet. Add time entries in the Daily tab.</td></tr>`;
+    document.getElementById('weekly-totals-bar').style.display='none';
+    return;
+  }
+
+  const wkTotalHrs=workers.reduce((a,w)=>a+w.totalHrs,0);
+  const wkTotalOT=workers.reduce((a,w)=>a+w.otHrs,0);
+  const wkTotalPay=workers.reduce((a,w)=>a+w.totalPay,0);
+
+  document.getElementById('weekly-table').innerHTML=workers.map(w=>{
+    const wkr=allWorkers.find(x=>x.id==w.worker_id)||{};
+    return`<tr>
+      <td><div style="font-weight:500">${w.name}</div></td>
+      <td style="color:var(--text2);font-size:12px">${wkr.role||'—'}</td>
+      <td style="font-size:12px;color:var(--text3)">R${wkr.hourly_rate||'—'}/hr</td>
+      ${dates.map((d,i)=>{
+        const h=w.days[d]||0;
+        const wknd=i>=5;
+        const color=wknd?'var(--purple)':h>0?'var(--teal)':'var(--text3)';
+        return`<td style="font-family:var(--font-d);font-size:13px;font-weight:${h>0?700:400};color:${color};text-align:center">${h>0?fmtH(h):'—'}</td>`;
+      }).join('')}
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(w.totalHrs)}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${w.otHrs>0?fmtH(w.otHrs):'—'}</td>
+      <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
+    </tr>`;
+  }).join('')+`<tr class="total-row">
+    <td colspan="3" style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Week Totals</td>
+    ${dates.map(()=>'<td></td>').join('')}
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(wkTotalHrs)}</td>
+    <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--purple)">${fmtH(wkTotalOT)}</td>
+    <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(wkTotalPay)}</td>
+  </tr>`;
+
+  document.getElementById('wk-total-hrs').textContent=fmtH(wkTotalHrs);
+  document.getElementById('wk-total-ot').textContent=fmtH(wkTotalOT);
+  document.getElementById('wk-total-pay').textContent=fmt(wkTotalPay);
+  document.getElementById('weekly-totals-bar').style.display='flex';
+}
+
+// ── MONTHLY TAB ───────────────────────────────────────────────────────────────
+function renderMonthlyTab(){
+  const month=document.getElementById('monthly-month').value;
+  if(!month)return;
+  const [yr,mo]=month.split('-');
+  const d=new Date(yr,mo,0);
+  const lastDay=`${month}-${String(d.getDate()).padStart(2,'0')}`;
+  const firstDay=`${month}-01`;
+
+  document.getElementById('monthly-card-title').textContent=
+    `Monthly Income — ${new Date(yr,mo-1,1).toLocaleDateString('en-ZA',{month:'long',year:'numeric'})}`;
+
+  const moEntries=allEntries.filter(e=>e.entry_date>=firstDay&&e.entry_date<=lastDay);
+
+  // Group by worker
+  const byWorker={};
+  moEntries.forEach(e=>{
+    if(!byWorker[e.worker_id]){
+      const wkr=allWorkers.find(w=>w.id==e.worker_id)||{};
+      byWorker[e.worker_id]={
+        name:e.worker_name,worker_id:e.worker_id,role:wkr.role,
+        hourlyRate:e.hourly_rate||wkr.hourly_rate||0,
+        otRate:e.ot_rate||wkr.ot_rate||0,
+        days:new Set(),totalHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0
+      };
+    }
+    byWorker[e.worker_id].days.add(e.entry_date);
+    byWorker[e.worker_id].totalHrs+=(e.total_hours||0);
+    byWorker[e.worker_id].otHrs+=(e.ot_hours||0);
+    byWorker[e.worker_id].regularPay+=(e.regular_pay||0);
+    byWorker[e.worker_id].otPay+=(e.ot_pay||0);
+    byWorker[e.worker_id].totalPay+=(e.total_pay||0);
+  });
+
+  // Include all workers (even zero entries)
+  allWorkers.forEach(w=>{
+    if(!byWorker[w.id])byWorker[w.id]={
+      name:w.name,worker_id:w.id,role:w.role,
+      hourlyRate:w.hourly_rate||0,otRate:w.ot_rate||0,
+      days:new Set(),totalHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0
+    };
+  });
+
+  const workers=Object.values(byWorker).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const moTotalDays=workers.reduce((a,w)=>a+w.days.size,0);
+  const moTotalHrs=workers.reduce((a,w)=>a+w.totalHrs,0);
+  const moTotalOT=workers.reduce((a,w)=>a+w.otHrs,0);
+  const moTotalPay=workers.reduce((a,w)=>a+w.totalPay,0);
+
+  document.getElementById('monthly-table').innerHTML=workers.map(w=>`<tr>
+    <td><div style="font-weight:500">${w.name}</div></td>
+    <td style="color:var(--text2);font-size:12px">${w.role||'—'}</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--teal)">R ${(w.hourlyRate||0).toFixed(2)}/hr</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)">R ${(w.otRate||0).toFixed(2)}/hr</td>
+    <td style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue)">${w.days.size}</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(w.totalHrs)}</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:${w.otHrs>0?'var(--purple)':'var(--text3)'}">${w.otHrs>0?fmtH(w.otHrs):'—'}</td>
+    <td style="color:var(--text2)">${fmt(w.regularPay)}</td>
+    <td style="color:var(--purple)">${w.otPay>0?fmt(w.otPay):'—'}</td>
+    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
+  </tr>`).join('')+`<tr class="total-row">
+    <td colspan="4" style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Month Totals</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--blue)">${moTotalDays}</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(moTotalHrs)}</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--purple)">${fmtH(moTotalOT)}</td>
+    <td colspan="2"></td>
+    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)">${fmt(moTotalPay)}</td>
+  </tr>`;
+
+  document.getElementById('mo-total-days').textContent=moTotalDays;
+  document.getElementById('mo-total-hrs').textContent=fmtH(moTotalHrs);
+  document.getElementById('mo-total-ot').textContent=fmtH(moTotalOT);
+  document.getElementById('mo-total-pay').textContent=fmt(moTotalPay);
+  document.getElementById('monthly-totals-bar').style.display='flex';
+}
+
+// ── RATES TAB ─────────────────────────────────────────────────────────────────
+function renderRatesTab(){
+  const tbody=document.getElementById('rates-table');
+  if(!allWorkers.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No workers found. Add workers in the <a href="index.html" style="color:var(--teal)">Workforce</a> page first.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=allWorkers.map(w=>`<tr>
+    <td><div style="font-weight:500">${w.name}</div></td>
+    <td style="color:var(--text2)">${w.role||'—'}</td>
+    <td><span class="badge badge-gray" style="font-size:10px">${w.type||'—'}</span></td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${w.hourly_rate?'R '+parseFloat(w.hourly_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
+    <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${w.ot_rate?'R '+parseFloat(w.ot_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
+    <td style="color:var(--text2)">${w.ot_threshold||8}h/day</td>
+    <td><span class="badge ${w.status==='active'?'badge-green':w.status==='leave'?'badge-amber':'badge-gray'}">${w.status||'—'}</span></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal(${w.id})">⚙ Set Rate</button></td>
+  </tr>`).join('');
+}
+
+// ── ENTRY MODAL ───────────────────────────────────────────────────────────────
+function openEntryModal(entryId=null){
+  const modal=document.getElementById('modal-entry');
+  modal.classList.add('open');
+  document.getElementById('entry-modal-title').textContent=entryId?'Edit Time Entry':'Log Time Entry';
+  document.getElementById('entry-save-btn').textContent='Save Entry';
+  document.getElementById('entry-id').value=entryId||'';
+
+  if(entryId){
+    const e=allEntries.find(x=>x.id===entryId);
+    if(e){
+      document.getElementById('entry-worker').value=e.worker_id||'';
+      document.getElementById('entry-date').value=e.entry_date||'';
+      document.getElementById('entry-clock-in').value=e.clock_in||'';
+      document.getElementById('entry-clock-out').value=e.clock_out||'';
+      document.getElementById('entry-break').value=e.break_minutes??30;
+      document.getElementById('entry-notes').value=e.notes||'';
+      onWorkerSelect();
+      recalcEntryHours();
+    }
+  }else{
+    document.getElementById('entry-worker').value='';
+    document.getElementById('entry-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
+    document.getElementById('entry-clock-in').value='';
+    document.getElementById('entry-clock-out').value='';
+    document.getElementById('entry-break').value='30';
+    document.getElementById('entry-notes').value='';
+    document.getElementById('entry-rate-preview').style.display='none';
+    document.getElementById('ep-total').textContent='0.00h';
+    document.getElementById('ep-regular').textContent='0.00h';
+    document.getElementById('ep-ot').textContent='0.00h';
+    document.getElementById('ep-pay').textContent='R 0.00';
+  }
+}
+
+function stampTime(inputId){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById(inputId).value=`${h}:${m}`;
+  recalcEntryHours();
+}
+
+function onWorkerSelect(){
+  const wid=document.getElementById('entry-worker').value;
+  const w=allWorkers.find(x=>x.id==wid);
+  const preview=document.getElementById('entry-rate-preview');
+  if(w&&(w.hourly_rate||w.ot_rate)){
+    document.getElementById('entry-rate-text').innerHTML=
+      `👷 <strong>${w.name}</strong> — Hourly: <strong style="color:var(--teal)">R${parseFloat(w.hourly_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT: <strong style="color:var(--purple)">R${parseFloat(w.ot_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT threshold: <strong>${w.ot_threshold||8}h/day</strong>`;
+    preview.style.display='block';
+  }else if(w){
+    document.getElementById('entry-rate-text').innerHTML=`⚠ <strong>${w.name}</strong> has no rates configured. <a href="#" onclick="closeModal('entry');openWorkerRateModal(${w.id});return false;" style="color:var(--accent)">Set rates now →</a>`;
+    preview.style.display='block';
+  }else{
+    preview.style.display='none';
+  }
+  recalcEntryHours();
+}
+
+function recalcEntryHours(){
+  const wid=document.getElementById('entry-worker').value;
+  const w=allWorkers.find(x=>x.id==wid)||{};
+  const clockIn=document.getElementById('entry-clock-in').value;
+  const clockOut=document.getElementById('entry-clock-out').value;
+  const breakMins=parseInt(document.getElementById('entry-break').value)||0;
+  const date=document.getElementById('entry-date').value;
+
+  const {total}=calcHours(clockIn,clockOut,breakMins);
+  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+
+  document.getElementById('ep-total').textContent=fmtH(total);
+  document.getElementById('ep-regular').textContent=fmtH(pay.regularHours);
+  document.getElementById('ep-ot').textContent=fmtH(pay.otHours);
+  document.getElementById('ep-pay').textContent=fmt(pay.totalPay);
+}
+
+async function saveEntry(){
+  const btn=document.getElementById('entry-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
+  try{
+    const wid=document.getElementById('entry-worker').value;
+    if(!wid){showToast('Select a worker','err');btn.disabled=false;btn.textContent='Save Entry';return;}
+    const w=allWorkers.find(x=>x.id==wid)||{};
+    const date=document.getElementById('entry-date').value;
+    const clockIn=document.getElementById('entry-clock-in').value;
+    const clockOut=document.getElementById('entry-clock-out').value;
+    if(!date||!clockIn||!clockOut){showToast('Date, clock-in and clock-out are required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
+    const breakMins=parseInt(document.getElementById('entry-break').value)||0;
+    const {total}=calcHours(clockIn,clockOut,breakMins);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+
+    const payload={
+      worker_id:parseInt(wid),
+      worker_name:w.name,
+      entry_date:date,
+      clock_in:clockIn,
+      clock_out:clockOut,
+      break_minutes:breakMins,
+      total_hours:total,
+      regular_hours:pay.regularHours,
+      ot_hours:pay.otHours,
+      hourly_rate:parseFloat(w.hourly_rate||0),
+      ot_rate:parseFloat(w.ot_rate||0),
+      ot_threshold:parseFloat(w.ot_threshold||8),
+      is_weekend:pay.isWeekend,
+      regular_pay:pay.regularPay,
+      ot_pay:pay.otPay,
+      total_pay:pay.totalPay,
+      notes:document.getElementById('entry-notes').value.trim()
+    };
+
+    const entryId=document.getElementById('entry-id').value;
+    if(entryId){
+      await sbPatch('timesheet_entries',entryId,payload);
+      allEntries=allEntries.map(e=>e.id==entryId?{...e,...payload,id:parseInt(entryId)}:e);
+      showToast('Entry updated');
+    }else{
+      const result=await sbPost('timesheet_entries',payload);
+      if(result&&result[0])allEntries.unshift(result[0]);
+      showToast('Entry saved');
+    }
+    closeModal('entry');
+    renderStats();
+    renderDailyTab();
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save Entry';
+}
+
+async function deleteEntry(id){
+  if(!confirm('Delete this time entry?'))return;
+  try{
+    await sb('DELETE','timesheet_entries',null,'id=eq.'+id);
+    allEntries=allEntries.filter(e=>e.id!==id);
+    showToast('Entry deleted');
+    renderStats();
+    renderDailyTab();
+  }catch(e){showToast('Delete failed','err');}
+}
+
+// ── RATE MODAL ────────────────────────────────────────────────────────────────
+function openWorkerRateModal(workerId=null){
+  document.getElementById('modal-rate').classList.add('open');
+  if(workerId){
+    document.getElementById('rate-worker').value=workerId;
+    const w=allWorkers.find(x=>x.id==workerId)||{};
+    document.getElementById('rate-hourly').value=w.hourly_rate||'';
+    document.getElementById('rate-ot').value=w.ot_rate||'';
+    document.getElementById('rate-ot-threshold').value=w.ot_threshold||8;
+    document.getElementById('rate-weekend').value=w.weekend_rate||'ot';
+    document.getElementById('rate-modal-title').textContent='Edit Rate — '+w.name;
+  }else{
+    document.getElementById('rate-worker').value='';
+    document.getElementById('rate-hourly').value='';
+    document.getElementById('rate-ot').value='';
+    document.getElementById('rate-ot-threshold').value='8';
+    document.getElementById('rate-weekend').value='ot';
+    document.getElementById('rate-modal-title').textContent='Set Worker Rate';
+  }
+}
+
+async function saveRate(){
+  const btn=document.getElementById('rate-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
+  try{
+    const wid=document.getElementById('rate-worker').value;
+    if(!wid){showToast('Select a worker','err');btn.disabled=false;btn.textContent='Save Rate';return;}
+    const hourly=parseFloat(document.getElementById('rate-hourly').value)||0;
+    const ot=parseFloat(document.getElementById('rate-ot').value)||0;
+    const threshold=parseFloat(document.getElementById('rate-ot-threshold').value)||8;
+    const weekend=document.getElementById('rate-weekend').value;
+    await sbPatch('workers',wid,{hourly_rate:hourly,ot_rate:ot,ot_threshold:threshold,weekend_rate:weekend});
+    // Update local state
+    allWorkers=allWorkers.map(w=>w.id==wid?{...w,hourly_rate:hourly,ot_rate:ot,ot_threshold:threshold,weekend_rate:weekend}:w);
+    showToast('Rates saved');
+    closeModal('rate');
+    renderRatesTab();
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save Rate';
+}
+
+// ── Close modals on backdrop click ────────────────────────────────────────────
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
