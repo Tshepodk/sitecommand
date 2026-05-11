@@ -123,6 +123,11 @@ tr:hover td{background:var(--bg3)}
       <div class="conn-dot" id="conn-dot"></div>
       <span id="conn-label" style="font-size:12px;color:var(--text3)">Connecting…</span>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-right:8px">
+      <span id="ts-user-name" style="font-size:12px;color:var(--text2)"></span>
+      <span id="ts-role-badge" style="font-size:10px;font-family:var(--font-d);font-weight:700;letter-spacing:0.06em;background:var(--bg3);padding:2px 7px;border-radius:4px"></span>
+    </div>
+    <a href="approvals.html" class="btn btn-ghost btn-sm" id="pmo-link" style="display:none">📋 PMO Approvals</a>
     <a href="index.html" class="btn btn-ghost btn-sm">← Back to App</a>
   </div>
   <div class="sidebar">
@@ -159,7 +164,7 @@ tr:hover td{background:var(--bg3)}
         <button class="tab-btn" onclick="switchTab('weekly',this)">📆 Weekly</button>
         <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly</button>
         <button class="tab-btn" onclick="switchTab('workers',this)">👷 Worker Rates</button>
-        <button class="tab-btn" onclick="switchTab('approvals',this)" id="tab-btn-approvals">✅ Approvals <span class="pending-badge" id="pending-badge" style="display:none">0</span></button>
+        <a href="approvals.html" class="tab-btn" id="tab-btn-approvals" style="text-decoration:none">📋 PMO Approvals <span class="pending-badge" id="pending-badge" style="display:none">0</span></a>
       </div>
 
       <!-- DAILY -->
@@ -538,6 +543,40 @@ const sbGet=(t,q)=>sb('GET',t,null,q);
 const sbPost=(t,d)=>sb('POST',t,d,'');
 const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
+
+// ── Role helpers (mirrors index.html) ────────────────────────────────────────
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+function getUserName(){const s=getSession();return s?.profile?.name||s?.user?.email||'Unknown';}
+function isAdmin(){const r=getUserRole();return r==='admin'||r==='pm';}
+function isSupervisorOrAbove(){const r=getUserRole();return ['admin','pm','foreman'].includes(r);}
+
+// ── Role-based UI setup ───────────────────────────────────────────────────────
+function applyRoleUI(){
+  const role=getUserRole();
+  const name=getUserName();
+  // Show role badge in topbar
+  const rb=document.getElementById('ts-role-badge');
+  const rn=document.getElementById('ts-user-name');
+  if(rb){
+    const colors={admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'};
+    rb.textContent=role.toUpperCase();
+    rb.style.color=colors[role]||'var(--text2)';
+  }
+  if(rn)rn.textContent=name;
+  // Hide Approvals tab from supervisors/foreman — redirect to approvals.html
+  const apprTab=document.getElementById('tab-btn-approvals');
+  if(apprTab){
+    if(isAdmin()){
+      // Admin/PM: show link to full approvals page instead of inline tab
+      apprTab.onclick=()=>window.location.href='approvals.html';
+      apprTab.title='Open PMO Approvals Dashboard';
+    } else {
+      apprTab.style.display='none';
+    }
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtH=h=>(h===''||h===undefined||h===null)?'—':(h%1===0?h+'h':Number(h).toFixed(2)+'h');
@@ -578,6 +617,10 @@ async function init(){
   document.getElementById('appr-filter-month').value=new Date().toISOString().substring(0,7);
   renderStats();renderDailyTab();renderRatesTab();
   updatePendingBadge();
+  applyRoleUI();
+  // Show PMO link in topbar for admin/pm
+  const pmoLink=document.getElementById('pmo-link');
+  if(pmoLink&&isAdmin())pmoLink.style.display='inline-flex';
 }
 
 function populateWorkerSelects(){

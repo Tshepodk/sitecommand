@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — PMO Approvals</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto}
+.main{background:var(--bg);overflow:auto;min-width:0}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.page{padding:1.5rem}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:14px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:var(--accent2)}.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-green{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#4ade80}.btn-green:hover{background:rgba(34,197,94,0.25)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text2)}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-amber::before{background:var(--accent)}.stat-card.s-blue::before{background:var(--blue)}.stat-card.s-green::before{background:var(--green)}.stat-card.s-teal::before{background:var(--teal)}.stat-card.s-purple::before{background:var(--purple)}.stat-card.s-red::before{background:var(--red)}
+.stat-n{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-l{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:8px 16px;font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:all 0.15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text2)}.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}.tab-content.active{display:block}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}.badge-amber{background:rgba(245,166,35,0.12);color:var(--accent)}.badge-blue{background:rgba(59,130,246,0.12);color:#60a5fa}.badge-red{background:rgba(239,68,68,0.12);color:#f87171}.badge-gray{background:rgba(139,144,160,0.12);color:var(--text2)}.badge-purple{background:rgba(168,85,247,0.12);color:#c084fc}
+.form-input,.form-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:7px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}.modal-close:hover{color:var(--text)}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:11px 18px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0}.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}.conn-dot.err{background:var(--red)}
+.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.total-row td{background:rgba(245,166,35,0.06);font-weight:700}
+
+/* Status badges */
+.st-pending{background:rgba(139,144,160,0.12);color:var(--text2);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.st-submitted{background:rgba(59,130,246,0.12);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.st-approved{background:rgba(34,197,94,0.12);color:#4ade80;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+.st-rejected{background:rgba(239,68,68,0.12);color:#f87171;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:1.25rem;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r)}
+
+/* Access denied */
+.access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:1rem}
+.access-denied h2{font-family:var(--font-d);font-size:28px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--red)}
+
+/* Month summary cards */
+.month-worker-row{display:grid;grid-template-columns:180px 80px 70px 70px 90px 90px 110px 100px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)}
+.month-worker-row:hover{background:var(--bg3)}
+.month-worker-hdr{display:grid;grid-template-columns:180px 80px 70px 70px 90px 90px 110px 100px;gap:10px;padding:7px 14px;background:var(--bg4);font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+
+/* Day type tags */
+.dt-sunday{font-size:10px;background:rgba(168,85,247,0.15);color:var(--purple);padding:1px 6px;border-radius:3px;font-weight:700}
+.dt-holiday{font-size:10px;background:rgba(239,68,68,0.12);color:#f87171;padding:1px 6px;border-radius:3px;font-weight:700}
+.dt-saturday{font-size:10px;background:rgba(59,130,246,0.12);color:#60a5fa;padding:1px 6px;border-radius:3px;font-weight:700}
+
+/* Urgency banner */
+.urgency-banner{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--r);margin-bottom:1.25rem;font-size:13px;font-weight:500}
+.urgency-banner.warn{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);color:var(--accent)}
+.urgency-banner.info{background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);color:#60a5fa}
+
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="logo">Site<span>Command</span> <span style="color:var(--accent);font-size:14px;margin-left:6px">PMO</span></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <span id="pmo-user-name" style="font-size:12px;color:var(--text2)"></span>
+      <span id="pmo-role-badge" style="font-size:10px;font-family:var(--font-d);font-weight:700;letter-spacing:0.06em;background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--accent)"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label" style="font-size:12px;color:var(--text3)">Connecting…</span>
+    </div>
+    <a href="timesheets.html" class="btn btn-ghost btn-sm">← Timesheets</a>
+    <a href="index.html" class="btn btn-ghost btn-sm">🏠 Dashboard</a>
+  </div>
+
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">PMO Navigation</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>Dashboard</a>
+      <a href="timesheets.html" class="nav-item"><span class="nav-icon">⏱</span>Timesheets</a>
+      <a href="approvals.html" class="nav-item active"><span class="nav-icon">✅</span>Approvals</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Quick Filters</div>
+      <div class="nav-item" onclick="quickFilter('submitted')" style="cursor:pointer"><span class="nav-icon">⏳</span>Pending <span id="sb-pending-count" style="margin-left:auto;background:var(--accent);color:#000;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;font-family:var(--font-d)">0</span></div>
+      <div class="nav-item" onclick="quickFilter('approved')" style="cursor:pointer"><span class="nav-icon">✓</span>Approved</div>
+      <div class="nav-item" onclick="quickFilter('rejected')" style="cursor:pointer"><span class="nav-icon">✕</span>Rejected</div>
+      <div class="nav-item" onclick="quickFilter('')" style="cursor:pointer"><span class="nav-icon">≡</span>All Entries</div>
+    </div>
+  </div>
+
+  <div class="main" id="main-content">
+    <!-- Access denied state (shown if not admin/pm) -->
+    <div class="access-denied" id="access-denied" style="display:none">
+      <div style="font-size:48px">🔒</div>
+      <h2>Access Restricted</h2>
+      <p style="color:var(--text2);max-width:400px">This page is for PMO Administrators and Project Managers only. Please contact your administrator for access.</p>
+      <a href="timesheets.html" class="btn btn-ghost">← Back to Timesheets</a>
+    </div>
+
+    <!-- Main PMO content -->
+    <div class="page" id="pmo-content" style="display:none">
+      <div class="page-header">
+        <div>
+          <div class="page-title">✅ PMO Approvals</div>
+          <div class="page-sub">Cross-project timesheet review — approve, reject, and sign off monthly payroll</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="init()">↺ Refresh</button>
+          <button class="btn btn-green btn-sm" onclick="bulkApproveAll()" id="bulk-approve-btn" style="display:none">✓ Approve All Pending</button>
+        </div>
+      </div>
+
+      <!-- Urgency banner -->
+      <div id="urgency-banner" style="display:none" class="urgency-banner warn"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="pmo-stats"></div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('pending',this)">⏳ Pending <span id="pending-count-tab" style="background:var(--accent);color:#000;border-radius:10px;padding:0px 7px;font-size:11px;font-weight:800;font-family:var(--font-d);margin-left:4px">0</span></button>
+        <button class="tab-btn" onclick="switchTab('byworker',this)">👷 By Worker</button>
+        <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly Payroll</button>
+        <button class="tab-btn" onclick="switchTab('history',this)">📋 All History</button>
+      </div>
+
+      <!-- ── PENDING TAB ──────────────────────────────────────── -->
+      <div class="tab-content active" id="tab-pending">
+        <div class="filter-bar">
+          <select class="form-select" id="pf-project" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderPending()"><option value="">All Projects</option></select>
+          <select class="form-select" id="pf-worker" style="width:180px;font-size:12px;padding:5px 8px" onchange="renderPending()"><option value="">All Workers</option></select>
+          <input type="date" class="form-input" id="pf-date-from" style="width:140px;font-size:12px;padding:5px 8px" onchange="renderPending()"/>
+          <span style="color:var(--text3);font-size:12px">to</span>
+          <input type="date" class="form-input" id="pf-date-to" style="width:140px;font-size:12px;padding:5px 8px" onchange="renderPending()"/>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters('pf')">Clear</button>
+          <button class="btn btn-green btn-sm" onclick="approveFiltered()" style="margin-left:auto">✓ Approve All Filtered</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th><input type="checkbox" id="select-all-pending" onchange="toggleAllPending(this.checked)" style="accent-color:var(--accent)"/></th><th>Worker</th><th>Project</th><th>Date</th><th>Day</th><th>Clock In/Out</th><th>Total Hrs</th><th>OT Hrs</th><th>Reg Pay</th><th>Total Pay</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="pending-table"></tbody>
+            </table>
+          </div>
+          <div id="pending-totals" style="display:none;padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl)">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Entries</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="pend-count">0</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="pend-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="pend-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Pending Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--accent)" id="pend-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── BY WORKER TAB ───────────────────────────────────── -->
+      <div class="tab-content" id="tab-byworker">
+        <div class="filter-bar">
+          <input type="month" class="form-input" id="bw-month" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderByWorker()"/>
+          <select class="form-select" id="bw-project" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderByWorker()"><option value="">All Projects</option></select>
+          <select class="form-select" id="bw-status" style="width:140px;font-size:12px;padding:5px 8px" onchange="renderByWorker()">
+            <option value="">All Statuses</option>
+            <option value="submitted">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Draft</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters('bw')">Clear</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="bw-title">Worker Summary</div>
+          </div>
+          <div class="month-worker-hdr">
+            <span>Worker</span><span>Project</span><span>Days</span><span>Total Hrs</span><span>OT Hrs</span><span>Reg Pay</span><span>Total Pay</span><span>Status</span>
+          </div>
+          <div id="byworker-list" style="max-height:500px;overflow-y:auto"></div>
+          <div id="bw-totals" style="display:none;padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl)">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Workers</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="bw-workers">0</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="bw-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="bw-ot">0h</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--accent)" id="bw-pay">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MONTHLY PAYROLL TAB ─────────────────────────────── -->
+      <div class="tab-content" id="tab-monthly">
+        <div class="filter-bar">
+          <input type="month" class="form-input" id="mp-month" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderMonthlyPayroll()"/>
+          <select class="form-select" id="mp-project" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderMonthlyPayroll()"><option value="">All Projects</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters('mp')">Clear</button>
+          <button class="btn btn-primary btn-sm" onclick="signOffMonth()" style="margin-left:auto">📝 Sign Off Month</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="mp-title">Monthly Payroll Summary</div>
+            <div style="font-size:12px;color:var(--text2)">Only approved entries are included in payroll</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Worker</th><th>Role</th><th>Project</th><th>Days</th><th>Mon–Sat Hrs</th><th>Sun/Holiday Hrs</th><th>OT Hrs (1.5×)</th><th>Std Rate</th><th>Regular Pay</th><th>OT Pay</th><th>Double Pay</th><th>Total Pay</th><th>195h Status</th></tr></thead>
+              <tbody id="monthly-payroll-table"></tbody>
+            </table>
+          </div>
+          <div id="mp-totals" style="display:none;padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl)">
+            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Employees</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="mp-empl">0</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="mp-hrs">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="mp-ot">0h</div></div>
+              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Regular Pay</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--text2)" id="mp-reg">R 0</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="mp-total">R 0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALL HISTORY TAB ─────────────────────────────────── -->
+      <div class="tab-content" id="tab-history">
+        <div class="filter-bar">
+          <select class="form-select" id="hf-status" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderHistory()">
+            <option value="">All Statuses</option>
+            <option value="submitted">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="pending">Draft</option>
+          </select>
+          <input type="month" class="form-input" id="hf-month" style="width:140px;font-size:12px;padding:5px 8px" onchange="renderHistory()"/>
+          <select class="form-select" id="hf-worker" style="width:180px;font-size:12px;padding:5px 8px" onchange="renderHistory()"><option value="">All Workers</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters('hf')">Clear</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Worker</th><th>Project</th><th>Date</th><th>Day</th><th>Clock In/Out</th><th>Total Hrs</th><th>OT Hrs</th><th>Total Pay</th><th>Status</th><th>Submitted</th><th>Approved</th><th>Actions</th></tr></thead>
+              <tbody id="history-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: REJECT ════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-reject">
+  <div class="modal">
+    <div class="modal-title"><span>Reject Entry</span><button class="modal-close" onclick="closeModal('reject')">✕</button></div>
+    <input type="hidden" id="reject-id"/>
+    <div class="form-group">
+      <label class="form-label">Reason *</label>
+      <input class="form-input" type="text" id="reject-reason" placeholder="e.g. Clock-out time incorrect, please resubmit…" style="width:100%"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('reject')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: UNLOCK ════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-unlock">
+  <div class="modal">
+    <div class="modal-title"><span>🔓 Unlock Entry</span><button class="modal-close" onclick="closeModal('unlock')">✕</button></div>
+    <input type="hidden" id="unlock-id"/>
+    <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;font-size:13px;color:var(--text2)">
+      ⚠ This will revert the entry to <strong>Draft</strong> status. The supervisor will need to re-submit for approval.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('unlock')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmUnlock()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: SIGN OFF ══════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-signoff">
+  <div class="modal">
+    <div class="modal-title"><span>📝 Sign Off Month</span><button class="modal-close" onclick="closeModal('signoff')">✕</button></div>
+    <div id="signoff-summary" style="background:var(--bg3);border-radius:var(--r);padding:14px;margin-bottom:1rem;font-size:13px;line-height:1.8"></div>
+    <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
+      Signing off marks this month as finalised. All approved entries are locked. Unapproved entries remain editable.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('signoff')">Cancel</button>
+      <button class="btn btn-green" onclick="confirmSignOff()">✓ Confirm Sign Off</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+function getH(){try{const s=JSON.parse(localStorage.getItem('sc_session')||'null');const t=(s&&s.access_token&&s.expires_at>Date.now())?s.access_token:SK;return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+t};}catch(e){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}}
+async function sb(method,table,data=null,query=''){const h=getH();const o={method,headers:h};if(data){o.body=JSON.stringify(data);o.headers['Prefer']='return=representation';}const r=await fetch(`${SB}/rest/v1/${table}?${query}`,o);if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return null;}if(!r.ok)throw new Error(await r.text());if(r.status===204)return null;const txt=await r.text();return txt?JSON.parse(txt):null;}
+const sbGet=(t,q)=>sb('GET',t,null,q);
+const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
+
+// ── Session & role ─────────────────────────────────────────────────────────────
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+function getUserName(){const s=getSession();return s?.profile?.name||s?.user?.email||'PMO User';}
+function isAdmin(){const r=getUserRole();return r==='admin'||r==='pm';}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtH=h=>(h===null||h===undefined)?'—':(Number(h)%1===0?Number(h)+'h':Number(h).toFixed(2)+'h');
+const fmtDate=ds=>ds?new Date(ds).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}):'—';
+const fmtDateTime=ds=>ds?new Date(ds).toLocaleString('en-ZA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
+const closeModal=k=>document.getElementById('modal-'+k).classList.remove('open');
+
+// ── SA Public Holidays ────────────────────────────────────────────────────────
+const SA_HOLIDAYS=new Set(['2025-01-01','2025-03-21','2025-04-18','2025-04-19','2025-04-21','2025-04-27','2025-05-01','2025-06-16','2025-08-09','2025-09-24','2025-12-16','2025-12-25','2025-12-26','2026-01-01','2026-03-21','2026-04-03','2026-04-04','2026-04-06','2026-04-27','2026-05-01','2026-06-16','2026-08-10','2026-09-24','2026-12-16','2026-12-25','2026-12-26','2027-01-01','2027-03-22','2027-03-26','2027-03-27','2027-03-29','2027-04-27','2027-05-01','2027-06-16','2027-08-09','2027-09-24','2027-12-16','2027-12-25','2027-12-27']);
+function isSunday(ds){return new Date(ds).getDay()===0;}
+function isHoliday(ds){return SA_HOLIDAYS.has(ds);}
+function isDoubleDay(ds){return isSunday(ds)||isHoliday(ds);}
+function getDayType(ds){if(isSunday(ds))return'sunday';if(isHoliday(ds))return'holiday';if(new Date(ds).getDay()===6)return'saturday';return'weekday';}
+function dayTag(ds){const t=getDayType(ds);if(t==='sunday')return'<span class="dt-sunday">SUNDAY</span>';if(t==='holiday')return'<span class="dt-holiday">HOLIDAY</span>';if(t==='saturday')return'<span class="dt-saturday">SAT</span>';return'';}
+
+// ── Status badges ─────────────────────────────────────────────────────────────
+const ST={pending:'<span class="st-pending">Draft</span>',submitted:'<span class="st-submitted">⏳ Pending</span>',approved:'<span class="st-approved">✓ Approved</span>',rejected:'<span class="st-rejected">✕ Rejected</span>'};
+const stLabel=s=>ST[s]||ST.pending;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allEntries=[],allWorkers=[],allProjects=[];
+let selectedPendingIds=new Set();
+let currentSignOffMonth='';
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name,el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='pending')renderPending();
+  if(name==='byworker')renderByWorker();
+  if(name==='monthly')renderMonthlyPayroll();
+  if(name==='history')renderHistory();
+}
+
+function quickFilter(status){
+  document.querySelector('[onclick="switchTab(\'pending\',this)"]').click();
+  // small delay to let tab render
+  setTimeout(()=>{
+    const sel=document.getElementById('pf-project');
+    renderPending(status);
+  },50);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init(){
+  // Role gate
+  const role=getUserRole();
+  const name=getUserName();
+  document.getElementById('pmo-user-name').textContent=name;
+  document.getElementById('pmo-role-badge').textContent=role.toUpperCase();
+
+  if(!isAdmin()){
+    document.getElementById('access-denied').style.display='flex';
+    document.getElementById('pmo-content').style.display='none';
+    return;
+  }
+  document.getElementById('access-denied').style.display='none';
+  document.getElementById('pmo-content').style.display='block';
+
+  // Set default month filters
+  const thisMonth=new Date().toISOString().substring(0,7);
+  document.getElementById('bw-month').value=thisMonth;
+  document.getElementById('mp-month').value=thisMonth;
+  document.getElementById('hf-month').value=thisMonth;
+
+  try{
+    [allEntries,allWorkers,allProjects]=await Promise.all([
+      sbGet('timesheet_entries','order=entry_date.desc'),
+      sbGet('workers','order=name.asc&active=eq.true'),
+      sbGet('projects','order=name.asc&active=eq.true').catch(()=>[])
+    ]);
+    if(!allEntries)allEntries=[];
+    if(!allWorkers)allWorkers=[];
+    if(!allProjects)allProjects=[];
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected';
+    document.getElementById('conn-label').style.color='var(--green)';
+  }catch(e){
+    document.getElementById('conn-dot').className='conn-dot err';
+    document.getElementById('conn-label').textContent='Connection error';
+    console.error(e);
+  }
+
+  populateFilters();
+  renderStats();
+  renderPending();
+}
+
+function populateFilters(){
+  const projOpts='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  ['pf-project','bw-project','mp-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
+  const wrkOpts='<option value="">All Workers</option>'+allWorkers.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  ['pf-worker','hf-worker'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=wrkOpts;});
+}
+
+function clearFilters(prefix){
+  document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el=>{
+    if(el.tagName==='SELECT')el.value='';
+    else if(el.tagName==='INPUT'&&el.type!=='checkbox')el.value='';
+  });
+  if(prefix==='pf')renderPending();
+  if(prefix==='bw')renderByWorker();
+  if(prefix==='mp')renderMonthlyPayroll();
+  if(prefix==='hf')renderHistory();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const submitted=allEntries.filter(e=>e.status==='submitted').length;
+  const approved=allEntries.filter(e=>e.status==='approved').length;
+  const rejected=allEntries.filter(e=>e.status==='rejected').length;
+  const pending=allEntries.filter(e=>!e.status||e.status==='pending').length;
+  const thisMonth=new Date().toISOString().substring(0,7);
+  const moApproved=allEntries.filter(e=>e.status==='approved'&&(e.entry_date||'').startsWith(thisMonth));
+  const moPayroll=moApproved.reduce((a,e)=>a+(e.total_pay||0),0);
+
+  // Update pending count badges
+  document.getElementById('pending-count-tab').textContent=submitted;
+  document.getElementById('sb-pending-count').textContent=submitted;
+  const bulkBtn=document.getElementById('bulk-approve-btn');
+  if(bulkBtn)bulkBtn.style.display=submitted>0?'inline-flex':'none';
+
+  // Urgency banner
+  const banner=document.getElementById('urgency-banner');
+  if(submitted>0){
+    banner.style.display='flex';
+    banner.innerHTML=`⏳ <strong>${submitted} timesheet entr${submitted===1?'y':'ies'} awaiting your approval.</strong> Review below and approve or reject.`;
+  }else{
+    banner.style.display='none';
+  }
+
+  document.getElementById('pmo-stats').innerHTML=`
+    <div class="stat-card s-blue"><div class="stat-n" style="color:#60a5fa">${submitted}</div><div class="stat-l">Awaiting Approval</div><div class="stat-sub">Submitted by supervisors</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${approved}</div><div class="stat-l">Approved</div><div class="stat-sub">Locked entries</div></div>
+    <div class="stat-card s-red"><div class="stat-n" style="color:#f87171">${rejected}</div><div class="stat-l">Rejected</div><div class="stat-sub">Returned to supervisor</div></div>
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${pending}</div><div class="stat-l">Draft</div><div class="stat-sub">Not yet submitted</div></div>
+    <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:20px">${fmt(moPayroll)}</div><div class="stat-l">Approved Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
+}
+
+// ── PENDING TAB ───────────────────────────────────────────────────────────────
+function renderPending(forceStatus=null){
+  const proj=document.getElementById('pf-project')?.value||'';
+  const worker=document.getElementById('pf-worker')?.value||'';
+  const dateFrom=document.getElementById('pf-date-from')?.value||'';
+  const dateTo=document.getElementById('pf-date-to')?.value||'';
+
+  let entries=allEntries.filter(e=>e.status==='submitted');
+  if(proj)entries=entries.filter(e=>{const w=allWorkers.find(x=>x.id==e.worker_id);return w&&w.project_name===proj;});
+  if(worker)entries=entries.filter(e=>e.worker_id==worker);
+  if(dateFrom)entries=entries.filter(e=>e.entry_date>=dateFrom);
+  if(dateTo)entries=entries.filter(e=>e.entry_date<=dateTo);
+  entries.sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
+
+  const tbody=document.getElementById('pending-table');
+  if(!entries.length){
+    tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;color:var(--green);padding:2rem;font-family:var(--font-d);font-size:16px;font-weight:700;letter-spacing:0.04em">✓ No pending entries — all clear</td></tr>`;
+    document.getElementById('pending-totals').style.display='none';
+    return;
+  }
+
+  tbody.innerHTML=entries.map(e=>{
+    const w=allWorkers.find(x=>x.id==e.worker_id)||{};
+    const checked=selectedPendingIds.has(e.id);
+    return`<tr>
+      <td><input type="checkbox" style="accent-color:var(--accent)" ${checked?'checked':''} onchange="togglePending(${e.id},this.checked)"/></td>
+      <td><div style="font-weight:500">${e.worker_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></td>
+      <td style="font-size:12px;color:var(--text2)">${w.project_name||'—'}</td>
+      <td><div style="font-family:var(--font-d);font-size:13px;font-weight:600">${e.entry_date||'—'}</div></td>
+      <td>${dayTag(e.entry_date||'')}</td>
+      <td style="font-family:var(--font-d);font-size:13px"><span style="color:var(--teal)">${e.clock_in||'—'}</span> → <span style="color:var(--blue)">${e.clock_out||'—'}</span></td>
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(e.total_hours||0)}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${(e.ot_hours||0)>0?fmtH(e.ot_hours):'—'}</td>
+      <td style="color:var(--text2)">${fmt(e.regular_pay||0)}</td>
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.notes||'—'}</td>
+      <td>${stLabel(e.status||'pending')}</td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-green btn-sm" onclick="approveOne(${e.id})">✓</button>
+        <button class="btn btn-danger btn-sm" onclick="openReject(${e.id})">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  const totH=entries.reduce((a,e)=>a+(e.total_hours||0),0);
+  const totOT=entries.reduce((a,e)=>a+(e.ot_hours||0),0);
+  const totPay=entries.reduce((a,e)=>a+(e.total_pay||0),0);
+  document.getElementById('pend-count').textContent=entries.length;
+  document.getElementById('pend-hrs').textContent=fmtH(totH);
+  document.getElementById('pend-ot').textContent=fmtH(totOT);
+  document.getElementById('pend-pay').textContent=fmt(totPay);
+  document.getElementById('pending-totals').style.display='flex';
+}
+
+function togglePending(id,checked){if(checked)selectedPendingIds.add(id);else selectedPendingIds.delete(id);}
+function toggleAllPending(checked){
+  document.querySelectorAll('#pending-table input[type=checkbox]').forEach(cb=>{
+    const row=cb.closest('tr');if(!row)return;
+    const btn=row.querySelector('.btn-green');if(!btn)return;
+    const onclick=btn.getAttribute('onclick')||'';
+    const id=parseInt(onclick.match(/\d+/)?.[0]);
+    if(id){cb.checked=checked;if(checked)selectedPendingIds.add(id);else selectedPendingIds.delete(id);}
+  });
+}
+
+async function approveOne(id){
+  try{
+    const approvedAt=new Date().toISOString();
+    await sbPatch('timesheet_entries',id,{status:'approved',approved_at:approvedAt});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};
+    showToast('Entry approved ✓');
+    renderStats();renderPending();
+  }catch(e){showToast('Failed: '+e.message,'err');}
+}
+
+async function approveFiltered(){
+  const toApprove=allEntries.filter(e=>e.status==='submitted');
+  if(!toApprove.length){showToast('No submitted entries to approve','err');return;}
+  const proj=document.getElementById('pf-project')?.value||'';
+  const worker=document.getElementById('pf-worker')?.value||'';
+  let filtered=toApprove;
+  if(proj)filtered=filtered.filter(e=>{const w=allWorkers.find(x=>x.id==e.worker_id);return w&&w.project_name===proj;});
+  if(worker)filtered=filtered.filter(e=>e.worker_id==worker);
+  if(!filtered.length){showToast('No entries match current filter','err');return;}
+  if(!confirm(`Approve ${filtered.length} entr${filtered.length===1?'y':'ies'}?`))return;
+  const approvedAt=new Date().toISOString();
+  try{
+    await Promise.all(filtered.map(e=>sbPatch('timesheet_entries',e.id,{status:'approved',approved_at:approvedAt})));
+    filtered.forEach(e=>{const idx=allEntries.findIndex(x=>x.id===e.id);if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};});
+    showToast(`✓ ${filtered.length} entries approved`);
+    renderStats();renderPending();
+  }catch(e){showToast('Bulk approve failed: '+e.message,'err');}
+}
+
+async function bulkApproveAll(){
+  const submitted=allEntries.filter(e=>e.status==='submitted');
+  if(!submitted.length){showToast('Nothing pending','err');return;}
+  if(!confirm(`Approve ALL ${submitted.length} pending entries across all projects?`))return;
+  const approvedAt=new Date().toISOString();
+  try{
+    await Promise.all(submitted.map(e=>sbPatch('timesheet_entries',e.id,{status:'approved',approved_at:approvedAt})));
+    submitted.forEach(e=>{const idx=allEntries.findIndex(x=>x.id===e.id);if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};});
+    showToast(`✓ All ${submitted.length} entries approved`);
+    renderStats();renderPending();
+  }catch(e){showToast('Failed: '+e.message,'err');}
+}
+
+// ── REJECT ────────────────────────────────────────────────────────────────────
+function openReject(id){
+  document.getElementById('reject-id').value=id;
+  document.getElementById('reject-reason').value='';
+  document.getElementById('modal-reject').classList.add('open');
+}
+async function confirmReject(){
+  const id=parseInt(document.getElementById('reject-id').value);
+  const reason=document.getElementById('reject-reason').value.trim();
+  if(!reason){showToast('Enter a rejection reason','err');return;}
+  try{
+    await sbPatch('timesheet_entries',id,{status:'rejected',rejection_reason:reason,approved_at:null});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'rejected',rejection_reason:reason};
+    showToast('Entry rejected');closeModal('reject');
+    renderStats();renderPending();
+  }catch(e){showToast('Failed: '+e.message,'err');}
+}
+
+// ── UNLOCK ────────────────────────────────────────────────────────────────────
+function openUnlock(id){document.getElementById('unlock-id').value=id;document.getElementById('modal-unlock').classList.add('open');}
+async function confirmUnlock(){
+  const id=parseInt(document.getElementById('unlock-id').value);
+  try{
+    await sbPatch('timesheet_entries',id,{status:'pending',approved_at:null,rejection_reason:null,submitted_at:null});
+    const idx=allEntries.findIndex(e=>e.id===id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'pending',approved_at:null,rejection_reason:null};
+    showToast('Entry unlocked');closeModal('unlock');
+    renderStats();renderPending();renderHistory();
+  }catch(e){showToast('Failed: '+e.message,'err');}
+}
+
+// ── BY WORKER TAB ─────────────────────────────────────────────────────────────
+function renderByWorker(){
+  const month=document.getElementById('bw-month').value;
+  const proj=document.getElementById('bw-project').value;
+  const statusF=document.getElementById('bw-status').value;
+  document.getElementById('bw-title').textContent=`Worker Summary${month?' — '+month:''}`;
+
+  let entries=allEntries;
+  if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
+  if(statusF)entries=entries.filter(e=>(e.status||'pending')===statusF);
+
+  const byW={};
+  entries.forEach(e=>{
+    const w=allWorkers.find(x=>x.id==e.worker_id)||{};
+    if(proj&&w.project_name!==proj)return;
+    if(!byW[e.worker_id])byW[e.worker_id]={
+      name:e.worker_name,role:w.role||'',project:w.project_name||'—',
+      days:new Set(),totalHrs:0,otHrs:0,totalPay:0,
+      statuses:new Set()
+    };
+    byW[e.worker_id].days.add(e.entry_date);
+    byW[e.worker_id].totalHrs+=(e.total_hours||0);
+    byW[e.worker_id].otHrs+=(e.ot_hours||0);
+    byW[e.worker_id].totalPay+=(e.total_pay||0);
+    byW[e.worker_id].statuses.add(e.status||'pending');
+  });
+
+  const workers=Object.values(byW).sort((a,b)=>a.name.localeCompare(b.name));
+  const totW=workers.length;
+  const totH=workers.reduce((a,w)=>a+w.totalHrs,0);
+  const totOT=workers.reduce((a,w)=>a+w.otHrs,0);
+  const totP=workers.reduce((a,w)=>a+w.totalPay,0);
+
+  const list=document.getElementById('byworker-list');
+  list.innerHTML=!workers.length
+    ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No entries for this period.</div>`
+    :workers.map(w=>{
+      const hasSubmitted=w.statuses.has('submitted');
+      const allApproved=[...w.statuses].every(s=>s==='approved');
+      const statusEl=allApproved?'<span class="st-approved">✓ All Approved</span>':
+        hasSubmitted?'<span class="st-submitted">⏳ Pending</span>':
+        '<span class="st-pending">Draft</span>';
+      return`<div class="month-worker-row">
+        <div><div style="font-weight:500">${w.name}</div><div style="font-size:11px;color:var(--text3)">${w.role}</div></div>
+        <div style="font-size:12px;color:var(--text2)">${w.project}</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue)">${w.days.size}</div>
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(w.totalHrs)}</div>
+        <div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${w.otHrs>0?fmtH(w.otHrs):'—'}</div>
+        <div style="color:var(--text2)">${fmt(w.totalPay*0.85)}</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</div>
+        <div>${statusEl}</div>
+      </div>`;
+    }).join('');
+
+  document.getElementById('bw-workers').textContent=totW;
+  document.getElementById('bw-hrs').textContent=fmtH(totH);
+  document.getElementById('bw-ot').textContent=fmtH(totOT);
+  document.getElementById('bw-pay').textContent=fmt(totP);
+  document.getElementById('bw-totals').style.display='flex';
+}
+
+// ── MONTHLY PAYROLL TAB ───────────────────────────────────────────────────────
+function renderMonthlyPayroll(){
+  const month=document.getElementById('mp-month').value;
+  const proj=document.getElementById('mp-project').value;
+  currentSignOffMonth=month;
+  document.getElementById('mp-title').textContent=`Monthly Payroll — ${month||'Select Month'} (Approved entries only)`;
+
+  let entries=allEntries.filter(e=>e.status==='approved');
+  if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
+
+  const byW={};
+  entries.forEach(e=>{
+    const w=allWorkers.find(x=>x.id==e.worker_id)||{};
+    if(proj&&w.project_name!==proj)return;
+    if(!byW[e.worker_id])byW[e.worker_id]={
+      name:e.worker_name,role:w.role||'',project:w.project_name||'—',
+      hourlyRate:e.hourly_rate||w.hourly_rate||0,
+      days:new Set(),
+      monSatHrs:0,doubleHrs:0,otHrs:0,
+      regularPay:0,otPay:0,doublePay:0,totalPay:0
+    };
+    const dt=getDayType(e.entry_date||'');
+    byW[e.worker_id].days.add(e.entry_date);
+    if(isDoubleDay(e.entry_date||'')){
+      byW[e.worker_id].doubleHrs+=(e.total_hours||0);
+      byW[e.worker_id].doublePay+=(e.ot_pay||0);
+    }else{
+      byW[e.worker_id].monSatHrs+=(e.total_hours||0);
+      byW[e.worker_id].regularPay+=(e.regular_pay||0);
+      byW[e.worker_id].otPay+=(e.ot_pay||0);
+    }
+    byW[e.worker_id].otHrs+=(e.ot_hours||0);
+    byW[e.worker_id].totalPay+=(e.total_pay||0);
+  });
+
+  const workers=Object.values(byW).sort((a,b)=>a.name.localeCompare(b.name));
+  const totH=workers.reduce((a,w)=>a+w.monSatHrs+w.doubleHrs,0);
+  const totOT=workers.reduce((a,w)=>a+w.otHrs,0);
+  const totReg=workers.reduce((a,w)=>a+w.regularPay,0);
+  const totPay=workers.reduce((a,w)=>a+w.totalPay,0);
+
+  document.getElementById('monthly-payroll-table').innerHTML=!workers.length
+    ?`<tr><td colspan="13" style="text-align:center;color:var(--text3);padding:2rem">No approved entries for this period.</td></tr>`
+    :workers.map(w=>{
+      const total195=w.monSatHrs;
+      const over195=w.otHrs;
+      const statusColor=over195>0?'var(--purple)':total195>=150?'var(--amber)':'var(--teal)';
+      const threshold195=total195>=195?'<span style="color:var(--purple);font-weight:700">✓ OT triggered</span>':
+        `<span style="color:var(--text3)">${(195-total195).toFixed(0)}h to go</span>`;
+      return`<tr>
+        <td><div style="font-weight:500">${w.name}</div><div style="font-size:11px;color:var(--text3)">${w.role}</div></td>
+        <td style="color:var(--text2);font-size:12px">${w.role}</td>
+        <td style="font-size:12px;color:var(--text2)">${w.project}</td>
+        <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--blue)">${w.days.size}</td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--teal)">${fmtH(w.monSatHrs)}</td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${w.doubleHrs>0?fmtH(w.doubleHrs):'—'}</td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${w.otHrs>0?fmtH(w.otHrs):'—'}</td>
+        <td style="font-size:12px;color:var(--teal)">R${parseFloat(w.hourlyRate||0).toFixed(2)}/hr</td>
+        <td style="color:var(--text2)">${fmt(w.regularPay)}</td>
+        <td style="color:var(--purple)">${w.otPay>0?fmt(w.otPay):'—'}</td>
+        <td style="color:var(--purple)">${w.doublePay>0?fmt(w.doublePay):'—'}</td>
+        <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
+        <td>${threshold195}</td>
+      </tr>`;
+    }).join('')+`<tr class="total-row">
+      <td colspan="3" style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">TOTALS</td>
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--blue)">${workers.reduce((a,w)=>a+w.days.size,0)}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--teal)">${fmtH(workers.reduce((a,w)=>a+w.monSatHrs,0))}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--purple)">${fmtH(workers.reduce((a,w)=>a+w.doubleHrs,0))}</td>
+      <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--purple)">${fmtH(totOT)}</td>
+      <td></td>
+      <td style="color:var(--text2);font-weight:700">${fmt(totReg)}</td>
+      <td colspan="2"></td>
+      <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(totPay)}</td>
+      <td></td>
+    </tr>`;
+
+  document.getElementById('mp-empl').textContent=workers.length;
+  document.getElementById('mp-hrs').textContent=fmtH(totH);
+  document.getElementById('mp-ot').textContent=fmtH(totOT);
+  document.getElementById('mp-reg').textContent=fmt(totReg);
+  document.getElementById('mp-total').textContent=fmt(totPay);
+  document.getElementById('mp-totals').style.display='flex';
+}
+
+// ── Sign Off Month ─────────────────────────────────────────────────────────────
+function signOffMonth(){
+  const month=document.getElementById('mp-month').value;
+  if(!month){showToast('Select a month first','err');return;}
+  const approved=allEntries.filter(e=>e.status==='approved'&&(e.entry_date||'').startsWith(month));
+  const pending=allEntries.filter(e=>e.status==='submitted'&&(e.entry_date||'').startsWith(month));
+  const totalPay=approved.reduce((a,e)=>a+(e.total_pay||0),0);
+  document.getElementById('signoff-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Month</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700">${month}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Approved Entries</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--green)">${approved.length}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Still Pending</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${pending.length>0?'var(--accent)':'var(--green)'}">${pending.length}</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Payroll</div><div style="font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--accent)">${fmt(totalPay)}</div></div>
+    </div>
+    ${pending.length>0?`<div style="margin-top:10px;padding:8px 10px;background:rgba(245,166,35,0.08);border-radius:4px;font-size:12px;color:var(--accent)">⚠ ${pending.length} entries still pending approval. They will NOT be included in payroll.</div>`:''}`;
+  document.getElementById('modal-signoff').classList.add('open');
+}
+
+async function confirmSignOff(){
+  const month=document.getElementById('mp-month').value;
+  showToast(`Month ${month} signed off — payroll locked ✓`);
+  closeModal('signoff');
+  // In a production system you'd write a sign-off record to a monthly_signoffs table
+}
+
+// ── ALL HISTORY TAB ───────────────────────────────────────────────────────────
+function renderHistory(){
+  const statusF=document.getElementById('hf-status').value;
+  const month=document.getElementById('hf-month').value;
+  const worker=document.getElementById('hf-worker').value;
+
+  let entries=[...allEntries];
+  if(statusF)entries=entries.filter(e=>(e.status||'pending')===statusF);
+  if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
+  if(worker)entries=entries.filter(e=>e.worker_id==worker);
+  entries.sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
+
+  document.getElementById('history-table').innerHTML=!entries.length
+    ?`<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:2rem">No entries match this filter.</td></tr>`
+    :entries.map(e=>{
+      const w=allWorkers.find(x=>x.id==e.worker_id)||{};
+      const st=e.status||'pending';
+      const locked=st==='approved';
+      return`<tr>
+        <td><div style="font-weight:500">${e.worker_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></td>
+        <td style="font-size:12px;color:var(--text2)">${w.project_name||'—'}</td>
+        <td><div style="font-family:var(--font-d);font-size:13px;font-weight:600">${e.entry_date||'—'}</div></td>
+        <td>${dayTag(e.entry_date||'')}</td>
+        <td style="font-family:var(--font-d);font-size:13px"><span style="color:var(--teal)">${e.clock_in||'—'}</span> → <span style="color:var(--blue)">${e.clock_out||'—'}</span></td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--teal)">${fmtH(e.total_hours||0)}</td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${(e.ot_hours||0)>0?fmtH(e.ot_hours):'—'}</td>
+        <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</td>
+        <td>${stLabel(st)}${e.rejection_reason?`<div style="font-size:10px;color:#f87171;margin-top:2px">${e.rejection_reason}</div>`:''}</td>
+        <td style="font-size:11px;color:var(--text3)">${fmtDateTime(e.submitted_at)}</td>
+        <td style="font-size:11px;color:var(--text3)">${fmtDateTime(e.approved_at)}</td>
+        <td><div style="display:flex;gap:4px">
+          ${locked?`<button class="btn btn-ghost btn-sm" onclick="openUnlock(${e.id})">🔓 Unlock</button>`:''}
+          ${st==='submitted'?`<button class="btn btn-green btn-sm" onclick="approveOne(${e.id})">✓</button><button class="btn btn-danger btn-sm" onclick="openReject(${e.id})">✕</button>`:''}
+        </div></td>
+      </tr>`;
+    }).join('');
+}
+
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+init();
+</script>
+</body>
+</html>
