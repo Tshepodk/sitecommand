@@ -651,6 +651,44 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
+    <!-- APPROVALS PAGE -->
+    <div class="page" id="page-approvals">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Approval Queue</div>
+          <div class="page-sub">Review and action daily report submissions</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select class="form-select" id="approval-filter-status" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="all">All Submissions</option>
+          </select>
+          <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats-grid" id="approval-stats"></div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="approval-queue-title">&#9651; Pending Review</div>
+          <div style="font-size:12px;color:var(--text3)" id="approval-queue-sub">Oldest submissions first</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Project</th><th>Submitted By</th><th>Workers</th><th>Cost</th><th>HSE</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="approvals-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1309,9 +1347,6 @@ function showPage(id,el){
   if(!pageEl){console.warn('showPage: no element found for page-'+id);return;}
   pageEl.classList.add('active');
   if(el)el.classList.add('active');
-  // Reset scroll to top on every page switch
-  const mainEl=document.querySelector('.main');
-  if(mainEl)mainEl.scrollTop=0;
   renderPage(id);
   // PMO-specific: load PMO data and update badge
   if(id==='pmo'){
@@ -2525,45 +2560,6 @@ setInterval(loadNotifications,60000);
 initRBAC();
 loadAllData().then(()=>renderDashboard());
 </script>
-
-
-    <!-- APPROVALS PAGE -->
-    <div class="page" id="page-approvals">
-      <div class="page-header">
-        <div>
-          <div class="page-title">Approval Queue</div>
-          <div class="page-sub">Review and action daily report submissions</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <select class="form-select" id="approval-filter-status" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
-            <option value="pending">Pending Review</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="all">All Submissions</option>
-          </select>
-          <select class="form-select" id="approval-filter-project" onchange="renderApprovalsPage()" style="font-size:12px;padding:5px 10px;width:auto;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text)">
-            <option value="">All Projects</option>
-          </select>
-        </div>
-      </div>
-      <div class="stats-grid" id="approval-stats"></div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title" id="approval-queue-title">&#9651; Pending Review</div>
-          <div style="font-size:12px;color:var(--text3)" id="approval-queue-sub">Oldest submissions first</div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th><th>Project</th><th>Submitted By</th><th>Workers</th><th>Cost</th><th>HSE</th><th>Status</th><th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="approvals-table"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
 <!-- Modal: Edit Daily Report -->
 <div class="modal-bg" id="modal-report-edit">
