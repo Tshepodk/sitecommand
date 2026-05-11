@@ -234,7 +234,7 @@ tr:hover td{background:var(--bg3)}
           </div>
         </div>
         <div style="margin-top:1rem;padding:1rem;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)">
-          ⚙ Regular hours up to OT threshold per day. Hours beyond that at OT rate. Weekend days always use OT rate.
+          ⚙ Mon–Sat hours accumulate toward 195hr/month threshold (standard rate). Above 195hrs → 1.5×. Sunday & public holidays always 2× rate regardless of monthly total.
         </div>
       </div>
     </div>
@@ -495,9 +495,45 @@ function setToday(){document.getElementById('daily-date').value=new Date().toISO
 function setThisWeek(){const d=new Date();const day=d.getDay();const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));document.getElementById('weekly-start').value=mon.toISOString().split('T')[0];}
 function setThisMonth(){document.getElementById('monthly-month').value=new Date().toISOString().substring(0,7);}
 function addDays(ds,n){const d=new Date(ds);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
-function isWeekend(ds){const d=new Date(ds);const day=d.getDay();return day===0||day===6;}
+// ══════════════════════════════════════════════════════════════════════════════
+// SA PAYROLL ENGINE
+//  Mon–Sat  → standard rate; ALL hours count toward 195hr/month threshold
+//  Above 195hrs/month (Mon–Sat) → 1.5× standard hourly rate on excess hours
+//  Sunday   → always 2× standard hourly rate; never touches 195hr threshold
+//  Public Holiday → always 2× standard hourly rate; never touches 195hr threshold
+// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Calculation ───────────────────────────────────────────────────────────────
+const SA_PUBLIC_HOLIDAYS=new Set([
+  '2025-01-01','2025-03-21','2025-04-18','2025-04-19','2025-04-21',
+  '2025-04-27','2025-05-01','2025-06-16','2025-08-09','2025-09-24',
+  '2025-12-16','2025-12-25','2025-12-26',
+  '2026-01-01','2026-03-21','2026-04-03','2026-04-04','2026-04-06',
+  '2026-04-27','2026-05-01','2026-06-16','2026-08-10','2026-09-24',
+  '2026-12-16','2026-12-25','2026-12-26',
+  '2027-01-01','2027-03-22','2027-03-26','2027-03-27','2027-03-29',
+  '2027-04-27','2027-05-01','2027-06-16','2027-08-09','2027-09-24',
+  '2027-12-16','2027-12-25','2027-12-27',
+]);
+
+function isSunday(ds){return new Date(ds).getDay()===0;}
+function isSaturday(ds){return new Date(ds).getDay()===6;}
+function isPublicHoliday(ds){return SA_PUBLIC_HOLIDAYS.has(ds);}
+function isDoubleTimeDay(ds){return isSunday(ds)||isPublicHoliday(ds);}
+function getDayType(ds){
+  if(isSunday(ds))return'sunday';
+  if(isPublicHoliday(ds))return'holiday';
+  if(isSaturday(ds))return'saturday';
+  return'weekday';
+}
+function dayTypeLabel(ds){
+  const t=getDayType(ds);
+  if(t==='sunday')return'<span style="font-size:10px;background:rgba(168,85,247,0.15);color:var(--purple);padding:1px 6px;border-radius:3px;font-weight:700">SUNDAY 2×</span>';
+  if(t==='holiday')return'<span style="font-size:10px;background:rgba(239,68,68,0.12);color:#f87171;padding:1px 6px;border-radius:3px;font-weight:700">PUBLIC HOLIDAY 2×</span>';
+  if(t==='saturday')return'<span style="font-size:10px;background:rgba(59,130,246,0.12);color:#60a5fa;padding:1px 6px;border-radius:3px;font-weight:700">SATURDAY</span>';
+  return'';
+}
+
+// ── Net hours from clock in/out ───────────────────────────────────────────────
 function calcHours(ci,co,brk){
   if(!ci||!co)return{total:0};
   const[ih,im]=ci.split(':').map(Number);
@@ -506,20 +542,87 @@ function calcHours(ci,co,brk){
   if(rawMins<0)rawMins+=1440;
   return{total:Math.round(Math.max(0,rawMins-(brk||0))/60*100)/100};
 }
-function calcPay(total,threshold,hourly,otr,date,weekendType){
-  const wknd=isWeekend(date);
-  let regularHours,otHours,regularPay,otPay;
-  if(wknd){
-    regularHours=0;otHours=total;
-    const wr=weekendType==='double'?hourly*2:weekendType==='standard'?hourly:otr;
-    regularPay=0;otPay=Math.round(otHours*(wr||0)*100)/100;
-  }else{
-    regularHours=Math.min(total,threshold||8);
-    otHours=Math.max(0,total-(threshold||8));
-    regularPay=Math.round(regularHours*(hourly||0)*100)/100;
-    otPay=Math.round(otHours*(otr||0)*100)/100;
+
+// ── Month-aware full recalc for one worker ────────────────────────────────────
+// Pass ALL entries for the worker in that month; returns updated pay per entry.
+function recalcMonthForWorker(workerEntries,hourlyRate){
+  const THRESHOLD=195;
+  const rate=parseFloat(hourlyRate)||0;
+  const sorted=[...workerEntries].sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
+  let threshAccum=0;
+  return sorted.map(entry=>{
+    const total=parseFloat(entry.total_hours)||0;
+    const ds=entry.entry_date;
+    const double=isDoubleTimeDay(ds);
+    let regularHours=0,otHours=0,regularPay=0,otPay=0;
+    if(double){
+      otHours=total;
+      otPay=Math.round(total*rate*2*100)/100;
+    }else{
+      const remaining=Math.max(0,THRESHOLD-threshAccum);
+      regularHours=Math.min(total,remaining);
+      otHours=Math.max(0,total-remaining);
+      regularPay=Math.round(regularHours*rate*100)/100;
+      otPay=Math.round(otHours*rate*1.5*100)/100;
+      threshAccum+=total;
+    }
+    return{id:entry.id,regular_hours:regularHours,ot_hours:otHours,
+      regular_pay:regularPay,ot_pay:otPay,total_pay:regularPay+otPay,
+      day_type:getDayType(ds),threshold_after:threshAccum};
+  });
+}
+
+// ── Quick preview estimate (UI only — no month context needed) ─────────────────
+function calcPayPreview(total,hourlyRate,dateStr,monthHoursSoFar){
+  const rate=parseFloat(hourlyRate)||0;
+  const THRESHOLD=195;
+  if(isDoubleTimeDay(dateStr)){
+    const pay=Math.round(total*rate*2*100)/100;
+    return{regularHours:0,otHours:total,regularPay:0,otPay:pay,totalPay:pay,
+      dayType:getDayType(dateStr),note:'2× rate ('+getDayType(dateStr)+')'};
   }
-  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend:wknd};
+  const soFar=parseFloat(monthHoursSoFar)||0;
+  const remaining=Math.max(0,THRESHOLD-soFar);
+  const regularHours=Math.min(total,remaining);
+  const otHours=Math.max(0,total-remaining);
+  const regularPay=Math.round(regularHours*rate*100)/100;
+  const otPay=Math.round(otHours*rate*1.5*100)/100;
+  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,
+    dayType:getDayType(dateStr),
+    note:otHours>0?`${soFar.toFixed(0)}hrs in month → 1.5× on excess`:
+         soFar>=THRESHOLD?'Already past 195hrs — all at 1.5×':
+         `${(THRESHOLD-soFar-total).toFixed(0)}hrs before OT threshold`};
+}
+
+// ── Worker's Mon–Sat hours already in month (for preview estimate) ─────────────
+function getWorkerMonthHours(workerId,yearMonth,excludeId=null){
+  return allEntries
+    .filter(e=>e.worker_id==workerId&&(e.entry_date||'').startsWith(yearMonth)
+      &&!isDoubleTimeDay(e.entry_date||'')&&e.id!=excludeId)
+    .reduce((a,e)=>a+(parseFloat(e.total_hours)||0),0);
+}
+
+// ── After save: patch all entries in month with recalculated pay ───────────────
+async function patchMonthRecalc(workerId,yearMonth,hourlyRate){
+  const firstDay=yearMonth+'-01';
+  const lastDay=yearMonth+'-'+String(new Date(yearMonth.split('-')[0],yearMonth.split('-')[1],0).getDate()).padStart(2,'0');
+  const monthEntries=allEntries.filter(e=>e.worker_id==workerId&&e.entry_date>=firstDay&&e.entry_date<=lastDay);
+  const recalculated=recalcMonthForWorker(monthEntries,hourlyRate);
+  // Patch only entries whose pay changed
+  const patches=recalculated.filter(r=>{
+    const orig=monthEntries.find(e=>e.id===r.id);
+    return orig&&(orig.total_pay!==r.total_pay||orig.ot_hours!==r.ot_hours);
+  });
+  await Promise.all(patches.map(r=>sbPatch('timesheet_entries',r.id,{
+    regular_hours:r.regular_hours,ot_hours:r.ot_hours,
+    regular_pay:r.regular_pay,ot_pay:r.ot_pay,total_pay:r.total_pay
+  })));
+  // Update local state
+  recalculated.forEach(r=>{
+    const idx=allEntries.findIndex(e=>e.id===r.id);
+    if(idx>=0)allEntries[idx]={...allEntries[idx],...r};
+  });
+  return patches.length;
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -555,13 +658,13 @@ function renderDailyTab(){
       ${['Worker','Clock In','Clock Out','Brk','Total','Regular','Overtime','Earnings',''].map(h=>`<div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">${h}</div>`).join('')}
     </div>
     ${de.map(e=>`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px;margin-bottom:5px;display:grid;grid-template-columns:180px 78px 78px 38px 68px 90px 108px 100px 72px;gap:8px;align-items:center">
-      <div><div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>${isWeekend(e.entry_date)?'<span style="font-size:10px;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Weekend</span>':''}${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}</div>
+      <div><div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>${dayTypeLabel(e.entry_date)}${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}</div>
       <div style="font-family:var(--font-d);font-size:14px;font-weight:600;color:var(--teal)">${e.clock_in||'—'}</div>
       <div style="font-family:var(--font-d);font-size:14px;font-weight:600;color:var(--blue)">${e.clock_out||'—'}</div>
       <div style="font-size:12px;color:var(--text3)">${e.break_minutes||0}m</div>
       <div style="font-family:var(--font-d);font-size:15px;font-weight:700">${fmtH(e.total_hours||0)}</div>
       <div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text2)">${fmtH(e.regular_hours||0)}</div>
-      <div><div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${e.ot_rate||0}/hr</div>`:''}</div>
+      <div><div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">${e.day_type==="sunday"||e.day_type==="holiday"?"2× rate":"1.5× rate"}</div>`:''}</div>
       <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
       <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})">✏</button><button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})">✕</button></div>
     </div>`).join('')}`;
@@ -635,7 +738,7 @@ function renderRatesTab(){
     <td><span class="badge badge-gray">${w.type||'—'}</span></td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${w.hourly_rate?'R '+parseFloat(w.hourly_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${w.ot_rate?'R '+parseFloat(w.ot_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
-    <td style="color:var(--text2)">${w.ot_threshold||8}h/day</td>
+    <td style="color:var(--text2)">195h/month</td>
     <td><span class="badge ${w.status==='active'?'badge-green':w.status==='leave'?'badge-amber':'badge-gray'}">${w.status||'—'}</span></td>
     <td><button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal(${w.id})">⚙ Set Rate</button></td>
   </tr>`).join('');
@@ -699,7 +802,7 @@ function renderBatchWorkerList(){
         <div><span class="badge badge-gray" style="font-size:10px">${w.type||'—'}</span></div>
         <div style="font-size:12px;color:var(--teal);font-weight:600">${w.hourly_rate?'R'+parseFloat(w.hourly_rate).toFixed(0):'<span style="color:var(--text3)">—</span>'}</div>
         <div style="font-size:12px;color:var(--purple);font-weight:600">${w.ot_rate?'R'+parseFloat(w.ot_rate).toFixed(0):'<span style="color:var(--text3)">—</span>'}</div>
-        <div style="font-size:12px;color:var(--text2)">${w.ot_threshold||8}h</div>
+        <div style="font-size:12px;color:var(--text2)">195h/mo</div>
         <div><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
         <div style="font-size:11px;color:var(--text3)">${w.project_name||'—'}</div>
         <div style="font-size:11px;color:${logged?'var(--accent)':'var(--text3)'}">${logged?'✓ Logged':'—'}</div>
@@ -808,7 +911,9 @@ function recalcBatchRow(wid){
   batchTimeData[wid]={in:ci,out:co,break:brk,notes};
   if(!ci||!co){['btot','bot','bpay'].forEach(p=>{const el=document.getElementById(p+'-'+wid);if(el)el.textContent='—';});return;}
   const{total}=calcHours(ci,co,brk);
-  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
+  const yearMonth=batchDate?batchDate.substring(0,7):'';
+  const soFar=yearMonth?getWorkerMonthHours(wid,yearMonth):0;
+  const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
   const te=document.getElementById('btot-'+wid);const oe=document.getElementById('bot-'+wid);const pe=document.getElementById('bpay-'+wid);
   if(te)te.textContent=fmtH(total);
   if(oe)oe.textContent=pay.otHours>0?fmtH(pay.otHours):'—';
@@ -830,13 +935,15 @@ function goToBatchStep3(){
   });
 
   const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
+  const yearMonth=batchDate.substring(0,7);
   const valid=[],skipped=[];
   workers.forEach(w=>{
     const td=batchTimeData[w.id]||{};
     if(!td.in||!td.out){skipped.push(w.name);return;}
     const{total}=calcHours(td.in,td.out,td.break||30);
-    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
-    valid.push({w,td,total,pay});
+    const soFar=getWorkerMonthHours(w.id,yearMonth);
+    const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
+    valid.push({w,td,total,pay,soFar});
   });
 
   showBatchStep(3);
@@ -849,13 +956,14 @@ function goToBatchStep3(){
     skipNotice.style.display='none';
   }
 
+  const dayTag=dayTypeLabel(batchDate);
   document.getElementById('batch-preview-rows').innerHTML=valid.length===0
     ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No valid entries — go back and enter clock times.</div>`
-    :valid.map(({w,td,total,pay})=>`<div class="preview-row">
+    :valid.map(({w,td,total,pay,soFar})=>`<div class="preview-row">
       <div>
         <div style="font-weight:500;font-size:13px">${w.name}</div>
         <div style="font-size:11px;color:var(--text3)">${td.in} → ${td.out}${td.notes?' · '+td.notes:''}</div>
-        ${pay.isWeekend?'<span style="font-size:10px;color:var(--purple);font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Weekend</span>':''}
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap">${dayTag}${pay.note?`<span style="font-size:10px;color:var(--text3)">${pay.note}</span>`:''}</div>
       </div>
       <div style="font-family:var(--font-d);font-weight:700;color:var(--teal)">${fmtH(total)}</div>
       <div style="font-family:var(--font-d);font-weight:700">${fmtH(pay.regularHours)}</div>
@@ -872,7 +980,8 @@ function goToBatchStep3(){
     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Workers</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)">${valid.length}</div></div>
     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)">${fmtH(totH)}</div></div>
     <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)">${fmtH(totOT)}</div></div>
-    <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Batch Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--accent)">${fmt(totPay)}</div></div>`;
+    <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Batch Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--accent)">${fmt(totPay)}</div></div>
+    <div style="width:100%;font-size:11px;color:var(--text3);padding-top:6px">⚠ Preview is indicative. Final pay is recalculated against each worker's full month after saving.</div>`;
 }
 
 // ── Save batch ────────────────────────────────────────────────────────────────
@@ -881,18 +990,22 @@ async function saveBatch(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
   try{
     const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
+    const yearMonth=batchDate.substring(0,7);
     const payloads=[];
     workers.forEach(w=>{
       const td=batchTimeData[w.id]||{};
       if(!td.in||!td.out)return;
       const{total}=calcHours(td.in,td.out,td.break||30);
-      const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
+      const soFar=getWorkerMonthHours(w.id,yearMonth);
+      const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
       payloads.push({
         worker_id:w.id,worker_name:w.name,entry_date:batchDate,
         clock_in:td.in,clock_out:td.out,break_minutes:td.break||30,
         total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
-        hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
-        ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,
+        hourly_rate:parseFloat(w.hourly_rate||0),
+        ot_rate:parseFloat(w.hourly_rate||0)*1.5,
+        is_weekend:isDoubleTimeDay(batchDate),
+        day_type:getDayType(batchDate),
         regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
         notes:td.notes||''
       });
@@ -900,7 +1013,14 @@ async function saveBatch(){
     if(!payloads.length){showToast('No valid entries to save','err');btn.disabled=false;btn.textContent='✓ Save All Entries';return;}
     const results=await Promise.all(payloads.map(p=>sbPost('timesheet_entries',p)));
     results.forEach(r=>{if(r&&r[0])allEntries.unshift(r[0]);});
-    showToast(`✓ ${payloads.length} entr${payloads.length===1?'y':'ies'} saved`);
+    // Recalc each affected worker's full month
+    btn.innerHTML='<span class="spinner"></span>Recalculating months…';
+    const affectedWorkers=[...new Set(payloads.map(p=>p.worker_id))];
+    await Promise.all(affectedWorkers.map(wid=>{
+      const w=allWorkers.find(x=>x.id===wid)||{};
+      return patchMonthRecalc(wid,yearMonth,w.hourly_rate||0);
+    }));
+    showToast(`✓ ${payloads.length} entr${payloads.length===1?'y':'ies'} saved & months recalculated`);
     closeModal('batch');
     document.getElementById('daily-date').value=batchDate;
     renderStats();renderDailyTab();
@@ -953,12 +1073,18 @@ function recalcEntryHours(){
   const co=document.getElementById('entry-clock-out').value;
   const brk=parseInt(document.getElementById('entry-break').value)||0;
   const date=document.getElementById('entry-date').value;
+  const entryId=document.getElementById('entry-id').value;
   const{total}=calcHours(ci,co,brk);
-  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+  const yearMonth=date?date.substring(0,7):'';
+  const soFar=yearMonth?getWorkerMonthHours(wid,yearMonth,entryId||null):0;
+  const pay=calcPayPreview(total,w.hourly_rate||0,date,soFar);
   document.getElementById('ep-total').textContent=fmtH(total);
   document.getElementById('ep-regular').textContent=fmtH(pay.regularHours);
   document.getElementById('ep-ot').textContent=fmtH(pay.otHours);
   document.getElementById('ep-pay').textContent=fmt(pay.totalPay);
+  // Show day type label
+  const noteEl=document.getElementById('ep-note');
+  if(noteEl){noteEl.textContent=pay.note||'';noteEl.style.display=pay.note?'block':'none';}
 }
 
 async function saveEntry(){
@@ -973,18 +1099,32 @@ async function saveEntry(){
     if(!date||!ci||!co){showToast('Date, clock-in and clock-out required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const brk=parseInt(document.getElementById('entry-break').value)||0;
     const{total}=calcHours(ci,co,brk);
-    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
-    const payload={worker_id:parseInt(wid),worker_name:w.name,entry_date:date,clock_in:ci,clock_out:co,break_minutes:brk,total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,notes:document.getElementById('entry-notes').value.trim()};
+    const yearMonth=date.substring(0,7);
     const entryId=document.getElementById('entry-id').value;
+    const soFar=getWorkerMonthHours(wid,yearMonth,entryId||null);
+    const pay=calcPayPreview(total,w.hourly_rate||0,date,soFar);
+    const payload={
+      worker_id:parseInt(wid),worker_name:w.name,entry_date:date,
+      clock_in:ci,clock_out:co,break_minutes:brk,
+      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      hourly_rate:parseFloat(w.hourly_rate||0),
+      ot_rate:parseFloat(w.hourly_rate||0)*1.5,
+      is_weekend:isDoubleTimeDay(date),
+      day_type:getDayType(date),
+      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
+      notes:document.getElementById('entry-notes').value.trim()
+    };
     if(entryId){
       await sbPatch('timesheet_entries',entryId,payload);
       allEntries=allEntries.map(e=>e.id==entryId?{...e,...payload,id:parseInt(entryId)}:e);
-      showToast('Entry updated');
     }else{
       const result=await sbPost('timesheet_entries',payload);
       if(result&&result[0])allEntries.unshift(result[0]);
-      showToast('Entry saved');
     }
+    // Recalculate the full month for this worker and patch changed entries
+    btn.innerHTML='<span class="spinner"></span>Recalculating month…';
+    const patched=await patchMonthRecalc(parseInt(wid),yearMonth,w.hourly_rate||0);
+    showToast(entryId?'Entry updated':'Entry saved'+(patched>0?` · ${patched} entries recalculated`:''));
     closeModal('entry');renderStats();renderDailyTab();
   }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;btn.textContent='Save Entry';
