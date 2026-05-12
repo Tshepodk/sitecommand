@@ -1,402 +1,572 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiteCommand — User Management</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>User Management — SiteCommand</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;min-height:100vh;padding-bottom:64px}
-.header{background:var(--bg2);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:1rem;position:sticky;top:0;z-index:10}
-.logo{font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent);text-transform:uppercase}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh;overflow:hidden}
+.topbar{grid-column:1/-1;grid-row:1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;flex-wrap:wrap}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto;min-width:220px;width:220px;grid-column:1;grid-row:2}
+.main{background:var(--bg);overflow:auto;min-width:0;grid-column:2;grid-row:2;padding:1.5rem}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
 .logo span{color:var(--text2);font-weight:400}
-.shell{max-width:1000px;margin:0 auto;padding:1.5rem}
-.page-title{font-family:var(--font-d);font-size:24px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:4px}
-.page-sub{color:var(--text2);font-size:13px;margin-bottom:1.5rem}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s;flex-shrink:0}
+.conn-dot.ok{background:var(--green)}
+.conn-dot.err{background:var(--red)}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem 6px;margin-bottom:2px}
+.nav-section{padding:0.75rem 0.75rem 0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;white-space:nowrap;overflow:hidden}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.sidebar-footer{margin-top:auto;padding:0.75rem;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg3);border-radius:20px;cursor:pointer;font-size:12px;font-family:var(--font-d);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;border:1px solid var(--border2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:14px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s;text-decoration:none}
 .btn-primary{background:var(--accent);color:#000}
-.btn-primary:hover{background:#e8861a}
-.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-primary:hover{background:var(--accent2)}
 .btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171}
-.btn-sm{padding:4px 10px;font-size:11px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:1rem}
-.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.card-title{font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1.1rem;position:relative;overflow:hidden}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sa::before{background:var(--accent)}.sb::before{background:var(--blue)}.sg::before{background:var(--green)}.sr::before{background:var(--red)}
-.stat-n{font-family:var(--font-d);font-size:26px;font-weight:700;line-height:1;margin-bottom:2px}
-.stat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 12px;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
-td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.btn-sm{font-size:12px;padding:5px 12px}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-intake{background:rgba(20,184,166,0.12);border:1px solid rgba(20,184,166,0.3);color:var(--teal);padding:7px 14px;font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;text-decoration:none}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--bg3)}
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
-.b-admin{background:rgba(245,166,35,0.15);color:var(--accent)}
-.b-pm{background:rgba(59,130,246,0.15);color:#60a5fa}
-.b-foreman{background:rgba(20,184,166,0.15);color:#2dd4bf}
-.b-viewer{background:rgba(139,144,160,0.12);color:var(--text2)}
-/* Role selector card */
-.role-card{background:var(--bg3);border:2px solid var(--border);border-radius:var(--r);padding:12px;text-align:center;cursor:pointer;transition:all 0.15s}
-.role-card:hover{border-color:var(--border2)}
-.role-card.selected{border-color:var(--accent);background:rgba(245,166,35,0.07)}
-.role-icon{font-size:24px;margin-bottom:6px}
-.role-name{font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
-.role-desc{font-size:11px;color:var(--text3);margin-top:3px}
-/* Access toggle */
-.access-proj-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-top:8px}
-.access-proj-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:var(--r);cursor:pointer}
-.access-proj-item:hover{background:var(--bg4)}
-.access-proj-item input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--accent)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;font-family:var(--font-d)}
+.badge-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.badge-blue{background:rgba(59,130,246,0.12);color:var(--blue)}
+.badge-teal{background:rgba(20,184,166,0.12);color:var(--teal)}
+.badge-gray{background:rgba(139,144,160,0.12);color:var(--text2)}
+.badge-red{background:rgba(239,68,68,0.12);color:var(--red)}
+.table-wrap{overflow-x:auto}
+/* Permission table */
+.perm-table th,.perm-table td{padding:10px 12px;font-size:12px}
+.perm-table .check{color:var(--green);font-size:16px}
+.perm-table .cross{color:var(--red);font-size:14px;opacity:0.6}
+.perm-table .note{font-size:10px;color:var(--text3);display:block;margin-top:1px}
 /* Modal */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:flex-end;justify-content:center}
-.modal-bg.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl) var(--rl) 0 0;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
-.modal-title{font-family:var(--font-d);font-size:17px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center}
-.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r)}
-.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
-.form-group{margin-bottom:0.875rem}
-.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:5px}
-.form-input,.form-select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:9px 11px;color:var(--text);font-family:var(--font-b);font-size:14px;outline:none;width:100%;transition:border-color 0.15s}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.2s}
+.modal-backdrop.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:2px 6px;border-radius:4px}
+.modal-close:hover{color:var(--text);background:var(--bg3)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.form-group{margin-bottom:1rem}
+.form-label{display:block;font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;font-family:var(--font-d)}
+.form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-size:13px;font-family:var(--font-b);outline:none;transition:border-color 0.15s}
 .form-input:focus,.form-select:focus{border-color:var(--accent)}
-.admin-only{background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)}
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:10px 16px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
-.toast.ok{background:var(--green);color:#000}.toast.err{background:var(--red);color:#fff}
-@keyframes slideup{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
-.spinner{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:4px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr}.role-cards{grid-template-columns:1fr 1fr}}
+.form-select{cursor:pointer}
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:9999;display:none;animation:slideup 0.2s ease}
+.toast.ok{border-color:rgba(34,197,94,0.4);color:var(--green)}
+.toast.err{border-color:rgba(239,68,68,0.4);color:var(--red)}
+@keyframes slideup{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* Empty state */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-state .icon{font-size:36px;margin-bottom:0.75rem}
+.empty-state p{font-size:13px}
+/* Inline role editor */
+.role-select{background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:3px 8px;font-family:var(--font-d);cursor:pointer;outline:none}
+.role-select:focus{border-color:var(--accent)}
+/* Section divider */
+.section-gap{margin-bottom:1.25rem}
+/* Stats row */
+.user-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.ustat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:0.875rem 1rem}
+.ustat-n{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:3px}
+.ustat-l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em}
+/* Action icon btn */
+.icon-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 7px;border-radius:4px;font-size:13px;transition:all 0.12s}
+.icon-btn:hover{color:var(--text);background:var(--bg3)}
+.icon-btn.danger:hover{color:var(--red);background:rgba(239,68,68,0.08)}
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.main{grid-column:1}.user-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="logo">Site<span>Command</span></div>
-  <div style="width:1px;height:20px;background:var(--border)"></div>
-  <span style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent)">User Management</span>
-  <div style="margin-left:auto;display:flex;gap:8px">
-    <button class="btn btn-ghost btn-sm" onclick="loadUsers()">&#8635; Refresh</button>
-    <a href="index.html" class="btn btn-ghost btn-sm">&#8592; Dashboard</a>
-  </div>
-</div>
-
 <div class="shell">
-  <div class="page-title">User Management</div>
-  <div class="page-sub">Manage user roles and project access — Admin only</div>
-
-  <div id="admin-check" class="admin-only" style="display:none">
-    ⚠️ This page is restricted to Admins only. You are logged in as <strong id="current-role-display">—</strong>.
-  </div>
-
-  <div class="stats-grid" id="user-stats"></div>
-
-  <!-- Role permissions reference -->
-  <div class="card" style="margin-bottom:1.25rem">
-    <div class="card-header"><div class="card-title">Role Permissions</div></div>
-    <div class="card-body" style="padding:0"><div class="table-wrap">
-      <table>
-        <thead><tr><th>Permission</th><th>Admin</th><th>Project Manager</th><th>Site Foreman</th><th>Viewer</th></tr></thead>
-        <tbody>
-          <tr><td>View dashboard &amp; reports</td><td>✅</td><td>✅ (assigned projects)</td><td>✅ (own project)</td><td>✅ (read only)</td></tr>
-          <tr><td>Submit daily reports</td><td>✅</td><td>✅</td><td>✅</td><td>❌</td></tr>
-          <tr><td>Edit / delete reports</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Create / edit projects</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Manage workers &amp; equipment</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Budget &amp; cost categories</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Variation orders</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>PMO — risks, KPIs, lessons</td><td>✅</td><td>✅</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Manage users</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
-          <tr><td>Cost category settings</td><td>✅</td><td>❌</td><td>❌</td><td>❌</td></tr>
-        </tbody>
-      </table>
-    </div></div>
-  </div>
-
-  <!-- Users table -->
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title">All Users</div>
-      <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite User</button>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Projects Access</th><th>Last Sign In</th><th>Actions</th></tr></thead>
-        <tbody id="users-table"></tbody>
-      </table>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="logo">Site<span>Command</span></div>
+    <div style="width:1px;height:24px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:6px"><div class="conn-dot" id="conn-dot"></div><span style="font-size:11px;color:var(--text3)" id="conn-label">Connecting...</span></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+      <a href="intake.html" class="btn-intake">&#128203; Daily Intake</a>
+      <div class="user-chip" onclick="signOut()"><span>&#128100;</span><span id="user-name">...</span><span id="user-role-badge" style="font-size:9px;color:var(--text3);font-family:var(--font-d);font-weight:700;letter-spacing:0.06em">GUEST</span></div>
     </div>
   </div>
-</div>
 
-<!-- Edit User Modal -->
-<div class="modal-bg" id="modal-edit-user">
-  <div class="modal">
-    <div class="modal-title"><span id="edit-user-modal-title">Edit User</span><button class="modal-close" onclick="closeEditModal()">✕</button></div>
-    <input type="hidden" id="edit-user-id"/>
-    <input type="hidden" id="edit-user-email-hidden"/>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <a href="index.html" class="nav-item" style="text-decoration:none"><span>&#9638;</span>Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Work</div>
+      <a href="index.html#tasks" class="nav-item" style="text-decoration:none"><span>&#10003;</span>Project Tasks</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Field Data</div>
+      <a href="intake.html" class="nav-item" style="text-decoration:none"><span>&#128203;</span>Daily Reports</a>
+      <a href="reports.html" class="nav-item" style="text-decoration:none"><span>&#128202;</span>Reports</a>
+      <a href="timesheets.html" class="nav-item" style="text-decoration:none"><span>&#128336;</span>Timesheets</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Admin</div>
+      <a href="users.html" class="nav-item active" style="text-decoration:none"><span>👥</span>User Management</a>
+    </div>
+    <div class="sidebar-footer">
+      <a href="login.html" class="nav-item" style="text-decoration:none;font-size:12px"><span>&#128274;</span>Sign Out</a>
+    </div>
+  </div>
 
-    <div class="form-group">
-      <label class="form-label">Full Name</label>
-      <input class="form-input" id="edit-user-name" placeholder="Full name"/>
+  <!-- Main content -->
+  <div class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">User Management</div>
+        <div class="page-sub">Manage user roles and project access — Admin only</div>
+      </div>
+      <button class="btn btn-primary" onclick="openInviteModal()">+ Invite User</button>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Role</label>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px" class="role-cards">
-        <div class="role-card" id="rc-admin" onclick="selectRole('admin')"><div class="role-icon">👑</div><div class="role-name" style="color:var(--accent)">Admin</div><div class="role-desc">Full access</div></div>
-        <div class="role-card" id="rc-pm" onclick="selectRole('pm')"><div class="role-icon">📋</div><div class="role-name" style="color:var(--blue)">PM</div><div class="role-desc">Manage projects</div></div>
-        <div class="role-card" id="rc-foreman" onclick="selectRole('foreman')"><div class="role-icon">👷</div><div class="role-name" style="color:var(--teal)">Foreman</div><div class="role-desc">Field reports</div></div>
-        <div class="role-card" id="rc-viewer" onclick="selectRole('viewer')"><div class="role-icon">👁</div><div class="role-name">Viewer</div><div class="role-desc">Read only</div></div>
+    <!-- Stats row -->
+    <div class="user-stats" id="user-stats">
+      <div class="ustat"><div class="ustat-n" id="stat-total">—</div><div class="ustat-l">Total Users</div></div>
+      <div class="ustat"><div class="ustat-n" style="color:var(--accent)" id="stat-admin">—</div><div class="ustat-l">Admins</div></div>
+      <div class="ustat"><div class="ustat-n" style="color:var(--blue)" id="stat-pm">—</div><div class="ustat-l">Project Managers</div></div>
+      <div class="ustat"><div class="ustat-n" style="color:var(--teal)" id="stat-foreman">—</div><div class="ustat-l">Foremen / Viewers</div></div>
+    </div>
+
+    <!-- Role Permissions reference -->
+    <div class="card section-gap">
+      <div class="card-header">
+        <div class="card-title">Role Permissions</div>
+        <button class="btn btn-ghost btn-sm" onclick="togglePerms()" id="perms-toggle-btn">Hide</button>
+      </div>
+      <div id="perms-panel">
+        <div class="table-wrap">
+          <table class="perm-table">
+            <thead>
+              <tr>
+                <th style="width:220px">Permission</th>
+                <th>Admin</th>
+                <th>Project Manager</th>
+                <th>Site Foreman</th>
+                <th>Viewer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>View dashboard &amp; reports</td><td><span class="check">✓</span></td><td><span class="check">✓</span><span class="note">assigned projects</span></td><td><span class="check">✓</span><span class="note">own project</span></td><td><span class="check">✓</span><span class="note">read only</span></td></tr>
+              <tr><td>Submit daily reports</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Edit / delete reports</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Create / edit projects</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Manage workers &amp; equipment</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Budget &amp; cost categories</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Variation orders</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>PMO — risks, KPIs, lessons</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Manage users</td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+              <tr><td>Cost category settings</td><td><span class="check">✓</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td><td><span class="cross">✕</span></td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <div class="form-group" id="project-access-section">
-      <label class="form-label">Project Access</label>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Leave all unchecked to give access to all projects (for PM role). Check specific projects to restrict access.</div>
-      <div class="access-proj-list" id="project-access-list"></div>
+    <!-- All Users table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Users</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" id="search-users" placeholder="Search name or email…" style="width:200px;padding:5px 10px;font-size:12px" oninput="filterUsers()"/>
+          <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite User</button>
+        </div>
+      </div>
+      <div id="users-loading" style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">Loading users…</div>
+      <div class="table-wrap" id="users-table-wrap" style="display:none">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Projects Access</th>
+              <th>Last Sign In</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+      <div id="users-empty" class="empty-state" style="display:none">
+        <div class="icon">👥</div>
+        <p>No users found. Invite your first team member to get started.</p>
+      </div>
     </div>
+  </div>
+</div>
 
+<!-- Invite User Modal -->
+<div class="modal-backdrop" id="modal-invite">
+  <div class="modal">
+    <div class="modal-title">
+      <span>Invite User</span>
+      <button class="modal-close" onclick="closeModal('invite')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="inv-name" placeholder="e.g. John Smith" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" id="inv-email" type="email" placeholder="john@company.co.za" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-select" id="inv-role">
+        <option value="viewer">Viewer — read only</option>
+        <option value="foreman">Site Foreman — field reports</option>
+        <option value="pm">Project Manager</option>
+        <option value="admin">Admin — full access</option>
+      </select>
+    </div>
+    <div style="padding:10px 12px;background:var(--bg3);border-radius:var(--r);font-size:12px;color:var(--text3);margin-bottom:0.25rem">
+      ℹ️ The user will receive an email invitation to set their password and sign in.
+    </div>
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" onclick="disableUser()" id="disable-user-btn">Disable User</button>
-      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
-      <button class="btn btn-primary" id="save-user-btn" onclick="saveUserRole()">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeModal('invite')">Cancel</button>
+      <button class="btn btn-primary" id="inv-save-btn" onclick="sendInvite()">Send Invite</button>
     </div>
   </div>
 </div>
 
-<!-- Invite Modal -->
-<div class="modal-bg" id="modal-invite">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title"><span>Invite New User</span><button class="modal-close" onclick="document.getElementById('modal-invite').classList.remove('open')">✕</button></div>
-    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1.25rem;font-size:12px;color:var(--text2)">
-      📧 Send this registration link to your team member. They register themselves and you assign their role here.
+<!-- Edit Role Modal -->
+<div class="modal-backdrop" id="modal-edit-role">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">
+      <span>Edit User Role</span>
+      <button class="modal-close" onclick="closeModal('edit-role')">✕</button>
     </div>
-    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 14px;font-family:var(--font-d);font-size:12px;color:var(--teal);word-break:break-all" id="invite-link"></div>
-    <button class="btn btn-primary" style="width:100%;margin-top:1rem;justify-content:center" onclick="copyInviteLink()">📋 Copy Registration Link</button>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="document.getElementById('modal-invite').classList.remove('open')">Close</button></div>
+    <div style="margin-bottom:1rem;font-size:13px;color:var(--text2)" id="edit-role-user-label"></div>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-select" id="edit-role-select">
+        <option value="viewer">Viewer — read only</option>
+        <option value="foreman">Site Foreman</option>
+        <option value="pm">Project Manager</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <input type="hidden" id="edit-role-uid"/>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('edit-role')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRoleChange()">Save Role</button>
+    </div>
   </div>
 </div>
 
+<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
-const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-// ── Dynamic auth headers — always uses live session token ──────────────────
+// ─── Supabase config ────────────────────────────────────────────────────────
+const SB  = 'https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK  = 'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+function getUserName(){const s=getSession();return s?.user?.user_metadata?.full_name||s?.user?.email?.split('@')[0]||'User';}
+function isAdmin(){return getUserRole()==='admin';}
+
 function getH(){
   try{
     const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
     const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
     return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
-  }catch(e){
-    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
-  }
+  }catch(e){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}
 }
-// For backwards compat — H is now a getter alias
-Object.defineProperty(window,'H',{get:getH,configurable:true});
 
-let allUsers=[],allProfiles=[],allProjects=[],allProjectAccess=[];
-let selectedRole='viewer',editingUserId=null;
-
-const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
-
-function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
-function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
-
-async function sbGet(t,q=""){
-  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{headers:getH()});
-  if(!r.ok)throw new Error(await r.text());return r.json();
+function requireAuth(){
+  const s=getSession();
+  if(!s||s.expires_at<Date.now()){window.location.href='login.html';return false;}
+  return true;
 }
-async function sbPatch(t,id,d){
-  const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});
+
+function signOut(e){
+  if(e)e.preventDefault();
+  if(!confirm('Sign out of SiteCommand?'))return;
+  localStorage.removeItem('sc_session');
+  window.location.href='login.html';
+}
+
+async function sbGet(table,query=''){
+  const r=await fetch(`${SB}/rest/v1/${table}?${query}`,{headers:getH()});
+  if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return[];}
   if(!r.ok)throw new Error(await r.text());
+  return r.json();
 }
-async function sbPost(t,d){
-  const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});
-  if(!r.ok)throw new Error(await r.text());
-}
-async function sbDel(t,q){
-  const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{method:'DELETE',headers:getH()});
+async function sbPatch(table,id,data){
+  const r=await fetch(`${SB}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(data)});
   if(!r.ok)throw new Error(await r.text());
 }
 
-async function loadUsers(){
-  const sess=getSession();
-  const role=getUserRole();
+// ─── State ──────────────────────────────────────────────────────────────────
+let allUsers = [];
 
-  // Check admin
-  if(role!=='admin'){
-    document.getElementById('admin-check').style.display='block';
-    document.getElementById('current-role-display').textContent=role;
-    document.getElementById('users-table').innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem">Admin access required to manage users.</td></tr>`;
+// ─── Init ───────────────────────────────────────────────────────────────────
+async function init(){
+  if(!requireAuth())return;
+
+  // Enforce admin-only
+  if(!isAdmin()){
+    document.querySelector('.main').innerHTML=`
+      <div style="padding:3rem;text-align:center">
+        <div style="font-size:36px;margin-bottom:1rem">🔒</div>
+        <div style="font-family:var(--font-d);font-size:20px;font-weight:700;text-transform:uppercase;margin-bottom:0.5rem">Admin Access Only</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:1.5rem">User management is restricted to administrators.</div>
+        <a href="index.html" class="btn btn-ghost">← Back to Dashboard</a>
+      </div>`;
     return;
   }
 
-  try{
-    // Load profiles, projects, access — use service key for admin operations
-    [allProfiles,allProjects,allProjectAccess]=await Promise.all([
-      sbGet('user_profiles','order=created_at.asc'),
-      sbGet('projects','order=name.asc&active=eq.true'),
-      sbGet('project_access','order=user_email.asc')
-    ]);
+  // Set topbar user info
+  const name=getUserName();
+  const role=getUserRole();
+  document.getElementById('user-name').textContent=name.split(' ')[0];
+  const roleEl=document.getElementById('user-role-badge');
+  if(roleEl){roleEl.textContent=role.toUpperCase();roleEl.style.color={admin:'var(--accent)',pm:'var(--blue)',foreman:'var(--teal)',viewer:'var(--text2)'}[role]||'var(--text2)';}
 
-    // Stats
-    const byRole={admin:0,pm:0,foreman:0,viewer:0};
-    allProfiles.forEach(p=>byRole[p.role]=(byRole[p.role]||0)+1);
-    document.getElementById('user-stats').innerHTML=`
-      <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${allProfiles.length}</div><div class="stat-l">Total Users</div></div>
-      <div class="stat sb"><div class="stat-n" style="color:var(--blue)">${byRole.admin||0}</div><div class="stat-l">Admins</div></div>
-      <div class="stat sg"><div class="stat-n" style="color:var(--green)">${byRole.pm||0}</div><div class="stat-l">Project Managers</div></div>
-      <div class="stat" style="border-top:3px solid var(--teal)"><div class="stat-n" style="color:var(--teal)">${(byRole.foreman||0)}</div><div class="stat-l">Foremen</div></div>
-      <div class="stat" style="border-top:3px solid var(--text3)"><div class="stat-n" style="color:var(--text2)">${byRole.viewer||0}</div><div class="stat-l">Viewers</div></div>`;
-
-    const roleBadge={admin:'b-admin',pm:'b-pm',foreman:'b-foreman',viewer:'b-viewer'};
-    document.getElementById('users-table').innerHTML=allProfiles.length===0
-      ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:2rem"><div style="margin-bottom:12px">No user profiles found.</div><div style="font-size:12px;color:var(--text3)">Users appear here after registering via <strong style="color:var(--teal)">login.html</strong>. If users exist in Supabase Auth but not here, run the back-fill SQL in your migration.</div></td></tr>`
-      :allProfiles.map(u=>{
-        const access=allProjectAccess.filter(a=>a.user_id===u.id);
-        const projList=access.length?access.map(a=>a.project_name).join(', '):'All projects';
-        const isSelf=(getSession()?.user?.id===u.id);
-        return`<tr>
-          <td><div style="font-weight:500">${u.full_name||'—'}</div>${isSelf?'<div style="font-size:10px;color:var(--accent);font-family:var(--font-d);letter-spacing:0.05em">YOU</div>':''}</td>
-          <td style="color:var(--text2);font-size:12px">${u.email||u.id?.slice(0,12)+'...'||'—'}</td>
-          <td>
-            <select class="role-inline-select" data-uid="${u.id}" data-name="${(u.full_name||'').replace(/"/g,'&quot;')}" onchange="quickChangeRole(this)" ${isSelf?'disabled title="Cannot change your own role"':''} style="background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:4px 8px;color:var(--text);font-family:var(--font-d);font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;outline:none;cursor:pointer;${isSelf?'opacity:0.5;cursor:not-allowed':''}">
-              <option value="admin" ${(u.role||'viewer')==='admin'?'selected':''}>&#128081; Admin</option>
-              <option value="pm" ${(u.role||'viewer')==='pm'?'selected':''}>&#128203; PM</option>
-              <option value="foreman" ${(u.role||'viewer')==='foreman'?'selected':''}>&#128119; Foreman</option>
-              <option value="viewer" ${(u.role||'viewer')==='viewer'?'selected':''}>&#128065; Viewer</option>
-            </select>
-          </td>
-          <td style="font-size:12px;color:var(--text2)">${projList}</td>
-          <td style="font-size:11px;color:var(--text3)">${u.created_at?new Date(u.created_at).toLocaleDateString('en-ZA'):'—'}</td>
-          <td><button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}','${(u.full_name||'').replace(/'/g,"\\'")}','${u.role||'viewer'}')">&#9881; Manage</button></td>
-        </tr>`;
-      }).join('');
-  }catch(e){showToast('Error loading users: '+e.message,'err');console.error(e);}
+  await loadUsers();
 }
 
-async function quickChangeRole(select){
-  const uid=select.dataset.uid;
-  const name=select.dataset.name;
-  const newRole=select.value;
-  const prev=select.querySelector('option[selected]')?.value||select.dataset.prev||'viewer';
-  if(!confirm(\`Change \${name||'this user'} to \${newRole.toUpperCase()}?\`)){
-    // revert
-    select.value=prev;return;
+async function loadUsers(){
+  try{
+    // Fetch user profiles from Supabase
+    allUsers = await sbGet('user_profiles','order=created_at.asc');
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
+    renderUsers(allUsers);
+  }catch(e){
+    console.error('Failed to load users:',e);
+    document.getElementById('conn-dot').className='conn-dot err';
+    document.getElementById('conn-label').textContent='Connection error';
+    document.getElementById('users-loading').textContent='Failed to load users. Check your connection.';
   }
-  select.disabled=true;
-  try{
-    await sbPatch('user_profiles',uid,{role:newRole});
-    select.querySelectorAll('option').forEach(o=>{o.selected=(o.value===newRole);o.removeAttribute('selected');});
-    select.querySelector(\`option[value="\${newRole}"]\`).setAttribute('selected','');
-    select.dataset.prev=newRole;
-    showToast(\`\${name||'User'} role updated to \${newRole.toUpperCase()}\`);
-    await loadUsers();
-  }catch(e){showToast('Failed: '+e.message,'err');select.value=prev;}
-  select.disabled=false;
 }
 
+function renderUsers(users){
+  document.getElementById('users-loading').style.display='none';
 
-function selectRole(role){
-  selectedRole=role;
-  ['admin','pm','foreman','viewer'].forEach(r=>{
-    const el=document.getElementById('rc-'+r);
-    if(el)el.classList.toggle('selected',r===role);
-  });
-  // Show/hide project access for non-admin roles
-  const section=document.getElementById('project-access-section');
-  if(section)section.style.display=role==='admin'?'none':'block';
+  // Stats
+  document.getElementById('stat-total').textContent=users.length;
+  document.getElementById('stat-admin').textContent=users.filter(u=>u.role==='admin').length;
+  document.getElementById('stat-pm').textContent=users.filter(u=>u.role==='pm').length;
+  document.getElementById('stat-foreman').textContent=users.filter(u=>u.role==='foreman'||u.role==='viewer').length;
+
+  if(users.length===0){
+    document.getElementById('users-empty').style.display='block';
+    document.getElementById('users-table-wrap').style.display='none';
+    return;
+  }
+
+  document.getElementById('users-empty').style.display='none';
+  document.getElementById('users-table-wrap').style.display='block';
+
+  const tbody=document.getElementById('users-tbody');
+  tbody.innerHTML=users.map(u=>{
+    const roleBadge={
+      admin:`<span class="badge badge-amber">Admin</span>`,
+      pm:`<span class="badge badge-blue">Project Manager</span>`,
+      foreman:`<span class="badge badge-teal">Foreman</span>`,
+      viewer:`<span class="badge badge-gray">Viewer</span>`
+    }[u.role]||`<span class="badge badge-gray">${u.role||'—'}</span>`;
+
+    const lastSignIn=u.last_sign_in_at
+      ? new Date(u.last_sign_in_at).toLocaleDateString('en-ZA',{day:'2-digit',month:'short',year:'numeric'})
+      : '<span style="color:var(--text3)">Never</span>';
+
+    const status=u.active!==false
+      ? `<span class="badge badge-teal" style="font-size:10px">Active</span>`
+      : `<span class="badge badge-red" style="font-size:10px">Inactive</span>`;
+
+    const projects = u.projects_access
+      ? (Array.isArray(u.projects_access)?u.projects_access.join(', '):u.projects_access)
+      : '<span style="color:var(--text3)">All</span>';
+
+    return `<tr>
+      <td><strong style="font-size:13px">${esc(u.full_name||'—')}</strong></td>
+      <td style="color:var(--text2)">${esc(u.email||'—')}</td>
+      <td>${roleBadge}</td>
+      <td style="color:var(--text2);font-size:12px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${projects}</td>
+      <td style="color:var(--text2)">${lastSignIn}</td>
+      <td>${status}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="icon-btn" title="Edit role" onclick="openEditRole('${esc(u.id)}','${esc(u.full_name||u.email||'')}','${esc(u.role||'viewer')}')">✏️</button>
+          <button class="icon-btn danger" title="Deactivate" onclick="toggleActive('${esc(u.id)}',${u.active!==false},'${esc(u.full_name||u.email||'')}')">
+            ${u.active!==false?'🚫':'✅'}
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
-function openEditModal(userId,name,currentRole){
-  editingUserId=userId;
-  document.getElementById('edit-user-id').value=userId;
-  document.getElementById('edit-user-modal-title').textContent='Edit: '+name;
-  document.getElementById('edit-user-name').value=name;
-  selectRole(currentRole||'viewer');
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
-  // Build project access checkboxes
-  const currentAccess=allProjectAccess.filter(a=>a.user_id===userId).map(a=>a.project_name);
-  const list=document.getElementById('project-access-list');
-  list.innerHTML=allProjects.map(p=>`
-    <label class="access-proj-item">
-      <input type="checkbox" value="${p.name}" ${currentAccess.includes(p.name)?'checked':''}/>
-      <span style="font-size:13px">${p.name}</span>
-      <span style="font-size:11px;color:var(--text3);margin-left:auto">${p.client||''}</span>
-    </label>`).join('');
-
-  document.getElementById('modal-edit-user').classList.add('open');
+function filterUsers(){
+  const q=document.getElementById('search-users').value.toLowerCase().trim();
+  if(!q){renderUsers(allUsers);return;}
+  renderUsers(allUsers.filter(u=>(u.full_name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)));
 }
 
-function closeEditModal(){
-  document.getElementById('modal-edit-user').classList.remove('open');
-  editingUserId=null;
+// ─── Permissions panel toggle ────────────────────────────────────────────────
+let permsVisible=true;
+function togglePerms(){
+  permsVisible=!permsVisible;
+  document.getElementById('perms-panel').style.display=permsVisible?'block':'none';
+  document.getElementById('perms-toggle-btn').textContent=permsVisible?'Hide':'Show';
 }
 
-async function saveUserRole(){
-  if(!editingUserId){showToast('No user selected','err');return;}
-  const btn=document.getElementById('save-user-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving...';
-  const name=document.getElementById('edit-user-name').value.trim();
+// ─── Modal helpers ───────────────────────────────────────────────────────────
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+// Close on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(bd=>{
+  bd.addEventListener('click',e=>{if(e.target===bd)bd.classList.remove('open');});
+});
 
-  try{
-    // 1. Update user_profiles role
-    await sbPatch('user_profiles',editingUserId,{role:selectedRole,full_name:name});
-
-    // 2. Update project access — delete existing then re-insert selected
-    await sbDel('project_access','user_id=eq.'+editingUserId);
-    const checkedProjects=[...document.querySelectorAll('#project-access-list input:checked')].map(i=>i.value);
-    if(checkedProjects.length>0&&selectedRole!=='admin'){
-      await Promise.all(checkedProjects.map(pname=>
-        sbPost('project_access',{user_id:editingUserId,project_name:pname,access_level:selectedRole})
-      ));
-    }
-
-    showToast('User updated successfully');
-    closeEditModal();
-    await loadUsers();
-  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
-  btn.disabled=false;btn.textContent='Save Changes';
-}
-
-async function disableUser(){
-  if(!editingUserId){return;}
-  const name=document.getElementById('edit-user-name').value;
-  if(!confirm(`Disable account for ${name}?\n\nThey will not be able to log in. You can re-enable them by setting their role back.`))return;
-  try{
-    await sbPatch('user_profiles',editingUserId,{active:false,role:'viewer'});
-    showToast('User disabled');closeEditModal();await loadUsers();
-  }catch(e){showToast('Failed to disable user','err');}
-}
-
+// ─── Invite User ─────────────────────────────────────────────────────────────
 function openInviteModal(){
-  const link=`https://tshepodk.github.io/sitecommand/login.html`;
-  document.getElementById('invite-link').textContent=link;
-  document.getElementById('modal-invite').classList.add('open');
+  document.getElementById('inv-name').value='';
+  document.getElementById('inv-email').value='';
+  document.getElementById('inv-role').value='viewer';
+  openModal('invite');
+  setTimeout(()=>document.getElementById('inv-name').focus(),100);
 }
 
-function copyInviteLink(){
-  const link=document.getElementById('invite-link').textContent;
-  navigator.clipboard.writeText(link).then(()=>showToast('Link copied!')).catch(()=>{
-    const ta=document.createElement('textarea');ta.value=link;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('Link copied!');
-  });
+async function sendInvite(){
+  const name=document.getElementById('inv-name').value.trim();
+  const email=document.getElementById('inv-email').value.trim().toLowerCase();
+  const role=document.getElementById('inv-role').value;
+
+  if(!name){showToast('Please enter a name','err');return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Please enter a valid email','err');return;}
+
+  const btn=document.getElementById('inv-save-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+
+  try{
+    // Call Supabase Admin invite endpoint via edge function or direct auth admin API
+    // Using the Supabase auth admin invite (requires service role — this uses the anon key flow)
+    const r=await fetch(`${SB}/auth/v1/invite`,{
+      method:'POST',
+      headers:{...getH(),'apikey':SK},
+      body:JSON.stringify({email,data:{full_name:name,role}})
+    });
+
+    if(r.ok||r.status===422){
+      // 422 = user already invited/exists — still show success to admin
+      // Also create/upsert a profile row so user appears in table immediately
+      try{
+        await fetch(`${SB}/rest/v1/user_profiles`,{
+          method:'POST',
+          headers:{...getH(),'Prefer':'resolution=ignore-duplicates,return=minimal'},
+          body:JSON.stringify({full_name:name,email,role,active:true})
+        });
+      }catch(pe){console.warn('Profile pre-create failed (may already exist):',pe);}
+      showToast('Invite sent to '+email);
+      closeModal('invite');
+      await loadUsers();
+    } else {
+      const err=await r.json().catch(()=>({}));
+      // If invite API isn't available with anon key, create a pending profile
+      if(r.status===401||r.status===403){
+        // Fallback: store pending user in user_profiles so admin can track it
+        try{
+          await fetch(`${SB}/rest/v1/user_profiles`,{
+            method:'POST',
+            headers:{...getH(),'Prefer':'resolution=ignore-duplicates,return=minimal'},
+            body:JSON.stringify({full_name:name,email,role,active:false,pending_invite:true})
+          });
+          showToast('User added (pending signup — share the app URL with them)');
+          closeModal('invite');
+          await loadUsers();
+        }catch(fe){
+          showToast('Could not save user. Check Supabase permissions.','err');
+        }
+      } else {
+        showToast((err.msg||err.message||'Invite failed'),'err');
+      }
+    }
+  }catch(e){
+    showToast('Network error: '+e.message,'err');
+  }finally{
+    btn.disabled=false;btn.textContent='Send Invite';
+  }
 }
 
-document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
-
-// Check auth — admin only
-const sess=getSession();
-if(!sess||sess.expires_at<Date.now()){
-  window.location.href='login.html';
-} else {
-  loadUsers();
+// ─── Edit Role ───────────────────────────────────────────────────────────────
+function openEditRole(uid,name,role){
+  document.getElementById('edit-role-uid').value=uid;
+  document.getElementById('edit-role-user-label').textContent='Editing: '+name;
+  document.getElementById('edit-role-select').value=role;
+  openModal('edit-role');
 }
+
+async function saveRoleChange(){
+  const uid=document.getElementById('edit-role-uid').value;
+  const role=document.getElementById('edit-role-select').value;
+  if(!uid)return;
+  try{
+    await sbPatch('user_profiles',uid,{role});
+    showToast('Role updated');
+    closeModal('edit-role');
+    await loadUsers();
+  }catch(e){
+    showToast('Failed to update role: '+e.message,'err');
+  }
+}
+
+// ─── Toggle Active ───────────────────────────────────────────────────────────
+async function toggleActive(uid,currentlyActive,name){
+  const action=currentlyActive?'deactivate':'activate';
+  if(!confirm(`${action.charAt(0).toUpperCase()+action.slice(1)} ${name}?`))return;
+  try{
+    await sbPatch('user_profiles',uid,{active:!currentlyActive});
+    showToast(`User ${action}d`);
+    await loadUsers();
+  }catch(e){
+    showToast('Failed: '+e.message,'err');
+  }
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+type;
+  el.style.display='block';
+  setTimeout(()=>el.style.display='none',3500);
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+init();
 </script>
 </body>
 </html>
