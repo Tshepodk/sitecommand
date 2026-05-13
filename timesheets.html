@@ -579,6 +579,7 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
+let allProjects=[];  // projects table
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
@@ -587,17 +588,26 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries]=await Promise.all([
+    [allWorkers,allEntries,allProjects]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc')
+      sbGet('timesheet_entries','order=entry_date.desc'),
+      sbGet('projects','order=name.asc').catch(()=>[])
     ]);
+    if(!allEntries)allEntries=[];
+    if(!allProjects)allProjects=[];
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
   }catch(e){
     // If timesheet_entries table doesn't exist yet, workers still load
-    try{allWorkers=await sbGet('workers','order=name.asc&active=eq.true');}catch(e2){}
+    try{
+      [allWorkers,allProjects]=await Promise.all([
+        sbGet('workers','order=name.asc&active=eq.true'),
+        sbGet('projects','order=name.asc').catch(()=>[])
+      ]);
+    }catch(e2){}
     allEntries=[];
+    if(!allProjects)allProjects=[];
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
@@ -1155,8 +1165,13 @@ function openBatchModal(){
   batchTimeData={};
   batchDate='';
   document.getElementById('batch-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
-  document.getElementById('batch-proj-filter').innerHTML='<option value="">All Projects</option>'+
-    [...new Set(allWorkers.map(w=>w.project_name).filter(Boolean))].map(p=>`<option>${p}</option>`).join('');
+
+  // Populate project filter from allProjects table; fall back to worker project_name values
+  const projectNames=allProjects.length>0
+    ? allProjects.map(p=>p.name).filter(Boolean)
+    : [...new Set(allWorkers.map(w=>w.project_name).filter(Boolean))];
+  document.getElementById('batch-proj-filter').innerHTML=
+    '<option value="">All Projects</option>'+projectNames.map(p=>`<option value="${p}">${p}</option>`).join('');
   clearBatchFilters();
   showBatchStep(1);
   renderBatchWorkerList();
@@ -1189,7 +1204,11 @@ function renderBatchWorkerList(){
   const alreadyLogged=new Set(allEntries.filter(e=>e.entry_date===date).map(e=>e.worker_id));
   const WFB={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
   const filtered=allWorkers.filter(w=>{
-    if(proj&&w.project_name!==proj)return false;
+    if(proj){
+      // Match by project_name directly, or resolve via project_id → allProjects
+      const workerProjName=w.project_name||(allProjects.find(p=>p.id==w.project_id)||{}).name||'';
+      if(workerProjName!==proj)return false;
+    }
     if(type&&w.type!==type)return false;
     if(search&&!w.name.toLowerCase().includes(search))return false;
     return true;
@@ -1208,7 +1227,7 @@ function renderBatchWorkerList(){
         <div style="font-size:12px;color:var(--purple);font-weight:600">${w.ot_rate?'R'+parseFloat(w.ot_rate).toFixed(0):'<span style="color:var(--text3)">—</span>'}</div>
         <div style="font-size:12px;color:var(--text2)">${w.ot_threshold||8}h</div>
         <div><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
-        <div style="font-size:11px;color:var(--text3)">${w.project_name||'—'}</div>
+        <div style="font-size:11px;color:var(--text3)">${w.project_name||(allProjects.find(p=>p.id==w.project_id)||{}).name||'—'}</div>
         <div style="font-size:11px;color:${logged?'var(--accent)':'var(--text3)'}">${logged?'✓ Logged':'—'}</div>
       </div>`;
     }).join('');
