@@ -127,6 +127,28 @@ tr:hover td{background:var(--bg3)}
 .empty-state h3{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase}
 /* Summary table highlight */
 .total-row td{background:rgba(245,166,35,0.06);font-weight:700}
+.btn-purple{background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:var(--purple)}
+.btn-purple:hover{background:rgba(168,85,247,0.22)}
+/* Batch modal */
+.modal-xl{width:820px}
+.step-bar{display:flex;align-items:center;gap:0;margin-bottom:1.5rem}
+.step-item{display:flex;align-items:center;gap:8px;font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);flex-shrink:0}
+.step-item.active{color:var(--accent)}
+.step-item.done{color:var(--teal)}
+.step-num{width:24px;height:24px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.step-line{flex:1;height:2px;background:var(--border);margin:0 10px}
+.step-line.done{background:var(--teal)}
+.select-all-bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;margin-top:1rem}
+.worker-check-row{display:grid;grid-template-columns:32px 1fr 100px 90px 70px 70px 60px 80px 80px 60px;gap:8px;align-items:center;padding:8px 12px;border-left:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s}
+.worker-check-row:hover{background:var(--bg3)}
+.worker-check-row.selected{background:rgba(245,166,35,0.06);border-left:2px solid var(--accent)}
+.worker-check-row.disabled{opacity:0.5;cursor:not-allowed}
+.wch-hdr{display:grid;grid-template-columns:32px 1fr 100px 90px 70px 70px 60px 80px 80px 60px;gap:8px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:10px}
+.btr-grid{display:grid;grid-template-columns:160px 90px 90px 70px 1fr 60px 70px 80px;gap:8px;align-items:center;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px}
+.qf-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(245,166,35,0.04);border:1px solid rgba(245,166,35,0.15);border-radius:var(--r);margin-bottom:1rem;flex-wrap:wrap}
+.preview-row{display:grid;grid-template-columns:180px 1fr 80px 80px 90px;gap:8px;align-items:center;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px}
+.cb{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
 /* Mobile */
 @media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)!important}.worker-ts-row{grid-template-columns:1fr 1fr;gap:8px}.fg2{grid-template-columns:1fr}}
 </style>
@@ -172,6 +194,7 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
+          <button class="btn btn-purple btn-sm" onclick="openBatchModal()">👥 Batch Entry</button>
           <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
         </div>
       </div>
@@ -207,7 +230,7 @@ tr:hover td{background:var(--bg3)}
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--teal)" id="day-total-hours">0h</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Regular</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--text)" id="day-total-regular">0h</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Overtime</div><div style="font-family:var(--font-d);font-size:22px;font-weight:700;color:var(--purple)" id="day-total-ot">0h</div></div>
-              <div style="margin-left:auto" data-earnings><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Day Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="day-total-pay">R 0</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Day Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="day-total-pay">R 0</div></div>
             </div>
           </div>
         </div>
@@ -217,7 +240,7 @@ tr:hover td{background:var(--bg3)}
       <div class="tab-content" id="tab-weekly">
         <div class="card">
           <div class="card-header">
-            <div class="card-title" id="weekly-card-title">Weekly Summary</div>
+            <div class="card-title" id="weekly-card-title">Weekly Income Summary</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <label style="font-size:12px;color:var(--text2)">Week of</label>
               <input type="date" class="form-input" id="weekly-start" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderWeeklyTab()"/>
@@ -228,7 +251,7 @@ tr:hover td{background:var(--bg3)}
             <table>
               <thead>
                 <tr>
-                  <th>Employee</th><th>Role</th><th data-earnings>Rate</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th><th>Total Hrs</th><th>OT Hrs</th><th data-earnings>Week Pay</th>
+                  <th>Employee</th><th>Role</th><th>Rate</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th><th>Total Hrs</th><th>OT Hrs</th><th>Week Pay</th>
                 </tr>
               </thead>
               <tbody id="weekly-table"></tbody>
@@ -238,7 +261,7 @@ tr:hover td{background:var(--bg3)}
             <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="wk-total-hrs">0h</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="wk-total-ot">0h</div></div>
-              <div style="margin-left:auto" data-earnings><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Weekly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="wk-total-pay">R 0</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Weekly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="wk-total-pay">R 0</div></div>
             </div>
           </div>
         </div>
@@ -258,7 +281,7 @@ tr:hover td{background:var(--bg3)}
             <table>
               <thead>
                 <tr>
-                  <th>Employee</th><th>Role</th><th data-earnings>Hourly Rate</th><th data-earnings>OT Rate</th><th>Days Worked</th><th>Total Hours</th><th>OT Hours</th><th data-earnings>Regular Pay</th><th data-earnings>OT Pay</th><th data-earnings>Monthly Total</th>
+                  <th>Employee</th><th>Role</th><th>Hourly Rate</th><th>OT Rate</th><th>Days Worked</th><th>Total Hours</th><th>OT Hours</th><th>Regular Pay</th><th>OT Pay</th><th>Monthly Total</th>
                 </tr>
               </thead>
               <tbody id="monthly-table"></tbody>
@@ -269,7 +292,7 @@ tr:hover td{background:var(--bg3)}
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Days Worked</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="mo-total-days">0</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="mo-total-hrs">0h</div></div>
               <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="mo-total-ot">0h</div></div>
-              <div style="margin-left:auto" data-earnings><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Monthly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="mo-total-pay">R 0</div></div>
+              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Monthly Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="mo-total-pay">R 0</div></div>
             </div>
           </div>
         </div>
@@ -359,7 +382,7 @@ tr:hover td{background:var(--bg3)}
         <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="ep-total">0.00h</div></div>
         <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Regular</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700" id="ep-regular">0.00h</div></div>
         <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Overtime</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="ep-ot">0.00h</div></div>
-        <div style="margin-left:auto" data-earnings><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Earnings</div><div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:var(--accent)" id="ep-pay">R 0.00</div></div>
+        <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Earnings</div><div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:var(--accent)" id="ep-pay">R 0.00</div></div>
       </div>
     </div>
 
@@ -420,6 +443,100 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+<!-- ════════════════════ MODAL: BATCH ENTRY ════════════════════ -->
+<div class="modal-bg" id="modal-batch">
+  <div class="modal modal-xl">
+    <div class="modal-title">
+      <span>👥 Batch Time Entry</span>
+      <button class="modal-close" onclick="closeModal('batch')">✕</button>
+    </div>
+    <div class="step-bar">
+      <div class="step-item active" id="step1-ind"><div class="step-num">1</div>Filter & Select</div>
+      <div class="step-line" id="step-line-1"></div>
+      <div class="step-item" id="step2-ind"><div class="step-num">2</div>Enter Times</div>
+      <div class="step-line" id="step-line-2"></div>
+      <div class="step-item" id="step3-ind"><div class="step-num">3</div>Preview & Save</div>
+    </div>
+    <!-- STEP 1 -->
+    <div id="batch-step1">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:1rem">
+        <div class="fg3" style="margin-bottom:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Date *</label>
+            <input class="form-input" type="date" id="batch-date"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Filter by Project</label>
+            <select class="form-select" id="batch-proj-filter" onchange="renderBatchWorkerList()">
+              <option value="">All Projects</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">Filter by Type</label>
+            <select class="form-select" id="batch-type-filter" onchange="renderBatchWorkerList()">
+              <option value="">All Types</option>
+              <option>Civil</option><option>Telecoms</option><option>Electrical</option>
+              <option>Supervisor</option><option>Subcontractor</option><option>Plant Operator</option>
+              <option>Survey</option><option>HSE Officer</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" type="text" id="batch-search" placeholder="🔍 Search worker name…" style="font-size:12px;padding:6px 10px" oninput="renderBatchWorkerList()"/>
+          <button class="btn btn-ghost btn-sm" onclick="clearBatchFilters()">Clear filters</button>
+        </div>
+      </div>
+      <div class="select-all-bar">
+        <input type="checkbox" class="cb" id="batch-select-all" onchange="toggleSelectAll(this.checked)"/>
+        <label for="batch-select-all" style="cursor:pointer;font-weight:600;font-size:12px">Select All Visible</label>
+        <span id="batch-selected-count" style="color:var(--accent);font-weight:700;margin-left:auto;font-family:var(--font-d);font-size:14px">0 selected</span>
+      </div>
+      <div class="wch-hdr">
+        <span></span><span>Name</span><span>Role</span><span>Type</span><span>Rate/hr</span><span>OT/hr</span><span>OT Thr</span><span>Status</span><span>Project</span><span>Today?</span>
+      </div>
+      <div id="batch-worker-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
+        <button class="btn btn-primary" onclick="goToBatchStep2()" id="batch-next-btn" disabled>Next: Enter Times →</button>
+      </div>
+    </div>
+    <!-- STEP 2 -->
+    <div id="batch-step2" style="display:none">
+      <div class="qf-bar">
+        <span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase">⚡ Quick Fill</span>
+        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">In</label><input type="time" id="qf-in" class="form-input" style="width:100px;padding:4px 8px;font-size:13px"/></div>
+        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Out</label><input type="time" id="qf-out" class="form-input" style="width:100px;padding:4px 8px;font-size:13px"/></div>
+        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(m)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="30" min="0"/></div>
+        <button class="btn btn-ghost btn-sm" onclick="applyQuickFill()">Apply to All</button>
+      </div>
+      <div style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
+        📅 <strong id="batch-date-label"></strong> &nbsp;·&nbsp; Adjust individual times as needed.
+      </div>
+      <div style="display:grid;grid-template-columns:160px 90px 90px 70px 1fr 60px 70px 80px;gap:8px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">
+        <span>Worker</span><span>Clock In</span><span>Clock Out</span><span>Break(m)</span><span>Notes</span><span>Total</span><span>OT</span><span>Pay</span>
+      </div>
+      <div id="batch-time-rows" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="goToBatchStep1()">← Back</button>
+        <button class="btn btn-primary" onclick="goToBatchStep3()">Next: Preview →</button>
+      </div>
+    </div>
+    <!-- STEP 3 -->
+    <div id="batch-step3" style="display:none">
+      <div id="batch-skip-notice" style="display:none;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--accent)"></div>
+      <div style="display:grid;grid-template-columns:180px 1fr 80px 80px 90px;gap:8px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">
+        <span>Worker</span><span>Times</span><span>Total</span><span>OT</span><span>Pay</span>
+      </div>
+      <div id="batch-preview-rows" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
+      <div id="batch-preview-total" style="display:flex;gap:2rem;justify-content:flex-end;padding:12px 14px;background:rgba(245,166,35,0.04);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);font-family:var(--font-d);font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="goToBatchStep2back()">← Back</button>
+        <button class="btn btn-primary" onclick="saveBatchEntries()" id="batch-save-btn">💾 Save All Entries</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -427,35 +544,6 @@ tr:hover td{background:var(--bg3)}
 // ── Supabase config (mirrors index.html) ──────────────────────────────────────
 const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
 const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
-
-// ── RBAC helpers ──────────────────────────────────────────────────────────────
-function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
-function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
-function isForeman(){const r=getUserRole();return r==='foreman';}
-function canSeeEarnings(){const r=getUserRole();return['admin','pm'].includes(r);}
-
-// Applied after init() loads data — hides all pay/rate UI for foreman role
-function applyTimesheetRBAC(){
-  if(canSeeEarnings())return; // admin & pm see everything
-  // Hide earnings columns/cells marked data-earnings
-  document.querySelectorAll('[data-earnings]').forEach(el=>el.style.display='none');
-  // Hide Worker Rates tab button
-  document.querySelectorAll('.tab-btn').forEach(btn=>{
-    if(btn.textContent.includes('Worker Rates'))btn.style.display='none';
-  });
-  // Hide Manage Rates button in page header
-  document.querySelectorAll('button').forEach(btn=>{
-    if(btn.textContent.includes('Manage Rates'))btn.style.display='none';
-  });
-  // Hide rate preview in entry modal — add data-earnings so it stays hidden
-  const rp=document.getElementById('entry-rate-preview');
-  if(rp){rp.dataset.earnings='1';rp.style.display='none';}
-  // Prevent onWorkerSelect from ever showing the rate preview for foremen
-  window._foremanMode=true;
-  // Update page sub-title to remove "income" wording
-  const sub=document.querySelector('.page-sub');
-  if(sub)sub.textContent='Clock in/out — log daily time entries for your workers';
-}
 
 function getH(){
   try{
@@ -521,7 +609,6 @@ async function init(){
   renderStats();
   renderDailyTab();
   renderRatesTab();
-  applyTimesheetRBAC();
 }
 
 function showTableSetupBanner(){
@@ -574,7 +661,6 @@ function switchTab(name,el){
   if(name==='weekly')renderWeeklyTab();
   if(name==='monthly')renderMonthlyTab();
   if(name==='workers')renderRatesTab();
-  applyTimesheetRBAC();
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -645,7 +731,7 @@ function renderStats(){
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayEntries.length}</div><div class="stat-l">Today's Entries</div><div class="stat-sub">${todayEntries.reduce((a,e)=>a+(e.total_hours||0),0).toFixed(1)}h logged</div></div>
     <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allEntries.length}</div><div class="stat-l">Total Entries</div><div class="stat-sub">${uniqueWorkers} employees</div></div>
     <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div></div>
-    <div class="stat-card s-amber" data-earnings><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
 }
 
 // ── DAILY TAB ─────────────────────────────────────────────────────────────────
@@ -675,7 +761,7 @@ function renderDailyTab(){
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Total</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Regular</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Overtime</div>
-      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600" data-earnings>Earnings</div>
+      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Earnings</div>
       <div></div>
     </div>
     ${dayEntries.map(e=>{
@@ -695,7 +781,7 @@ function renderDailyTab(){
           <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>
           ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${e.ot_rate||0}/hr</div>`:''}
         </div>
-        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)" data-earnings>${fmt(e.total_pay||0)}</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
         <div style="display:flex;gap:4px">
           <button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})" title="Edit">✏</button>
           <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})" title="Delete">✕</button>
@@ -713,7 +799,6 @@ function renderDailyTab(){
   document.getElementById('day-total-ot').textContent=fmtH(dayTotalOT);
   document.getElementById('day-total-pay').textContent=fmt(dayTotalPay);
   totalsEl.style.display='flex';
-  applyTimesheetRBAC();
 }
 
 // ── WEEKLY TAB ────────────────────────────────────────────────────────────────
@@ -758,7 +843,7 @@ function renderWeeklyTab(){
     return`<tr>
       <td><div style="font-weight:500">${w.name}</div></td>
       <td style="color:var(--text2);font-size:12px">${wkr.role||'—'}</td>
-      <td style="font-size:12px;color:var(--text3)" data-earnings>R${wkr.hourly_rate||'—'}/hr</td>
+      <td style="font-size:12px;color:var(--text3)">R${wkr.hourly_rate||'—'}/hr</td>
       ${dates.map((d,i)=>{
         const h=w.days[d]||0;
         const wknd=i>=5;
@@ -767,14 +852,14 @@ function renderWeeklyTab(){
       }).join('')}
       <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(w.totalHrs)}</td>
       <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--purple)">${w.otHrs>0?fmtH(w.otHrs):'—'}</td>
-      <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)" data-earnings>${fmt(w.totalPay)}</td>
+      <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
     </tr>`;
   }).join('')+`<tr class="total-row">
     <td colspan="3" style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Week Totals</td>
     ${dates.map(()=>'<td></td>').join('')}
     <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(wkTotalHrs)}</td>
     <td style="font-family:var(--font-d);font-size:14px;font-weight:800;color:var(--purple)">${fmtH(wkTotalOT)}</td>
-    <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)" data-earnings>${fmt(wkTotalPay)}</td>
+    <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(wkTotalPay)}</td>
   </tr>`;
 
   document.getElementById('wk-total-hrs').textContent=fmtH(wkTotalHrs);
@@ -836,21 +921,21 @@ function renderMonthlyTab(){
   document.getElementById('monthly-table').innerHTML=workers.map(w=>`<tr>
     <td><div style="font-weight:500">${w.name}</div></td>
     <td style="color:var(--text2);font-size:12px">${w.role||'—'}</td>
-    <td style="font-family:var(--font-d);font-weight:700;color:var(--teal)" data-earnings>R ${(w.hourlyRate||0).toFixed(2)}/hr</td>
-    <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)" data-earnings>R ${(w.otRate||0).toFixed(2)}/hr</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--teal)">R ${(w.hourlyRate||0).toFixed(2)}/hr</td>
+    <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)">R ${(w.otRate||0).toFixed(2)}/hr</td>
     <td style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue)">${w.days.size}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmtH(w.totalHrs)}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:${w.otHrs>0?'var(--purple)':'var(--text3)'}">${w.otHrs>0?fmtH(w.otHrs):'—'}</td>
-    <td style="color:var(--text2)" data-earnings>${fmt(w.regularPay)}</td>
-    <td style="color:var(--purple)" data-earnings>${w.otPay>0?fmt(w.otPay):'—'}</td>
-    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)" data-earnings>${fmt(w.totalPay)}</td>
+    <td style="color:var(--text2)">${fmt(w.regularPay)}</td>
+    <td style="color:var(--purple)">${w.otPay>0?fmt(w.otPay):'—'}</td>
+    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
   </tr>`).join('')+`<tr class="total-row">
     <td colspan="4" style="font-family:var(--font-d);font-weight:700;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Month Totals</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--blue)">${moTotalDays}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(moTotalHrs)}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--purple)">${fmtH(moTotalOT)}</td>
     <td colspan="2"></td>
-    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)" data-earnings>${fmt(moTotalPay)}</td>
+    <td style="font-family:var(--font-d);font-size:17px;font-weight:800;color:var(--accent)">${fmt(moTotalPay)}</td>
   </tr>`;
 
   document.getElementById('mo-total-days').textContent=moTotalDays;
@@ -926,7 +1011,6 @@ function onWorkerSelect(){
   const wid=document.getElementById('entry-worker').value;
   const w=allWorkers.find(x=>x.id==wid);
   const preview=document.getElementById('entry-rate-preview');
-  if(window._foremanMode){preview.style.display='none';recalcEntryHours();return;}
   if(w&&(w.hourly_rate||w.ot_rate)){
     document.getElementById('entry-rate-text').innerHTML=
       `👷 <strong>${w.name}</strong> — Hourly: <strong style="color:var(--teal)">R${parseFloat(w.hourly_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT: <strong style="color:var(--purple)">R${parseFloat(w.ot_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT threshold: <strong>${w.ot_threshold||8}h/day</strong>`;
@@ -1059,6 +1143,237 @@ async function saveRate(){
     renderRatesTab();
   }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;btn.textContent='Save Rate';
+}
+
+// ── BATCH ENTRY ───────────────────────────────────────────────────────────────
+let batchSelectedIds=new Set();
+let batchTimeData={};
+let batchDate='';
+
+function openBatchModal(){
+  batchSelectedIds=new Set();
+  batchTimeData={};
+  batchDate='';
+  document.getElementById('batch-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
+  document.getElementById('batch-proj-filter').innerHTML='<option value="">All Projects</option>'+
+    [...new Set(allWorkers.map(w=>w.project_name).filter(Boolean))].map(p=>`<option>${p}</option>`).join('');
+  clearBatchFilters();
+  showBatchStep(1);
+  renderBatchWorkerList();
+  updateBatchCount();
+  document.getElementById('modal-batch').classList.add('open');
+}
+
+function showBatchStep(n){
+  [1,2,3].forEach(i=>{
+    document.getElementById('batch-step'+i).style.display=i===n?'block':'none';
+    const el=document.getElementById('step'+i+'-ind');
+    el.className='step-item'+(i<n?' done':i===n?' active':'');
+  });
+  document.getElementById('step-line-1').className='step-line'+(n>1?' done':'');
+  document.getElementById('step-line-2').className='step-line'+(n>2?' done':'');
+}
+
+function clearBatchFilters(){
+  document.getElementById('batch-proj-filter').value='';
+  document.getElementById('batch-type-filter').value='';
+  document.getElementById('batch-search').value='';
+  renderBatchWorkerList();
+}
+
+function renderBatchWorkerList(){
+  const proj=document.getElementById('batch-proj-filter').value;
+  const type=document.getElementById('batch-type-filter').value;
+  const search=document.getElementById('batch-search').value.toLowerCase();
+  const date=document.getElementById('batch-date').value;
+  const alreadyLogged=new Set(allEntries.filter(e=>e.entry_date===date).map(e=>e.worker_id));
+  const WFB={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
+  const filtered=allWorkers.filter(w=>{
+    if(proj&&w.project_name!==proj)return false;
+    if(type&&w.type!==type)return false;
+    if(search&&!w.name.toLowerCase().includes(search))return false;
+    return true;
+  });
+  document.getElementById('batch-worker-list').innerHTML=filtered.length===0
+    ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No workers match current filters.</div>`
+    :filtered.map(w=>{
+      const checked=batchSelectedIds.has(w.id);
+      const logged=alreadyLogged.has(w.id);
+      return`<div class="worker-check-row${checked?' selected':''}${logged?' disabled':''}" id="wcr-${w.id}">
+        <input type="checkbox" class="cb" id="wc-${w.id}" ${checked?'checked':''} ${logged?'disabled':''} onchange="toggleWorker(${w.id},this.checked)"/>
+        <div><div style="font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name}</div>${logged?'<div style="font-size:10px;color:var(--accent);font-weight:600">⚠ Already logged</div>':''}</div>
+        <div style="font-size:12px;color:var(--text2)">${w.role||'—'}</div>
+        <div><span class="badge badge-gray" style="font-size:10px">${w.type||'—'}</span></div>
+        <div style="font-size:12px;color:var(--teal);font-weight:600">${w.hourly_rate?'R'+parseFloat(w.hourly_rate).toFixed(0):'<span style="color:var(--text3)">—</span>'}</div>
+        <div style="font-size:12px;color:var(--purple);font-weight:600">${w.ot_rate?'R'+parseFloat(w.ot_rate).toFixed(0):'<span style="color:var(--text3)">—</span>'}</div>
+        <div style="font-size:12px;color:var(--text2)">${w.ot_threshold||8}h</div>
+        <div><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
+        <div style="font-size:11px;color:var(--text3)">${w.project_name||'—'}</div>
+        <div style="font-size:11px;color:${logged?'var(--accent)':'var(--text3)'}">${logged?'✓ Logged':'—'}</div>
+      </div>`;
+    }).join('');
+  updateBatchCount();
+}
+
+function toggleWorker(id,checked){
+  if(checked)batchSelectedIds.add(id);else batchSelectedIds.delete(id);
+  const row=document.getElementById('wcr-'+id);
+  if(row)row.classList.toggle('selected',checked);
+  updateBatchCount();
+  const allVisible=Array.from(document.querySelectorAll('#batch-worker-list .cb:not([disabled])'));
+  document.getElementById('batch-select-all').checked=allVisible.length>0&&allVisible.every(cb=>cb.checked);
+}
+
+function toggleSelectAll(checked){
+  document.querySelectorAll('#batch-worker-list .cb:not([disabled])').forEach(cb=>{
+    const id=parseInt(cb.id.replace('wc-',''));
+    cb.checked=checked;
+    if(checked)batchSelectedIds.add(id);else batchSelectedIds.delete(id);
+    const row=document.getElementById('wcr-'+id);
+    if(row)row.classList.toggle('selected',checked);
+  });
+  updateBatchCount();
+}
+
+function updateBatchCount(){
+  const count=batchSelectedIds.size;
+  document.getElementById('batch-selected-count').textContent=count+' selected';
+  document.getElementById('batch-next-btn').disabled=count===0;
+}
+
+function goToBatchStep2(){
+  if(!batchSelectedIds.size){showToast('Select at least one worker','err');return;}
+  batchDate=document.getElementById('batch-date').value;
+  if(!batchDate){showToast('Select a date','err');return;}
+  document.getElementById('batch-date-label').textContent=
+    new Date(batchDate).toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  showBatchStep(2);
+  renderBatchTimeRows();
+}
+
+function goToBatchStep1(){showBatchStep(1);renderBatchWorkerList();}
+
+function renderBatchTimeRows(){
+  const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
+  document.getElementById('batch-time-rows').innerHTML=workers.map(w=>{
+    const td=batchTimeData[w.id]||{in:'',out:'',break:30,notes:''};
+    return`<div class="btr-grid" id="btr-${w.id}">
+      <div><div style="font-weight:500;font-size:13px">${w.name}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}${w.hourly_rate?' · R'+parseFloat(w.hourly_rate).toFixed(0)+'/h':''}</div></div>
+      <input type="time" class="form-input" id="bci-${w.id}" value="${td.in}" style="padding:5px 8px;font-size:13px" oninput="recalcBatchRow(${w.id})"/>
+      <input type="time" class="form-input" id="bco-${w.id}" value="${td.out}" style="padding:5px 8px;font-size:13px" oninput="recalcBatchRow(${w.id})"/>
+      <input type="number" class="form-input" id="bbrk-${w.id}" value="${td.break}" min="0" style="padding:5px 8px;font-size:13px" oninput="recalcBatchRow(${w.id})"/>
+      <input type="text" class="form-input" id="bnotes-${w.id}" value="${td.notes}" placeholder="Notes…" style="padding:5px 8px;font-size:12px" oninput="recalcBatchRow(${w.id})"/>
+      <div id="btot-${w.id}" style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--teal);text-align:right">—</div>
+      <div id="bot-${w.id}" style="font-family:var(--font-d);font-size:13px;font-weight:600;color:var(--purple);text-align:right">—</div>
+      <div id="bpay-${w.id}" style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--accent);text-align:right">—</div>
+    </div>`;
+  }).join('');
+  // Recalc any already filled entries
+  workers.forEach(w=>{if(batchTimeData[w.id]&&batchTimeData[w.id].in)recalcBatchRow(w.id);});
+}
+
+function applyQuickFill(){
+  const qfIn=document.getElementById('qf-in').value;
+  const qfOut=document.getElementById('qf-out').value;
+  const qfBreak=document.getElementById('qf-break').value;
+  allWorkers.filter(w=>batchSelectedIds.has(w.id)).forEach(w=>{
+    if(qfIn){const el=document.getElementById('bci-'+w.id);if(el)el.value=qfIn;}
+    if(qfOut){const el=document.getElementById('bco-'+w.id);if(el)el.value=qfOut;}
+    if(qfBreak){const el=document.getElementById('bbrk-'+w.id);if(el)el.value=qfBreak;}
+    recalcBatchRow(w.id);
+  });
+  showToast('Quick fill applied to '+batchSelectedIds.size+' workers');
+}
+
+function recalcBatchRow(wid){
+  const w=allWorkers.find(x=>x.id===wid)||{};
+  const ci=(document.getElementById('bci-'+wid)||{}).value||'';
+  const co=(document.getElementById('bco-'+wid)||{}).value||'';
+  const brk=parseInt((document.getElementById('bbrk-'+wid)||{}).value)||30;
+  const notes=(document.getElementById('bnotes-'+wid)||{}).value||'';
+  batchTimeData[wid]={in:ci,out:co,break:brk,notes};
+  if(!ci||!co){['btot','bot','bpay'].forEach(p=>{const el=document.getElementById(p+'-'+wid);if(el)el.textContent='—';});return;}
+  const{total}=calcHours(ci,co,brk);
+  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
+  const te=document.getElementById('btot-'+wid);const oe=document.getElementById('bot-'+wid);const pe=document.getElementById('bpay-'+wid);
+  if(te)te.textContent=fmtH(total);
+  if(oe)oe.textContent=pay.otHours>0?fmtH(pay.otHours):'—';
+  if(pe)pe.textContent=fmt(pay.totalPay);
+}
+
+function goToBatchStep3(){
+  allWorkers.filter(w=>batchSelectedIds.has(w.id)).forEach(w=>{
+    batchTimeData[w.id]={
+      in:(document.getElementById('bci-'+w.id)||{}).value||'',
+      out:(document.getElementById('bco-'+w.id)||{}).value||'',
+      break:parseInt((document.getElementById('bbrk-'+w.id)||{}).value)||30,
+      notes:(document.getElementById('bnotes-'+w.id)||{}).value||''
+    };
+  });
+  const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
+  const valid=[],skipped=[];
+  workers.forEach(w=>{
+    const td=batchTimeData[w.id]||{};
+    if(!td.in||!td.out){skipped.push(w.name);return;}
+    const{total}=calcHours(td.in,td.out,td.break||30);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
+    valid.push({w,td,total,pay});
+  });
+  showBatchStep(3);
+  const skipNotice=document.getElementById('batch-skip-notice');
+  if(skipped.length){skipNotice.style.display='block';skipNotice.textContent=`⚠ ${skipped.length} worker(s) skipped — missing clock in/out: ${skipped.join(', ')}`;
+  }else{skipNotice.style.display='none';}
+  document.getElementById('batch-preview-rows').innerHTML=valid.length===0
+    ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No valid entries — go back and enter clock times.</div>`
+    :valid.map(({w,td,total,pay})=>`<div class="preview-row">
+      <div><div style="font-weight:500;font-size:13px">${w.name}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></div>
+      <div><div style="font-size:13px;color:var(--teal);font-family:var(--font-d)">${td.in} → ${td.out}</div>${td.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${td.notes}</div>`:''}</div>
+      <div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text)">${fmtH(total)}</div>
+      <div style="font-family:var(--font-d);font-size:13px;font-weight:600;color:var(--purple)">${pay.otHours>0?fmtH(pay.otHours):'—'}</div>
+      <div style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">${fmt(pay.totalPay)}</div>
+    </div>`).join('');
+  const totH=valid.reduce((a,{total})=>a+total,0);
+  const totOT=valid.reduce((a,{pay})=>a+pay.otHours,0);
+  const totPay=valid.reduce((a,{pay})=>a+pay.totalPay,0);
+  document.getElementById('batch-preview-total').innerHTML=
+    `<span style="color:var(--text2)">${valid.length} entries</span><span style="color:var(--teal)">${fmtH(totH)} total hrs</span><span style="color:var(--purple)">${fmtH(totOT)} OT</span><span style="color:var(--accent)">${fmt(totPay)} payroll</span>`;
+}
+
+function goToBatchStep2back(){showBatchStep(2);}
+
+async function saveBatchEntries(){
+  const btn=document.getElementById('batch-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
+  const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
+  const toSave=[];
+  workers.forEach(w=>{
+    const td=batchTimeData[w.id]||{};
+    if(!td.in||!td.out)return;
+    const{total}=calcHours(td.in,td.out,td.break||30);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,batchDate,w.weekend_rate||'ot');
+    toSave.push({
+      worker_id:w.id,worker_name:w.name,entry_date:batchDate,
+      clock_in:td.in,clock_out:td.out,break_minutes:td.break||30,
+      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
+      ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,
+      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
+      notes:td.notes||''
+    });
+  });
+  if(!toSave.length){showToast('No valid entries to save','err');btn.disabled=false;btn.innerHTML='💾 Save All Entries';return;}
+  try{
+    let saved=0;
+    for(const payload of toSave){
+      const result=await sbPost('timesheet_entries',payload);
+      if(result&&result[0]){allEntries.unshift(result[0]);saved++;}
+    }
+    showToast(`${saved} entries saved`);
+    closeModal('batch');
+    renderStats();
+    renderDailyTab();
+  }catch(e){showToast('Batch save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.innerHTML='💾 Save All Entries';
 }
 
 // ── Close modals on backdrop click ────────────────────────────────────────────
