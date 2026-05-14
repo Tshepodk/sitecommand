@@ -652,13 +652,18 @@ function renderStats(){
   const totalPay=monthEntries.reduce((a,e)=>a+(e.total_pay||0),0);
   const totalOT=monthEntries.reduce((a,e)=>a+(e.ot_hours||0),0);
   const uniqueWorkers=new Set(allEntries.map(e=>e.worker_id)).size;
-
-  document.getElementById('ts-stats').innerHTML=`
+  const earnings=canSeeEarnings();
+  const grid=document.getElementById('ts-stats');
+  grid.style.gridTemplateColumns=`repeat(${earnings?5:4},1fr)`;
+  grid.innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Workers</div><div class="stat-sub">with rate configs</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayEntries.length}</div><div class="stat-l">Today's Entries</div><div class="stat-sub">${todayEntries.reduce((a,e)=>a+(e.total_hours||0),0).toFixed(1)}h logged</div></div>
     <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allEntries.length}</div><div class="stat-l">Total Entries</div><div class="stat-sub">${uniqueWorkers} employees</div></div>
+    ${earnings?`
     <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div></div>
-    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`
+    :`<div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div><div class="stat-sub">hours only</div></div>`}
+  `;
 }
 
 // ── DAILY TAB ─────────────────────────────────────────────────────────────────
