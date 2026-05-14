@@ -440,7 +440,7 @@ tr:hover td{background:var(--bg3)}
     </div>
     <div class="modal-footer" id="phantom-footer" style="display:none">
       <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
-      <button class="btn btn-danger" id="phantom-delete-btn" onclick="deleteSelectedPhantoms()">🗑 Delete Selected Entries</button>
+      <button class="btn btn-danger" id="phantom-delete-btn" onclick="deleteSelectedPhantoms()">🧹 Clear Selected</button>
     </div>
   </div>
 </div>
@@ -1065,20 +1065,20 @@ async function openPhantomCleaner(){
   phantomData = {};
 
   try{
-    // Fetch real projects from Supabase
+    // Fetch real project names from Supabase
     const projects = await sbGet('projects','select=name&order=name.asc');
     const realNames = new Set((projects||[]).map(p=>(p.name||'').toLowerCase().trim()));
 
-    // Get all unique project names in timesheet_entries
-    const entries = await sbGet('timesheet_entries','select=id,project_name&not.project_name.is.null&order=project_name.asc');
+    // Fetch all workers that have a project_name assigned
+    const workers = await sbGet('workers','select=id,name,project_name&not.project_name.is.null&order=name.asc');
 
-    // Group by project_name, find ones not in real projects
-    (entries||[]).forEach(e=>{
-      const pn = (e.project_name||'').trim();
+    // Find workers whose assigned project_name doesn't exist in real projects
+    (workers||[]).forEach(w=>{
+      const pn = (w.project_name||'').trim();
       if(!pn) return;
       if(!realNames.has(pn.toLowerCase())){
         if(!phantomData[pn]) phantomData[pn]=[];
-        phantomData[pn].push(e.id);
+        phantomData[pn].push({id: w.id, name: w.name});
       }
     });
 
@@ -1094,6 +1094,9 @@ async function openPhantomCleaner(){
     const listEl = document.getElementById('phantom-list');
     listEl.style.display='block';
     listEl.innerHTML=`
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+        These workers are assigned to project names that don't exist in your Projects table. Clearing will set their project to <strong>Unassigned</strong> — their timesheet entries remain intact.
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${phantomNames.length} phantom project${phantomNames.length>1?'s':''} found</span>
         <label style="font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px">
@@ -1106,17 +1109,17 @@ async function openPhantomCleaner(){
             <input type="checkbox" class="phantom-cb" data-name="${name}" checked style="cursor:pointer;width:16px;height:16px;flex-shrink:0" onchange="updatePhantomDeleteBtn()"/>
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;color:var(--text);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">Not found in Projects table</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">${phantomData[name].map(w=>w.name).join(', ')}</div>
             </div>
             <div style="text-align:right;flex-shrink:0">
               <div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--red)">${phantomData[name].length}</div>
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">entries</div>
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">worker${phantomData[name].length>1?'s':''}</div>
             </div>
           </div>
         `).join('')}
       </div>
-      <div style="margin-top:10px;padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r);font-size:12px;color:#f87171">
-        ⚠ This will permanently delete the selected timesheet entries. This cannot be undone.
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);font-size:12px;color:var(--accent)">
+        ℹ This will clear the phantom project assignment from these workers — it will NOT delete any timesheet entries or pay data.
       </div>`;
 
     document.getElementById('phantom-select-all').checked=true;
@@ -1135,12 +1138,12 @@ function phantomToggleAll(checked){
 
 function updatePhantomDeleteBtn(){
   const selected = [...document.querySelectorAll('.phantom-cb:checked')];
-  const totalEntries = selected.reduce((sum,cb)=>{
+  const totalWorkers = selected.reduce((sum,cb)=>{
     const name=cb.dataset.name;
     return sum+(phantomData[name]||[]).length;
   },0);
   const btn=document.getElementById('phantom-delete-btn');
-  btn.textContent=`🗑 Delete ${totalEntries} Entr${totalEntries===1?'y':'ies'} from ${selected.length} Project${selected.length===1?'':'s'}`;
+  btn.textContent=`🧹 Clear ${totalWorkers} Worker${totalWorkers===1?'':'s'} from ${selected.length} Phantom Project${selected.length===1?'':'s'}`;
   btn.disabled=selected.length===0;
 }
 
@@ -1148,32 +1151,29 @@ async function deleteSelectedPhantoms(){
   const selected=[...document.querySelectorAll('.phantom-cb:checked')].map(cb=>cb.dataset.name);
   if(!selected.length){showToast('Nothing selected','err');return;}
 
-  const allIds=selected.flatMap(name=>phantomData[name]||[]);
-  if(!allIds.length){showToast('No entries to delete','err');return;}
+  const allWorkerIds=selected.flatMap(name=>(phantomData[name]||[]).map(w=>w.id));
+  if(!allWorkerIds.length){showToast('No workers to update','err');return;}
 
   const btn=document.getElementById('phantom-delete-btn');
   btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span> Deleting…';
+  btn.innerHTML='<span class="spinner"></span> Clearing…';
 
   try{
-    // Delete in batches of 50 using IN filter
-    const batchSize=50;
-    for(let i=0;i<allIds.length;i+=batchSize){
-      const batch=allIds.slice(i,i+batchSize);
-      await sb('DELETE','timesheet_entries',null,'id=in.('+batch.join(',')+')');
-    }
+    // Patch each worker to clear their project_name
+    await Promise.all(allWorkerIds.map(id=>sbPatch('workers',id,{project_name:null})));
 
-    // Refresh local state
-    allEntries=allEntries.filter(e=>!allIds.includes(e.id));
-    showToast(`✅ Deleted ${allIds.length} phantom entries`,'ok');
+    // Update local worker state
+    allWorkers=allWorkers.map(w=>allWorkerIds.includes(w.id)?{...w,project_name:null}:w);
+
+    showToast(`✅ Cleared phantom project from ${allWorkerIds.length} worker${allWorkerIds.length===1?'':'s'}`,'ok');
     closeModal('phantom');
     renderStats();
     renderDailyTab();
   }catch(e){
-    showToast('Delete failed: '+e.message,'err');
+    showToast('Update failed: '+e.message,'err');
     console.error(e);
     btn.disabled=false;
-    btn.textContent='🗑 Delete Selected Entries';
+    btn.textContent='🧹 Clear Selected';
   }
 }
 
