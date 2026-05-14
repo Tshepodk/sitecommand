@@ -510,7 +510,7 @@ tr:hover td{background:var(--bg3)}
         <button class="btn btn-primary" onclick="openModal('project')">+ New Project</button>
       </div>
       <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap">
-        <table><thead><tr><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Budget</th><th>Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
+        <table><thead><tr><th>PO Number</th><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Budget</th><th>Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
       </div></div></div>
     </div>
 
@@ -1385,7 +1385,7 @@ function renderDashboard(){
   const tabsEl=document.getElementById('dash-proj-tabs');
   if(tabsEl){
     tabsEl.innerHTML=`<button class="proj-tab ${dashProjectFilter==='all'?'active':''}" onclick="setDashFilter('all')">All Projects</button>`
-      +allProjects.map(p=>`<button class="proj-tab ${dashProjectFilter===p.name?'active':''}" onclick="setDashFilter('${p.name.replace(/'/g,"\\'")}')">${p.name}</button>`).join('');
+      +allProjects.map(p=>`<button class="proj-tab ${dashProjectFilter===p.name?'active':''}" onclick="setDashFilter('${p.name.replace(/'/g,"\\'")}')">${p.po_number?`<span style="font-size:10px;opacity:0.75;margin-right:4px">${p.po_number}</span>`:''}${p.name}</button>`).join('');
   }
 
   // Filter data based on selected project
@@ -1548,7 +1548,7 @@ function renderDashboard(){
 // ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects(){
   document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' — Supabase';
-  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
+  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-family:var(--font-d);font-weight:700;color:var(--blue);font-size:13px">${p.po_number||'—'}</div>${p.po_value>0?`<div style="font-size:10px;color:var(--text3)">${fmt(p.po_value)}</div>`:''}</td><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
 }
 
 // ── Project Tasks ─────────────────────────────────────────────────────────────
@@ -1647,6 +1647,7 @@ function renderBudget(){
     const pct=p.pct;const fillW=Math.min(pct,100);const isOver=pct>100;
     const rowClass=isOver?'over':pct>=90?'danger':pct>=75?'warn':'';
     return`<tr>
+      <td><div style="font-family:var(--font-d);font-weight:700;color:var(--blue);font-size:13px">${p.po_number||'—'}</div>${p.po_value>0?`<div style="font-size:10px;color:var(--text3)">${fmt(p.po_value)}</div>`:''}</td>
       <td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td>
       <td style="font-family:var(--font-d);font-weight:700">${fmt(p.budget)}</td>
       <td style="color:var(--text2)">${fmt(p.contract_spend)}</td>
@@ -1668,7 +1669,7 @@ function renderBudget(){
     </tr>`;
   }).join('');
 
-  document.getElementById('budget-table').innerHTML=rowsHtml||`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No projects yet.</td></tr>`;
+  document.getElementById('budget-table').innerHTML=rowsHtml||`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No projects yet.</td></tr>`;
 
   // Insert portfolio bar above table
   const tableCard=document.getElementById('budget-table').closest('.card');
@@ -2104,7 +2105,7 @@ function downloadPDF(){
 
   <h2>Budget Status by Project</h2>
   <table>
-    <thead><tr><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Used %</th><th>Status</th></tr></thead>
+    <thead><tr><th>PO Number</th><th>Project</th><th>Budget</th><th>Contracted</th><th>Field Reported</th><th>Total Spend</th><th>Remaining</th><th>Used %</th><th>Status</th></tr></thead>
     <tbody>
       ${budgetData.map(p=>{
         const pct=p.pct;
