@@ -635,6 +635,7 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
+let allProjects=[];  // for batch project filter
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
@@ -643,9 +644,10 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries]=await Promise.all([
+    [allWorkers,allEntries,allProjects]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc')
+      sbGet('timesheet_entries','order=entry_date.desc').catch(()=>[]),
+      sbGet('projects','order=name.asc&active=eq.true').catch(()=>[])
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
@@ -1215,8 +1217,7 @@ let batchDate='';
 function openBatchModal(){
   batchSelectedIds=new Set();batchTimeData={};batchDate='';
   document.getElementById('batch-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
-  const projSet=[...new Set(allWorkers.map(w=>w.project_name).filter(Boolean))];
-  document.getElementById('batch-proj-filter').innerHTML='<option value="">All Projects</option>'+projSet.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('batch-proj-filter').innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
   document.getElementById('batch-type-filter').value='';
   document.getElementById('batch-search').value='';
   showBatchStep(1);renderBatchWorkerList();updateBatchCount();
