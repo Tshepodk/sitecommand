@@ -143,10 +143,17 @@ tr:hover td{background:var(--bg3)}
 .worker-check-row:hover{background:var(--bg3)}
 .worker-check-row.selected{background:rgba(245,166,35,0.06)}
 .worker-check-row.disabled{opacity:0.45;pointer-events:none}
+.hide-foreman{} /* toggled via JS */
+/* Foreman grid — removes rate/OT/threshold columns */
+.wch-hdr.foreman-grid{grid-template-columns:24px 1fr 80px 90px 80px 120px 70px}
+.worker-check-row.foreman-grid{grid-template-columns:24px 1fr 80px 90px 80px 120px 70px}
+.hide-foreman{display:none!important}
 .qf-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:8px 14px;margin-bottom:1rem}
 .btr-grid{display:grid;grid-template-columns:160px 90px 90px 70px 1fr 60px 70px 80px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
+.btr-grid.foreman-grid{grid-template-columns:160px 90px 90px 70px 1fr 60px}
 .btr-grid:last-child{border-bottom:none}
 .preview-row{display:grid;grid-template-columns:1fr 70px 70px 70px 90px 70px 100px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
+.preview-row.foreman-grid{grid-template-columns:1fr 70px 70px}
 .preview-row.phdr{background:var(--bg3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);border-radius:var(--r) var(--r) 0 0}
 .preview-total{display:flex;gap:2rem;justify-content:flex-end;padding:10px 14px;background:rgba(245,166,35,0.04);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
 </style>
@@ -472,7 +479,7 @@ tr:hover td{background:var(--bg3)}
         <span id="batch-selected-count" style="color:var(--accent);font-weight:700;margin-left:auto;font-family:var(--font-d);font-size:14px">0 selected</span>
       </div>
       <div class="wch-hdr" style="border-radius:0;border-top:none">
-        <span></span><span>Name</span><span>Role</span><span>Type</span><span class="hide-foreman">Rate/hr</span><span class="hide-foreman">OT/hr</span><span class="hide-foreman">OT Thr</span><span>Status</span><span>Project</span><span>Today?</span>
+        <span></span><span>Name</span><span>Role</span><span>Type</span><span class="hide-foreman">Rate/hr</span><span class="hide-foreman">OT/hr</span><span class="hide-foreman">OT Thr</span><span class="hide-foreman">Status</span><span class="hide-foreman">Project</span><span>Today?</span>
       </div>
       <div id="batch-worker-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
       <div class="modal-footer">
@@ -612,8 +619,11 @@ function applyTimesheetRBAC(){
   // Update subtitle
   const sub=document.querySelector('.page-sub');
   if(sub)sub.textContent='Clock in/out — log daily time entries for your workers';
-  // Hide OT/Pay columns in batch worker list header & rows (done via CSS class)
+  // Hide all foreman-restricted columns
   document.querySelectorAll('.hide-foreman').forEach(el=>el.style.display='none');
+  // Collapse batch worker list grid to only visible columns: checkbox, name, role, type, today
+  const narrowGrid='24px 1fr 100px 100px 70px';
+  document.querySelectorAll('.wch-hdr,.worker-check-row').forEach(el=>el.style.gridTemplateColumns=narrowGrid);
 }
 
 
@@ -1257,8 +1267,8 @@ function renderBatchWorkerList(){
         <div style="font-size:11px;color:var(--teal)" class="hide-foreman">${w.hourly_rate?fmt2(w.hourly_rate)+'/h':'—'}</div>
         <div style="font-size:11px;color:var(--purple)" class="hide-foreman">${w.ot_rate?fmt2(w.ot_rate)+'/h':'—'}</div>
         <div style="font-size:11px;color:var(--text3)" class="hide-foreman">${w.ot_threshold||8}h</div>
-        <div><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
-        <div style="font-size:11px;color:var(--text3)">${w.project_name||'—'}</div>
+        <div class="hide-foreman"><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
+        <div style="font-size:11px;color:var(--text3)" class="hide-foreman">${w.project_name||'—'}</div>
         <div style="font-size:11px;color:${logged?'var(--green)':'var(--text3)'}">${logged?'✓ Done':'—'}</div>
       </div>`;
     }).join('');
@@ -1266,6 +1276,12 @@ function renderBatchWorkerList(){
   const allCbs=document.querySelectorAll('#batch-worker-list .cb:not([disabled])');
   document.getElementById('batch-select-all').checked=allCbs.length>0&&[...allCbs].every(cb=>cb.checked);
   updateBatchCount();
+  // Re-apply foreman hiding after rows are in DOM
+  if(!canSeeEarnings()){
+    document.querySelectorAll('.hide-foreman').forEach(el=>el.style.display='none');
+    const narrowGrid='24px 1fr 110px 110px 70px';
+    document.querySelectorAll('.wch-hdr,.worker-check-row').forEach(el=>el.style.gridTemplateColumns=narrowGrid);
+  }
 }
 
 function toggleWorker(id,checked){
