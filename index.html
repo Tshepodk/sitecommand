@@ -310,7 +310,6 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Resources</div>
       <div class="nav-item" onclick="showPage('workforce',this)"><span class="nav-icon">&#128119;</span>Workforce<span class="nav-badge nb-blue" id="worker-badge">0</span></div>
-      <a href="timesheets.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#9201;</span>Timesheets</a>
       <div class="nav-item" onclick="showPage('equipment',this)"><span class="nav-icon">&#127959;</span>Equipment<span class="nav-badge nb-blue" id="equip-badge">0</span></div>
       <div class="nav-item" onclick="showPage('budget',this)"><span class="nav-icon">&#128176;</span>Budget</div>
       <div class="nav-item" onclick="showPage('costs',this)"><span class="nav-icon">&#9881;</span>Cost Categories</div>
@@ -671,7 +670,9 @@ tr:hover td{background:var(--bg3)}
       <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" id="project-start"/></div>
       <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" id="project-end"/></div>
       <div class="form-group"><label class="form-label">Budget (R)</label><input class="form-input" type="number" id="project-budget" placeholder="0" min="0"/></div>
-      <div class="form-group"><label class="form-label">Contracted Spend (R)</label><input class="form-input" type="number" id="project-contract" placeholder="0" min="0"/></div>
+      <div class="form-group"><label class="form-label">Contracted Spend (R)</label><input class="form-input" type="number" id="project-contract" placeholder="0" min="0" oninput="syncPOValue(this.value)"/></div>
+      <div class="form-group"><label class="form-label">PO Number</label><input class="form-input" id="project-po-number" placeholder="e.g. PO-2025-001"/></div>
+      <div class="form-group"><label class="form-label">PO Value (R) <span style="font-size:10px;color:var(--text3);font-weight:400;text-transform:none">— auto-fills from Contract</span></label><input class="form-input" type="number" id="project-po-value" placeholder="0" min="0"/></div>
       <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="project-status"><option value="on-track">On Track</option><option value="at-risk">At Risk</option><option value="delayed">Delayed</option><option value="completed">Completed</option><option value="on-hold">On Hold</option></select></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><textarea class="form-textarea" id="project-desc" placeholder="Scope, milestones, notes..."></textarea></div>
     </div>
@@ -1334,6 +1335,7 @@ function bpc(){
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
+function syncPOValue(val){const poVal=document.getElementById('project-po-value');if(poVal&&!poVal.value)poVal.value=val;}
 function projTaskStats(n){const pt=allTasks.filter(t=>t.project_name===n);if(!pt.length)return{count:0,avg:0,complete:0};const avg=pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length;return{count:pt.length,avg:Math.round(avg),complete:pt.filter(t=>t.status==='complete').length};}
 
 // ── Dashboard project filter ─────────────────────────────────────────────────
@@ -1481,6 +1483,14 @@ function renderDashboard(){
         <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Field Reported</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--teal)">${fmt(pBudget.fieldCost)}</div></div>
         <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Remaining</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:${pBudget.remaining<0?'var(--red)':'var(--green)'}">${fmt(pBudget.remaining)}</div></div>
       </div>
+      ${p.po_number?`<div style="display:flex;align-items:center;gap:16px;padding:10px 14px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:var(--r);margin-bottom:1rem">
+        <div style="font-size:12px;color:var(--blue);font-weight:700;letter-spacing:0.06em;text-transform:uppercase">🧾 PO</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text)">${p.po_number}</div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">PO Value</div>
+          <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--blue)">${fmt(p.po_value||0)}</div>
+        </div>
+      </div>`:''}
       <div style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:12px;color:var(--text2)">Budget used</span>
@@ -1913,7 +1923,7 @@ function openModal(type, rec=null){
   if(rec){
     document.getElementById(type+'-modal-title').textContent='Edit '+({project:'Project',task:'Task',worker:'Worker',equipment:'Equipment','cost-cat':'Category'}[type]||'');
     const mapping={
-      project:{id:'id',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend',status:'status',desc:'description'},
+      project:{id:'id',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend','po-number':'po_number','po-value':'po_value',status:'status',desc:'description'},
       task:{id:'id',title:'title',type:'type','qty-total':'qty_total',unit:'unit',priority:'priority',assigned:'assigned_to',status:'status','qty-done':'qty_done',notes:'notes'},
       worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status'},
       equipment:{id:'id',name:'name',type:'type',make:'make_model',serial:'serial_number',service:'next_service',status:'status',notes:'notes'},
@@ -1940,7 +1950,7 @@ async function saveRecord(type){
     let payload={};let table='';let id=document.getElementById(type+'-id')?.value;
     if(type==='project'){
       const name=document.getElementById('project-name').value.trim();if(!name){showToast('Project name required','err');btn.disabled=false;btn.textContent='Save Project';return;}
-      payload={name,phase:document.getElementById('project-phase').value.trim(),type:document.getElementById('project-type').value,client:document.getElementById('project-client').value.trim(),pm:document.getElementById('project-pm').value.trim(),start_date:document.getElementById('project-start').value,end_date:document.getElementById('project-end').value,budget:parseFloat(document.getElementById('project-budget').value)||0,contract_spend:parseFloat(document.getElementById('project-contract').value)||0,status:document.getElementById('project-status').value,description:document.getElementById('project-desc').value.trim(),active:true};table='projects';
+      payload={name,phase:document.getElementById('project-phase').value.trim(),type:document.getElementById('project-type').value,client:document.getElementById('project-client').value.trim(),pm:document.getElementById('project-pm').value.trim(),start_date:document.getElementById('project-start').value,end_date:document.getElementById('project-end').value,budget:parseFloat(document.getElementById('project-budget').value)||0,contract_spend:parseFloat(document.getElementById('project-contract').value)||0,po_number:document.getElementById('project-po-number').value.trim()||null,po_value:parseFloat(document.getElementById('project-po-value').value)||0,status:document.getElementById('project-status').value,description:document.getElementById('project-desc').value.trim(),active:true};table='projects';
     } else if(type==='task'){
       const title=document.getElementById('task-title').value.trim();const proj=document.getElementById('task-project').value;const qt=parseFloat(document.getElementById('task-qty-total').value)||0;const unit=document.getElementById('task-unit').value.trim();
       if(!title||!proj||!qt||!unit){showToast('Title, project, quantity and unit are required','err');btn.disabled=false;btn.textContent='Save Task';return;}
