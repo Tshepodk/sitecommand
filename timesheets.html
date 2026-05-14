@@ -425,23 +425,42 @@ tr:hover td{background:var(--bg3)}
 <div class="modal-bg" id="modal-phantom">
   <div class="modal modal-wide">
     <div class="modal-title">
-      <span>🧹 Clean Phantom Projects</span>
+      <span id="phantom-modal-title">🧹 Clean Phantom Projects</span>
       <button class="modal-close" onclick="closeModal('phantom')">✕</button>
     </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-      These project names appear in timesheet entries but <strong style="color:var(--accent)">do not exist</strong> in your Projects table. They are ghost data skewing your reports.
+
+    <!-- STEP 1: Scan & Select -->
+    <div id="phantom-step1">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+        Scans <strong>daily field reports</strong> and <strong>worker assignments</strong> for project names that don't exist in your Projects table.
+      </div>
+      <div id="phantom-loading" style="padding:1.5rem;text-align:center;color:var(--text3);font-size:13px">
+        <span class="spinner"></span> Scanning for phantom projects…
+      </div>
+      <div id="phantom-list" style="display:none"></div>
+      <div id="phantom-empty" style="display:none;padding:1.5rem;text-align:center;color:var(--green);font-size:13px;font-weight:600">
+        ✅ No phantom projects found — your data is clean!
+      </div>
+      <div class="modal-footer" id="phantom-footer" style="display:none">
+        <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
+        <button class="btn btn-primary" id="phantom-preview-btn" onclick="showPhantomPreview()">Preview Records →</button>
+      </div>
     </div>
-    <div id="phantom-loading" style="padding:1.5rem;text-align:center;color:var(--text3);font-size:13px">
-      <span class="spinner"></span> Scanning for phantom projects…
+
+    <!-- STEP 2: Preview before delete -->
+    <div id="phantom-step2" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
+        <button class="btn btn-ghost btn-sm" onclick="backToPhantomStep1()">← Back</button>
+        <span style="font-size:13px;color:var(--text2)">Review what will be deleted before confirming</span>
+      </div>
+      <div id="phantom-preview-content" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)"></div>
+      <div id="phantom-preview-summary" style="margin-top:10px;padding:10px 14px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);font-size:12px;color:#f87171"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
+        <button class="btn btn-danger" id="phantom-delete-btn" onclick="deleteSelectedPhantoms()">🗑 Confirm & Delete</button>
+      </div>
     </div>
-    <div id="phantom-list" style="display:none"></div>
-    <div id="phantom-empty" style="display:none;padding:1.5rem;text-align:center;color:var(--green);font-size:13px;font-weight:600">
-      ✅ No phantom projects found — your data is clean!
-    </div>
-    <div class="modal-footer" id="phantom-footer" style="display:none">
-      <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
-      <button class="btn btn-danger" id="phantom-delete-btn" onclick="deleteSelectedPhantoms()">🧹 Clear Selected</button>
-    </div>
+
   </div>
 </div>
 
@@ -1054,48 +1073,54 @@ async function saveRate(){
 }
 
 // ── PHANTOM PROJECT CLEANER ───────────────────────────────────────────────────
-let phantomData = {}; // { projectName: [entry ids] }
+let phantomData = {};       // { projectName: { reportIds[], workerIds[], reports[] } }
+let phantomFullReports = []; // full report objects fetched for preview
 
 async function openPhantomCleaner(){
-  document.getElementById('modal-phantom').classList.add('open');
+  // Reset to step 1
+  document.getElementById('phantom-step1').style.display='block';
+  document.getElementById('phantom-step2').style.display='none';
+  document.getElementById('modal-phantom-title')||null;
   document.getElementById('phantom-loading').style.display='block';
   document.getElementById('phantom-list').style.display='none';
   document.getElementById('phantom-empty').style.display='none';
   document.getElementById('phantom-footer').style.display='none';
-  phantomData = {};
+  document.getElementById('modal-phantom').classList.add('open');
+  phantomData={};
+  phantomFullReports=[];
 
   try{
-    // Fetch real project names
     const projects = await sbGet('projects','select=name&order=name.asc');
     const realNames = new Set((projects||[]).map(p=>(p.name||'').toLowerCase().trim()));
 
-    // ── Source 1: daily_reports.project ───────────────────────────────────────
-    const reports = await sbGet('daily_reports','select=id,project&order=project.asc');
-    (reports||[]).forEach(r=>{
+    // Fetch full daily_reports for preview details
+    phantomFullReports = await sbGet('daily_reports','select=id,project,report_date,reporter,location,workers,total_cost,costs&order=project.asc,report_date.asc')||[];
+
+    phantomFullReports.forEach(r=>{
       const pn=(r.project||'').trim();
       if(!pn||realNames.has(pn.toLowerCase())) return;
-      if(!phantomData[pn]) phantomData[pn]={reportIds:[], workerIds:[], label:''};
+      if(!phantomData[pn]) phantomData[pn]={reportIds:[],workerIds:[],reports:[]};
       phantomData[pn].reportIds.push(r.id);
+      phantomData[pn].reports.push(r);
     });
 
-    // ── Source 2: workers.project_name ────────────────────────────────────────
     const workers = await sbGet('workers','select=id,name,project_name&order=name.asc');
     (workers||[]).forEach(w=>{
       const pn=(w.project_name||'').trim();
       if(!pn||realNames.has(pn.toLowerCase())) return;
-      if(!phantomData[pn]) phantomData[pn]={reportIds:[], workerIds:[], label:''};
-      phantomData[pn].workerIds.push({id:w.id, name:w.name});
+      if(!phantomData[pn]) phantomData[pn]={reportIds:[],workerIds:[],reports:[]};
+      phantomData[pn].workerIds.push({id:w.id,name:w.name});
     });
 
     document.getElementById('phantom-loading').style.display='none';
 
-    const phantomNames = Object.keys(phantomData);
+    const phantomNames=Object.keys(phantomData);
     if(!phantomNames.length){
       document.getElementById('phantom-empty').style.display='block';
       return;
     }
 
-    const listEl = document.getElementById('phantom-list');
+    const listEl=document.getElementById('phantom-list');
     listEl.style.display='block';
     listEl.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1110,27 +1135,24 @@ async function openPhantomCleaner(){
           const parts=[];
           if(d.reportIds.length) parts.push(`${d.reportIds.length} field report${d.reportIds.length>1?'s':''}`);
           if(d.workerIds.length) parts.push(`${d.workerIds.length} worker${d.workerIds.length>1?'s':''}`);
+          const totalCost=d.reports.reduce((s,r)=>s+(parseFloat(r.total_cost)||0),0);
           return`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${i%2===0?'var(--bg3)':'var(--bg2)'};border-bottom:1px solid var(--border)">
-            <input type="checkbox" class="phantom-cb" data-name="${name}" checked style="cursor:pointer;width:16px;height:16px;flex-shrink:0" onchange="updatePhantomDeleteBtn()"/>
+            <input type="checkbox" class="phantom-cb" data-name="${name}" checked style="cursor:pointer;width:16px;height:16px;flex-shrink:0" onchange="updatePhantomPreviewBtn()"/>
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;color:var(--text);font-size:13px">${name}</div>
               <div style="font-size:11px;color:var(--text3);margin-top:2px">${parts.join(' · ')||'No linked data'}</div>
               ${d.workerIds.length?`<div style="font-size:11px;color:var(--text2);margin-top:2px">Workers: ${d.workerIds.map(w=>w.name).join(', ')}</div>`:''}
             </div>
             <div style="text-align:right;flex-shrink:0">
-              <div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--red)">${d.reportIds.length+d.workerIds.length}</div>
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">records</div>
+              ${totalCost>0?`<div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--red)">R ${totalCost.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text3)">total costs</div>`:'<div style="font-size:11px;color:var(--text3)">R 0</div>'}
             </div>
           </div>`;
         }).join('')}
-      </div>
-      <div style="margin-top:10px;padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--r);font-size:12px;color:#f87171">
-        ⚠ Field reports linked to phantom projects will be <strong>permanently deleted</strong>. Worker project assignments will be cleared to Unassigned.
       </div>`;
 
     document.getElementById('phantom-select-all').checked=true;
     document.getElementById('phantom-footer').style.display='flex';
-    updatePhantomDeleteBtn();
+    updatePhantomPreviewBtn();
   }catch(e){
     document.getElementById('phantom-loading').innerHTML='<span style="color:var(--red)">Error scanning: '+e.message+'</span>';
     console.error(e);
@@ -1139,31 +1161,102 @@ async function openPhantomCleaner(){
 
 function phantomToggleAll(checked){
   document.querySelectorAll('.phantom-cb').forEach(cb=>cb.checked=checked);
-  updatePhantomDeleteBtn();
+  updatePhantomPreviewBtn();
 }
 
-function updatePhantomDeleteBtn(){
+function updatePhantomPreviewBtn(){
   const selected=[...document.querySelectorAll('.phantom-cb:checked')];
-  const totalRecords=selected.reduce((sum,cb)=>{
-    const d=phantomData[cb.dataset.name]||{reportIds:[],workerIds:[]};
-    return sum+d.reportIds.length+d.workerIds.length;
-  },0);
-  const btn=document.getElementById('phantom-delete-btn');
-  btn.textContent=`🧹 Clean ${totalRecords} Record${totalRecords===1?'':'s'} from ${selected.length} Phantom Project${selected.length===1?'':'s'}`;
-  btn.disabled=selected.length===0;
+  const totalReports=selected.reduce((s,cb)=>s+(phantomData[cb.dataset.name]?.reportIds.length||0),0);
+  const totalWorkers=selected.reduce((s,cb)=>s+(phantomData[cb.dataset.name]?.workerIds.length||0),0);
+  const btn=document.getElementById('phantom-preview-btn');
+  if(selected.length===0){
+    btn.textContent='Preview Records →';
+    btn.disabled=true;
+  } else {
+    btn.textContent=`Preview ${totalReports} Report${totalReports!==1?'s':''}${totalWorkers>0?' + '+totalWorkers+' Worker'+(totalWorkers>1?'s':''):''} →`;
+    btn.disabled=false;
+  }
+}
+
+function backToPhantomStep1(){
+  document.getElementById('phantom-step1').style.display='block';
+  document.getElementById('phantom-step2').style.display='none';
+}
+
+async function showPhantomPreview(){
+  const selected=[...document.querySelectorAll('.phantom-cb:checked')].map(cb=>cb.dataset.name);
+  if(!selected.length){showToast('Select at least one phantom project','err');return;}
+
+  // Switch to step 2
+  document.getElementById('phantom-step1').style.display='none';
+  document.getElementById('phantom-step2').style.display='block';
+
+  const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  let totalReports=0,totalCost=0,totalWorkers=0;
+  const sections=selected.map(name=>{
+    const d=phantomData[name];
+    totalReports+=d.reportIds.length;
+    totalWorkers+=d.workerIds.length;
+    const projCost=d.reports.reduce((s,r)=>s+(parseFloat(r.total_cost)||0),0);
+    totalCost+=projCost;
+
+    const reportRows=d.reports.length?`
+      <div style="margin-top:8px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding:0 12px">Field Reports to be deleted:</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--bg3)">
+            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Date</th>
+            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Reporter</th>
+            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Location</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Workers</th>
+            <th style="padding:6px 12px;text-align:right;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Cost</th>
+          </tr></thead>
+          <tbody>
+            ${d.reports.map((r,i)=>`<tr style="background:${i%2===0?'var(--bg2)':'var(--bg3)'}">
+              <td style="padding:7px 12px;color:var(--text)">${r.report_date||'—'}</td>
+              <td style="padding:7px 12px;color:var(--text2)">${r.reporter||'—'}</td>
+              <td style="padding:7px 12px;color:var(--text2)">${r.location||'—'}</td>
+              <td style="padding:7px 12px;text-align:right;color:var(--text2)">${r.workers||0}</td>
+              <td style="padding:7px 12px;text-align:right;font-weight:600;color:${(r.total_cost||0)>0?'var(--red)':'var(--text3)'}">${fmt(r.total_cost)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`:'<div style="padding:8px 12px;font-size:12px;color:var(--text3)">No field reports — only worker assignments will be cleared.</div>';
+
+    const workerNote=d.workerIds.length
+      ?`<div style="padding:8px 12px;font-size:12px;color:var(--text2);border-top:1px solid var(--border)">
+          👷 Workers to be unassigned: <strong>${d.workerIds.map(w=>w.name).join(', ')}</strong>
+        </div>`:'';
+
+    return`<div style="border-bottom:2px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(239,68,68,0.06)">
+        <div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text)">${name}</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--red)">${fmt(projCost)}</div>
+      </div>
+      ${reportRows}
+      ${workerNote}
+    </div>`;
+  });
+
+  document.getElementById('phantom-preview-content').innerHTML=sections.join('');
+  document.getElementById('phantom-preview-summary').innerHTML=
+    `⚠ <strong>Confirm deletion:</strong> ${totalReports} field report${totalReports!==1?'s':''} totalling <strong>${fmt(totalCost)}</strong> in costs will be <strong>permanently deleted</strong>${totalWorkers>0?`, and ${totalWorkers} worker assignment${totalWorkers!==1?'s':''} cleared`:''}. This cannot be undone.`;
+
+  // Store selected for deletion
+  document.getElementById('phantom-delete-btn').dataset.selected=JSON.stringify(selected);
 }
 
 async function deleteSelectedPhantoms(){
-  const selected=[...document.querySelectorAll('.phantom-cb:checked')].map(cb=>cb.dataset.name);
-  if(!selected.length){showToast('Nothing selected','err');return;}
-
   const btn=document.getElementById('phantom-delete-btn');
+  const selected=JSON.parse(btn.dataset.selected||'[]');
+  if(!selected.length){showToast('Nothing to delete','err');return;}
+
   btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span> Cleaning…';
+  btn.innerHTML='<span class="spinner"></span> Deleting…';
 
   try{
-    // Delete daily_reports for selected phantom projects
-    const reportIds=selected.flatMap(name=>(phantomData[name]?.reportIds||[]));
+    const reportIds=selected.flatMap(name=>phantomData[name]?.reportIds||[]);
     if(reportIds.length){
       const batchSize=50;
       for(let i=0;i<reportIds.length;i+=batchSize){
@@ -1172,21 +1265,21 @@ async function deleteSelectedPhantoms(){
       }
     }
 
-    // Clear project_name on affected workers
     const workerIds=selected.flatMap(name=>(phantomData[name]?.workerIds||[]).map(w=>w.id));
     if(workerIds.length){
       await Promise.all(workerIds.map(id=>sbPatch('workers',id,{project_name:null})));
+      allWorkers=allWorkers.map(w=>workerIds.includes(w.id)?{...w,project_name:null}:w);
     }
 
-    showToast(`✅ Cleaned ${reportIds.length} reports + ${workerIds.length} worker assignments`,'ok');
+    showToast(`✅ Deleted ${reportIds.length} phantom report${reportIds.length!==1?'s':''}${workerIds.length?' + '+workerIds.length+' assignment'+(workerIds.length>1?'s':'')+' cleared':''}`, 'ok');
     closeModal('phantom');
     renderStats();
     renderDailyTab();
   }catch(e){
-    showToast('Clean failed: '+e.message,'err');
+    showToast('Delete failed: '+e.message,'err');
     console.error(e);
     btn.disabled=false;
-    btn.textContent='🧹 Clean Selected';
+    btn.textContent='🗑 Confirm & Delete';
   }
 }
 
