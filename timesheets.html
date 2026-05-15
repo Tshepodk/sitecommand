@@ -127,35 +127,8 @@ tr:hover td{background:var(--bg3)}
 .empty-state h3{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase}
 /* Summary table highlight */
 .total-row td{background:rgba(245,166,35,0.06);font-weight:700}
-/* Batch modal */
-.modal-xl{width:860px;max-width:98vw}
-.step-bar{display:flex;align-items:center;gap:0;margin-bottom:1.25rem}
-.step-item{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text3);font-family:var(--font-d);letter-spacing:0.06em;text-transform:uppercase;padding:6px 10px;border-radius:var(--r)}
-.step-item.active{color:var(--accent)}
-.step-item.done{color:var(--green)}
-.step-num{width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
-.step-item.active .step-num{background:var(--accent);color:#000;border-color:var(--accent)}
-.step-item.done .step-num{background:var(--green);color:#000;border-color:var(--green)}
-.step-line{flex:1;height:1px;background:var(--border)}
-.step-line.done{background:var(--green)}
-.wch-hdr{display:grid;grid-template-columns:24px 1fr 80px 90px 70px 70px 60px 80px 120px 70px;gap:6px;padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)}
-.worker-check-row{display:grid;grid-template-columns:24px 1fr 80px 90px 70px 70px 60px 80px 120px 70px;gap:6px;padding:8px 10px;border-bottom:1px solid var(--border);align-items:center;font-size:12px;cursor:pointer;transition:background 0.1s}
-.worker-check-row:hover{background:var(--bg3)}
-.worker-check-row.selected{background:rgba(245,166,35,0.06)}
-.worker-check-row.disabled{opacity:0.45;pointer-events:none}
-.hide-foreman{} /* toggled via JS */
-/* Foreman grid — removes rate/OT/threshold columns */
-.wch-hdr.foreman-grid{grid-template-columns:24px 1fr 80px 90px 80px 120px 70px}
-.worker-check-row.foreman-grid{grid-template-columns:24px 1fr 80px 90px 80px 120px 70px}
-.hide-foreman{display:none!important}
-.qf-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:8px 14px;margin-bottom:1rem}
-.btr-grid{display:grid;grid-template-columns:160px 90px 90px 70px 1fr 60px 70px 80px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
-.btr-grid.foreman-grid{grid-template-columns:160px 90px 90px 70px 1fr 60px}
-.btr-grid:last-child{border-bottom:none}
-.preview-row{display:grid;grid-template-columns:1fr 70px 70px 70px 90px 70px 100px;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;font-size:12px}
-.preview-row.foreman-grid{grid-template-columns:1fr 70px 70px}
-.preview-row.phdr{background:var(--bg3);font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);border-radius:var(--r) var(--r) 0 0}
-.preview-total{display:flex;gap:2rem;justify-content:flex-end;padding:10px 14px;background:rgba(245,166,35,0.04);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase}
+/* Mobile */
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)!important}.worker-ts-row{grid-template-columns:1fr 1fr;gap:8px}.fg2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -199,8 +172,7 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
-          <button class="btn btn-danger btn-sm" onclick="openPhantomCleaner()">🧹 Clean Phantom Projects</button>
-          <button class="btn btn-ghost btn-sm" onclick="openBatchModal()" data-keep>👥 Batch Time Entry</button>
+          <button class="btn btn-teal" onclick="openBatchModal()">⚡ Batch Entry</button>
           <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
         </div>
       </div>
@@ -377,7 +349,7 @@ tr:hover td{background:var(--bg3)}
     <div class="form-group" style="margin-bottom:1rem">
       <label class="form-label">Break / Lunch Deduction (minutes)</label>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input class="form-input" type="number" id="entry-break" min="0" max="180" value="30" style="width:100px" oninput="recalcEntryHours()"/>
+        <input class="form-input" type="number" id="entry-break" min="0" max="180" value="60" style="width:100px" oninput="recalcEntryHours()"/>
         <span style="font-size:12px;color:var(--text3)">Subtract from total hours worked</span>
       </div>
     </div>
@@ -451,119 +423,50 @@ tr:hover td{background:var(--bg3)}
 
 <!-- ════════════════════ MODAL: BATCH ENTRY ════════════════════ -->
 <div class="modal-bg" id="modal-batch">
-  <div class="modal modal-xl">
+  <div class="modal" style="width:860px;max-width:98vw">
     <div class="modal-title">
-      <span>👥 Batch Time Entry</span>
+      <span>⚡ Batch Time Entry</span>
       <button class="modal-close" onclick="closeModal('batch')">✕</button>
     </div>
-    <div class="step-bar">
-      <div class="step-item active" id="step1-ind"><div class="step-num">1</div>Select Workers</div>
-      <div class="step-line" id="step-line-1"></div>
-      <div class="step-item" id="step2-ind"><div class="step-num">2</div>Enter Times</div>
-      <div class="step-line" id="step-line-2"></div>
-      <div class="step-item" id="step3-ind"><div class="step-num">3</div>Preview & Save</div>
+
+    <!-- Date + Quick Fill bar -->
+    <div style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="batch-date" style="width:160px" onchange="renderBatchWorkers()"/>
+      </div>
+      <div></div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Quick Fill — Clock In</label>
+        <input class="form-input ts-time-input" type="time" id="batch-qf-in" style="width:110px"/>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Clock Out</label>
+        <input class="form-input ts-time-input" type="time" id="batch-qf-out" style="width:110px"/>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Break (min)</label>
+        <input class="form-input" type="number" id="batch-qf-break" value="60" min="0" max="180" style="width:80px"/>
+      </div>
+      <button class="btn btn-teal" onclick="applyQuickFill()" style="align-self:flex-end">Apply to Selected</button>
     </div>
 
-    <!-- STEP 1: Select workers -->
-    <div id="batch-step1">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end">
-        <div><label class="form-label">Date *</label><input class="form-input" type="date" id="batch-date"/></div>
-        <div><label class="form-label">Filter by Project</label><select class="form-select" id="batch-proj-filter" onchange="renderBatchWorkerList()"><option value="">All Projects</option></select></div>
-        <div><label class="form-label">Filter by Type</label><select class="form-select" id="batch-type-filter" onchange="renderBatchWorkerList()"><option value="">All Types</option><option>Civil</option><option>Telecoms</option><option>Electrical</option><option>Supervisor</option><option>Plant Operator</option><option>Subcontractor</option></select></div>
-        <button class="btn btn-ghost btn-sm" onclick="clearBatchFilters()">Clear</button>
-      </div>
-      <input class="form-input" id="batch-search" placeholder="🔍 Search workers..." oninput="renderBatchWorkerList()" style="margin-bottom:8px"/>
-      <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0">
-        <input type="checkbox" id="batch-select-all" onchange="toggleSelectAll(this.checked)" style="cursor:pointer"/>
-        <label for="batch-select-all" style="cursor:pointer;font-weight:600;font-size:12px">Select All Visible</label>
-        <span id="batch-selected-count" style="color:var(--accent);font-weight:700;margin-left:auto;font-family:var(--font-d);font-size:14px">0 selected</span>
-      </div>
-      <div class="wch-hdr" style="border-radius:0;border-top:none">
-        <span></span><span>Name</span><span>Role</span><span>Type</span><span class="hide-foreman">Rate/hr</span><span class="hide-foreman">OT/hr</span><span class="hide-foreman">OT Thr</span><span class="hide-foreman">Status</span><span class="hide-foreman">Project</span><span>Today?</span>
-      </div>
-      <div id="batch-worker-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
-        <button class="btn btn-primary" onclick="goToBatchStep2()" id="batch-next-btn" disabled>Next: Enter Times →</button>
-      </div>
+    <!-- Select all -->
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 4px;margin-bottom:6px;border-bottom:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text2);user-select:none">
+        <input type="checkbox" id="batch-select-all" onchange="toggleSelectAllBatch(this.checked)" style="cursor:pointer;accent-color:var(--accent)"/>
+        <strong>Select All Workers</strong>
+      </label>
+      <span style="font-size:11px;color:var(--text3)" id="batch-selected-count">0 selected</span>
     </div>
 
-    <!-- STEP 2: Enter times -->
-    <div id="batch-step2" style="display:none">
-      <div class="qf-bar">
-        <span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:0.06em;text-transform:uppercase">⚡ Quick Fill</span>
-        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">In</label><input type="time" id="qf-in" class="form-input" style="width:100px;padding:4px 8px;font-size:13px"/></div>
-        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Out</label><input type="time" id="qf-out" class="form-input" style="width:100px;padding:4px 8px;font-size:13px"/></div>
-        <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(m)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="30" min="0"/></div>
-        <button class="btn btn-ghost btn-sm" onclick="applyQuickFill()">Apply to All</button>
-      </div>
-      <div style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
-        📅 <strong id="batch-date-label"></strong> &nbsp;·&nbsp; Adjust individual times as needed.
-      </div>
-      <div style="display:grid;grid-template-columns:160px 90px 90px 70px 1fr 60px 70px 80px;gap:8px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">
-        <span>Worker</span><span>Clock In</span><span>Clock Out</span><span>Break(m)</span><span>Notes</span><span>Total</span><span class="hide-foreman">OT</span><span class="hide-foreman">Pay</span>
-      </div>
-      <div id="batch-time-rows" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="goToBatchStep1()">← Back</button>
-        <button class="btn btn-primary" onclick="goToBatchStep3()">Next: Preview →</button>
-      </div>
-    </div>
+    <!-- Worker rows -->
+    <div id="batch-workers-list" style="max-height:420px;overflow-y:auto;padding-right:4px"></div>
 
-    <!-- STEP 3: Preview & save -->
-    <div id="batch-step3" style="display:none">
-      <div id="batch-skip-notice" style="display:none;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--accent)"></div>
-      <div class="preview-row phdr"><span>Worker</span><span>Total Hrs</span><span>Reg Hrs</span><span class="hide-foreman">OT Hrs</span><span class="hide-foreman">Regular Pay</span><span class="hide-foreman">OT Pay</span><span class="hide-foreman">Total Pay</span></div>
-      <div id="batch-preview-rows" style="border:1px solid var(--border);border-top:none;max-height:300px;overflow-y:auto"></div>
-      <div class="preview-total" id="batch-preview-total"></div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="goToBatchStep2back()">← Back</button>
-        <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">💾 Save All Entries</button>
-      </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
+      <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">💾 Save All Entries</button>
     </div>
-  </div>
-</div>
-
-<!-- ════════════════════ MODAL: PHANTOM CLEANER ════════════════════ -->
-<div class="modal-bg" id="modal-phantom">
-  <div class="modal modal-wide">
-    <div class="modal-title">
-      <span id="phantom-modal-title">🧹 Clean Phantom Projects</span>
-      <button class="modal-close" onclick="closeModal('phantom')">✕</button>
-    </div>
-
-    <!-- STEP 1: Scan & Select -->
-    <div id="phantom-step1">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.6">
-        Scans <strong>daily field reports</strong> and <strong>worker assignments</strong> for project names that don't exist in your Projects table.
-      </div>
-      <div id="phantom-loading" style="padding:1.5rem;text-align:center;color:var(--text3);font-size:13px">
-        <span class="spinner"></span> Scanning for phantom projects…
-      </div>
-      <div id="phantom-list" style="display:none"></div>
-      <div id="phantom-empty" style="display:none;padding:1.5rem;text-align:center;color:var(--green);font-size:13px;font-weight:600">
-        ✅ No phantom projects found — your data is clean!
-      </div>
-      <div class="modal-footer" id="phantom-footer" style="display:none">
-        <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
-        <button class="btn btn-primary" id="phantom-preview-btn" onclick="showPhantomPreview()">Preview Records →</button>
-      </div>
-    </div>
-
-    <!-- STEP 2: Preview before delete -->
-    <div id="phantom-step2" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem">
-        <button class="btn btn-ghost btn-sm" onclick="backToPhantomStep1()">← Back</button>
-        <span style="font-size:13px;color:var(--text2)">Review what will be deleted before confirming</span>
-      </div>
-      <div id="phantom-preview-content" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)"></div>
-      <div id="phantom-preview-summary" style="margin-top:10px;padding:10px 14px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:var(--r);font-size:12px;color:#f87171"></div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('phantom')">Cancel</button>
-        <button class="btn btn-danger" id="phantom-delete-btn" onclick="deleteSelectedPhantoms()">🗑 Confirm & Delete</button>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -600,33 +503,7 @@ const sbGet=(t,q)=>sb('GET',t,null,q);
 const sbPost=(t,d)=>sb('POST',t,d,'');
 const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
 
-// ── RBAC helpers ──────────────────────────────────────────────────────────────
-function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
-function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
-function canSeeEarnings(){return['admin','pm'].includes(getUserRole());}
-function isForeman(){return getUserRole()==='foreman';}
-
-// Called after init() — hides all pay/rate UI for foreman
-function applyTimesheetRBAC(){
-  if(canSeeEarnings())return; // admin & pm see everything
-  // Hide Worker Rates tab
-  document.querySelectorAll('.tab-btn').forEach(btn=>{if(btn.textContent.includes('Worker Rates'))btn.style.display='none';});
-  // Hide Manage Rates button
-  document.querySelectorAll('button').forEach(btn=>{if(btn.textContent.includes('Manage Rates'))btn.style.display='none';});
-  // Hide rate preview in entry modal
-  const rp=document.getElementById('entry-rate-preview');if(rp){rp.style.display='none';}
-  window._foremanMode=true;
-  // Update subtitle
-  const sub=document.querySelector('.page-sub');
-  if(sub)sub.textContent='Clock in/out — log daily time entries for your workers';
-  // Hide all foreman-restricted columns
-  document.querySelectorAll('.hide-foreman').forEach(el=>el.style.display='none');
-  // Collapse batch worker list grid to only visible columns: checkbox, name, role, type, today
-  const narrowGrid='24px 1fr 100px 100px 70px';
-  document.querySelectorAll('.wch-hdr,.worker-check-row').forEach(el=>el.style.gridTemplateColumns=narrowGrid);
-}
-
-
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtH=h=>h%1===0?h+'h':h.toFixed(2)+'h';
 const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
@@ -635,7 +512,6 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
-let allProjects=[];  // for batch project filter
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
@@ -644,10 +520,9 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries,allProjects]=await Promise.all([
+    [allWorkers,allEntries]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc').catch(()=>[]),
-      sbGet('projects','order=name.asc&active=eq.true').catch(()=>[])
+      sbGet('timesheet_entries','order=entry_date.desc')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
@@ -667,7 +542,6 @@ async function init(){
   renderStats();
   renderDailyTab();
   renderRatesTab();
-  applyTimesheetRBAC();
 }
 
 function showTableSetupBanner(){
@@ -784,18 +658,13 @@ function renderStats(){
   const totalPay=monthEntries.reduce((a,e)=>a+(e.total_pay||0),0);
   const totalOT=monthEntries.reduce((a,e)=>a+(e.ot_hours||0),0);
   const uniqueWorkers=new Set(allEntries.map(e=>e.worker_id)).size;
-  const earnings=canSeeEarnings();
-  const grid=document.getElementById('ts-stats');
-  grid.style.gridTemplateColumns=`repeat(${earnings?5:4},1fr)`;
-  grid.innerHTML=`
+
+  document.getElementById('ts-stats').innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allWorkers.length}</div><div class="stat-l">Workers</div><div class="stat-sub">with rate configs</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${todayEntries.length}</div><div class="stat-l">Today's Entries</div><div class="stat-sub">${todayEntries.reduce((a,e)=>a+(e.total_hours||0),0).toFixed(1)}h logged</div></div>
     <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allEntries.length}</div><div class="stat-l">Total Entries</div><div class="stat-sub">${uniqueWorkers} employees</div></div>
-    ${earnings?`
     <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div></div>
-    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`
-    :`<div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${totalOT.toFixed(1)}h</div><div class="stat-l">OT This Month</div><div class="stat-sub">hours only</div></div>`}
-  `;
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:22px">${fmt(totalPay)}</div><div class="stat-l">Month Payroll</div><div class="stat-sub">${thisMonth}</div></div>`;
 }
 
 // ── DAILY TAB ─────────────────────────────────────────────────────────────────
@@ -1043,7 +912,7 @@ function openEntryModal(entryId=null){
       document.getElementById('entry-date').value=e.entry_date||'';
       document.getElementById('entry-clock-in').value=e.clock_in||'';
       document.getElementById('entry-clock-out').value=e.clock_out||'';
-      document.getElementById('entry-break').value=e.break_minutes??30;
+      document.getElementById('entry-break').value=e.break_minutes??60;
       document.getElementById('entry-notes').value=e.notes||'';
       onWorkerSelect();
       recalcEntryHours();
@@ -1053,7 +922,7 @@ function openEntryModal(entryId=null){
     document.getElementById('entry-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
     document.getElementById('entry-clock-in').value='';
     document.getElementById('entry-clock-out').value='';
-    document.getElementById('entry-break').value='30';
+    document.getElementById('entry-break').value='60';
     document.getElementById('entry-notes').value='';
     document.getElementById('entry-rate-preview').style.display='none';
     document.getElementById('ep-total').textContent='0.00h';
@@ -1094,7 +963,7 @@ function recalcEntryHours(){
   const clockIn=document.getElementById('entry-clock-in').value;
   const clockOut=document.getElementById('entry-clock-out').value;
   const breakMins=parseInt(document.getElementById('entry-break').value)||0;
-  const date=document.getElementById('entry-date').value;
+  const date=document.getElementById('entry-date').value||new Date().toISOString().split('T')[0];
 
   const {total}=calcHours(clockIn,clockOut,breakMins);
   const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
@@ -1209,464 +1078,165 @@ async function saveRate(){
   btn.disabled=false;btn.textContent='Save Rate';
 }
 
-// ── BATCH ENTRY ───────────────────────────────────────────────────────────────
-let batchSelectedIds=new Set();
-let batchTimeData={};
-let batchDate='';
-
+// ── BATCH ENTRY MODAL ─────────────────────────────────────────────────────────
 function openBatchModal(){
-  batchSelectedIds=new Set();batchTimeData={};batchDate='';
-  document.getElementById('batch-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
-  document.getElementById('batch-proj-filter').innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-  document.getElementById('batch-type-filter').value='';
-  document.getElementById('batch-search').value='';
-  showBatchStep(1);renderBatchWorkerList();updateBatchCount();
   document.getElementById('modal-batch').classList.add('open');
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('batch-date').value=document.getElementById('daily-date').value||today;
+  document.getElementById('batch-qf-in').value='';
+  document.getElementById('batch-qf-out').value='';
+  document.getElementById('batch-qf-break').value='60';
+  document.getElementById('batch-select-all').checked=false;
+  renderBatchWorkers();
 }
 
-function showBatchStep(n){
-  [1,2,3].forEach(i=>{
-    document.getElementById('batch-step'+i).style.display=i===n?'block':'none';
-    const el=document.getElementById('step'+i+'-ind');
-    el.className='step-item'+(i<n?' done':i===n?' active':'');
-  });
-  document.getElementById('step-line-1').className='step-line'+(n>1?' done':'');
-  document.getElementById('step-line-2').className='step-line'+(n>2?' done':'');
-}
-
-function clearBatchFilters(){
-  document.getElementById('batch-proj-filter').value='';
-  document.getElementById('batch-type-filter').value='';
-  document.getElementById('batch-search').value='';
-  renderBatchWorkerList();
-}
-
-function renderBatchWorkerList(){
-  const proj=document.getElementById('batch-proj-filter').value;
-  const type=document.getElementById('batch-type-filter').value;
-  const search=(document.getElementById('batch-search').value||'').toLowerCase();
-  const date=document.getElementById('batch-date').value;
-  const alreadyLogged=new Set(allEntries.filter(e=>e.entry_date===date).map(e=>e.worker_id));
-  const WFB={active:'badge-green',leave:'badge-amber','cert-expiring':'badge-red',inactive:'badge-gray'};
-  const filtered=allWorkers.filter(w=>{
-    if(proj&&w.project_name!==proj)return false;
-    if(type&&w.type!==type)return false;
-    if(search&&!(w.name||'').toLowerCase().includes(search))return false;
-    return true;
-  });
-  const fmt2=n=>'R'+Number(n||0).toFixed(0);
-  document.getElementById('batch-worker-list').innerHTML=filtered.length===0
-    ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No workers match filters.</div>`
-    :filtered.map(w=>{
-      const checked=batchSelectedIds.has(w.id);
-      const logged=alreadyLogged.has(w.id);
-      return`<div class="worker-check-row${checked?' selected':''}${logged?' disabled':''}" id="wcr-${w.id}">
-        <input type="checkbox" class="cb" id="wc-${w.id}" ${checked?'checked':''} ${logged?'disabled':''} onchange="toggleWorker(${w.id},this.checked)" style="cursor:pointer"/>
-        <div><div style="font-weight:500">${w.name}</div></div>
-        <div style="font-size:11px;color:var(--text2)">${w.role||'—'}</div>
-        <div style="font-size:11px;color:var(--text2)">${w.type||'—'}</div>
-        <div style="font-size:11px;color:var(--teal)" class="hide-foreman">${w.hourly_rate?fmt2(w.hourly_rate)+'/h':'—'}</div>
-        <div style="font-size:11px;color:var(--purple)" class="hide-foreman">${w.ot_rate?fmt2(w.ot_rate)+'/h':'—'}</div>
-        <div style="font-size:11px;color:var(--text3)" class="hide-foreman">${w.ot_threshold||8}h</div>
-        <div class="hide-foreman"><span class="badge ${WFB[w.status]||'badge-gray'}" style="font-size:10px">${w.status||'—'}</span></div>
-        <div style="font-size:11px;color:var(--text3)" class="hide-foreman">${w.project_name||'—'}</div>
-        <div style="font-size:11px;color:${logged?'var(--green)':'var(--text3)'}">${logged?'✓ Done':'—'}</div>
-      </div>`;
-    }).join('');
-  // sync select-all state
-  const allCbs=document.querySelectorAll('#batch-worker-list .cb:not([disabled])');
-  document.getElementById('batch-select-all').checked=allCbs.length>0&&[...allCbs].every(cb=>cb.checked);
-  updateBatchCount();
-  // Re-apply foreman hiding after rows are in DOM
-  if(!canSeeEarnings()){
-    document.querySelectorAll('.hide-foreman').forEach(el=>el.style.display='none');
-    const narrowGrid='24px 1fr 110px 110px 70px';
-    document.querySelectorAll('.wch-hdr,.worker-check-row').forEach(el=>el.style.gridTemplateColumns=narrowGrid);
+function renderBatchWorkers(){
+  const date=document.getElementById('batch-date').value||new Date().toISOString().split('T')[0];
+  const list=document.getElementById('batch-workers-list');
+  if(!allWorkers.length){
+    list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3)">No workers found. Add workers in the Workforce page first.</div>';
+    return;
   }
-}
-
-function toggleWorker(id,checked){
-  if(checked)batchSelectedIds.add(id);else batchSelectedIds.delete(id);
-  const row=document.getElementById('wcr-'+id);
-  if(row)row.classList.toggle('selected',checked);
-  updateBatchCount();
-  const allCbs=[...document.querySelectorAll('#batch-worker-list .cb:not([disabled])')];
-  document.getElementById('batch-select-all').checked=allCbs.length>0&&allCbs.every(cb=>cb.checked);
-}
-
-function toggleSelectAll(checked){
-  document.querySelectorAll('#batch-worker-list .cb:not([disabled])').forEach(cb=>{
-    const id=parseInt(cb.id.replace('wc-',''));
-    cb.checked=checked;
-    if(checked)batchSelectedIds.add(id);else batchSelectedIds.delete(id);
-    const row=document.getElementById('wcr-'+id);
-    if(row)row.classList.toggle('selected',checked);
-  });
-  updateBatchCount();
-}
-
-function updateBatchCount(){
-  const count=batchSelectedIds.size;
-  document.getElementById('batch-selected-count').textContent=count+' selected';
-  document.getElementById('batch-next-btn').disabled=count===0;
-}
-
-function goToBatchStep2(){
-  if(!batchSelectedIds.size){showToast('Select at least one worker','err');return;}
-  batchDate=document.getElementById('batch-date').value;
-  if(!batchDate){showToast('Select a date','err');return;}
-  document.getElementById('batch-date-label').textContent=
-    new Date(batchDate+'T12:00:00').toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  showBatchStep(2);renderBatchTimeRows();
-}
-
-function goToBatchStep1(){showBatchStep(1);renderBatchWorkerList();}
-function goToBatchStep2back(){showBatchStep(2);}
-
-function applyQuickFill(){
-  const ci=document.getElementById('qf-in').value;
-  const co=document.getElementById('qf-out').value;
-  const brk=document.getElementById('qf-break').value||30;
-  batchSelectedIds.forEach(id=>{
-    if(!batchTimeData[id])batchTimeData[id]={};
-    if(ci)batchTimeData[id].in=ci;
-    if(co)batchTimeData[id].out=co;
-    batchTimeData[id].break=parseInt(brk);
-    const ri=document.getElementById('btr-in-'+id);
-    const ro=document.getElementById('btr-out-'+id);
-    const rb=document.getElementById('btr-brk-'+id);
-    if(ri&&ci)ri.value=ci;
-    if(ro&&co)ro.value=co;
-    if(rb)rb.value=brk;
-    updateBatchRowCalc(id);
-  });
-}
-
-function renderBatchTimeRows(){
-  const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
-  document.getElementById('batch-time-rows').innerHTML=workers.map(w=>{
-    const td=batchTimeData[w.id]||{in:'',out:'',break:30,notes:''};
-    return`<div class="btr-grid" id="btr-${w.id}">
-      <div><div style="font-weight:500;font-size:13px">${w.name}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></div>
-      <input class="form-input ts-time-input" type="time" id="btr-in-${w.id}" value="${td.in||''}" style="padding:4px 6px;font-size:12px" oninput="saveBatchCell(${w.id},'in',this.value);updateBatchRowCalc(${w.id})"/>
-      <input class="form-input ts-time-input" type="time" id="btr-out-${w.id}" value="${td.out||''}" style="padding:4px 6px;font-size:12px" oninput="saveBatchCell(${w.id},'out',this.value);updateBatchRowCalc(${w.id})"/>
-      <input class="form-input" type="number" id="btr-brk-${w.id}" value="${td.break??30}" min="0" style="padding:4px 6px;font-size:12px" oninput="saveBatchCell(${w.id},'break',this.value);updateBatchRowCalc(${w.id})"/>
-      <input class="form-input" type="text" id="btr-notes-${w.id}" value="${td.notes||''}" placeholder="Notes..." style="padding:4px 6px;font-size:12px" oninput="saveBatchCell(${w.id},'notes',this.value)"/>
-      <div id="btr-total-${w.id}" style="font-size:12px;color:var(--teal);font-weight:600">—</div>
-      <div id="btr-ot-${w.id}" style="font-size:12px;color:var(--purple)" class="hide-foreman">—</div>
-      <div id="btr-pay-${w.id}" style="font-size:12px;color:var(--accent);font-weight:600" class="hide-foreman">—</div>
+  list.innerHTML=allWorkers.map(w=>{
+    const existingEntry=allEntries.find(e=>e.worker_id==w.id&&e.entry_date===date);
+    const ci=existingEntry?existingEntry.clock_in:'';
+    const co=existingEntry?existingEntry.clock_out:'';
+    const brk=existingEntry!=null?existingEntry.break_minutes:60;
+    const hasRate=w.hourly_rate||w.ot_rate;
+    return`<div class="worker-ts-row" id="brow-${w.id}" style="grid-template-columns:18px 160px 110px 110px 80px 1fr 80px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:grid;gap:10px;align-items:center">
+      <input type="checkbox" class="batch-chk" data-wid="${w.id}" onchange="updateBatchSelectedCount()" style="cursor:pointer;accent-color:var(--accent)" ${existingEntry?'checked':''}>
+      <div>
+        <div style="font-weight:500;font-size:13px">${w.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${w.role||'—'}${hasRate?` · R${parseFloat(w.hourly_rate||0).toFixed(0)}/hr`:' · <span style="color:var(--red)">No rate</span>'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Clock In</div>
+        <input type="time" class="ts-time-input batch-ci" data-wid="${w.id}" value="${ci}" oninput="recalcBatchRow(${w.id})" style="width:100px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-size:13px"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Clock Out</div>
+        <input type="time" class="ts-time-input batch-co" data-wid="${w.id}" value="${co}" oninput="recalcBatchRow(${w.id})" style="width:100px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-size:13px"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Break (min)</div>
+        <input type="number" class="batch-brk" data-wid="${w.id}" value="${brk}" min="0" max="180" oninput="recalcBatchRow(${w.id})" style="width:65px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-family:var(--font-b);font-size:13px"/>
+      </div>
+      <div id="brow-calc-${w.id}" style="font-family:var(--font-d);font-size:13px;color:var(--text3)">—</div>
+      <div id="brow-pay-${w.id}" style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--accent);text-align:right">—</div>
     </div>`;
   }).join('');
-  // recalc all rows that already have data
-  workers.forEach(w=>{if(batchTimeData[w.id]?.in&&batchTimeData[w.id]?.out)updateBatchRowCalc(w.id);});
-}
-
-function saveBatchCell(id,field,val){
-  if(!batchTimeData[id])batchTimeData[id]={break:30};
-  batchTimeData[id][field]=field==='break'?parseInt(val)||0:val;
-}
-
-function updateBatchRowCalc(wid){
-  const td=batchTimeData[wid]||{};
-  if(!td.in||!td.out)return;
-  const w=allWorkers.find(x=>x.id===wid)||{};
-  const{total}=calcHours(td.in,td.out,td.break||30);
-  const soFar=getWorkerMonthHours(wid,batchDate.substring(0,7));
-  const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
-  const fmt2=n=>'R'+Number(n||0).toFixed(0);
-  const el=id=>document.getElementById(id);
-  if(el('btr-total-'+wid))el('btr-total-'+wid).textContent=total.toFixed(1)+'h';
-  if(el('btr-ot-'+wid))el('btr-ot-'+wid).textContent=pay.otHours>0?pay.otHours.toFixed(1)+'h':'—';
-  if(el('btr-pay-'+wid))el('btr-pay-'+wid).textContent=fmt2(pay.totalPay);
-}
-
-function goToBatchStep3(){
-  const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
-  const skipped=[];
-  const rows=[];
-  const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
-  let totHrs=0,totOT=0,totPay=0;
-  workers.forEach(w=>{
-    const td=batchTimeData[w.id]||{};
-    if(!td.in||!td.out){skipped.push(w.name);return;}
-    const{total}=calcHours(td.in,td.out,td.break||30);
-    const soFar=getWorkerMonthHours(w.id,batchDate.substring(0,7));
-    const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
-    totHrs+=total;totOT+=pay.otHours;totPay+=pay.totalPay;
-    rows.push(`<div class="preview-row">
-      <div><div style="font-weight:500">${w.name}</div><div style="font-size:11px;color:var(--text3)">${td.in} – ${td.out}</div></div>
-      <div style="color:var(--teal);font-weight:600">${total.toFixed(2)}h</div>
-      <div>${pay.regularHours.toFixed(2)}h</div>
-      <div style="color:var(--purple)" class="hide-foreman">${pay.otHours>0?pay.otHours.toFixed(2)+'h':'—'}</div>
-      <div class="hide-foreman">${fmt(pay.regularPay)}</div>
-      <div style="color:var(--purple)" class="hide-foreman">${pay.otHours>0?fmt(pay.otPay):'—'}</div>
-      <div style="color:var(--accent);font-weight:700" class="hide-foreman">${fmt(pay.totalPay)}</div>
-    </div>`);
+  updateBatchSelectedCount();
+  // Recalc any pre-filled rows
+  allWorkers.forEach(w=>{
+    const ci=document.querySelector(`.batch-ci[data-wid="${w.id}"]`);
+    if(ci&&ci.value)recalcBatchRow(w.id);
   });
-  const notice=document.getElementById('batch-skip-notice');
-  if(skipped.length){notice.style.display='block';notice.textContent='⚠ Skipped (no times entered): '+skipped.join(', ');}
-  else notice.style.display='none';
-  if(!rows.length){showToast('No valid entries to preview — enter clock in/out times first','err');return;}
-  document.getElementById('batch-preview-rows').innerHTML=rows.join('');
-  const fmt2=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
-  document.getElementById('batch-preview-total').innerHTML=
-    `<span>Total Hours: <strong style="color:var(--teal)">${totHrs.toFixed(2)}h</strong></span>
-     <span class="hide-foreman">OT: <strong style="color:var(--purple)">${totOT.toFixed(2)}h</strong></span>
-     <span class="hide-foreman">Total Pay: <strong style="color:var(--accent)">${fmt2(totPay)}</strong></span>`;
-  showBatchStep(3);
+}
+
+function recalcBatchRow(wid){
+  const w=allWorkers.find(x=>x.id==wid)||{};
+  const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`);
+  const co=document.querySelector(`.batch-co[data-wid="${wid}"]`);
+  const brk=document.querySelector(`.batch-brk[data-wid="${wid}"]`);
+  const calcEl=document.getElementById('brow-calc-'+wid);
+  const payEl=document.getElementById('brow-pay-'+wid);
+  if(!ci||!co||!calcEl||!payEl)return;
+  const date=document.getElementById('batch-date').value||new Date().toISOString().split('T')[0];
+  if(!ci.value||!co.value){calcEl.textContent='—';payEl.textContent='—';return;}
+  const {total}=calcHours(ci.value,co.value,parseInt(brk.value)||0);
+  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+  calcEl.innerHTML=`<span style="color:var(--teal)">${fmtH(total)}</span>${pay.otHours>0?`<span style="color:var(--purple);font-size:11px;margin-left:4px">+${fmtH(pay.otHours)} OT</span>`:''}`;
+  payEl.textContent=w.hourly_rate?fmt(pay.totalPay):'No rate';
+  payEl.style.color=w.hourly_rate?'var(--accent)':'var(--text3)';
+}
+
+function applyQuickFill(){
+  const qfIn=document.getElementById('batch-qf-in').value;
+  const qfOut=document.getElementById('batch-qf-out').value;
+  const qfBrk=document.getElementById('batch-qf-break').value;
+  if(!qfIn&&!qfOut){showToast('Enter at least clock-in or clock-out time','err');return;}
+  const checked=document.querySelectorAll('.batch-chk:checked');
+  if(!checked.length){showToast('Select at least one worker first','err');return;}
+  checked.forEach(chk=>{
+    const wid=chk.dataset.wid;
+    if(qfIn){const el=document.querySelector(`.batch-ci[data-wid="${wid}"]`);if(el)el.value=qfIn;}
+    if(qfOut){const el=document.querySelector(`.batch-co[data-wid="${wid}"]`);if(el)el.value=qfOut;}
+    if(qfBrk){const el=document.querySelector(`.batch-brk[data-wid="${wid}"]`);if(el)el.value=qfBrk;}
+    recalcBatchRow(parseInt(wid));
+  });
+  showToast(`Applied to ${checked.length} worker${checked.length>1?'s':''}`);
+}
+
+function toggleSelectAllBatch(checked){
+  document.querySelectorAll('.batch-chk').forEach(chk=>chk.checked=checked);
+  updateBatchSelectedCount();
+}
+
+function updateBatchSelectedCount(){
+  const total=document.querySelectorAll('.batch-chk').length;
+  const selected=document.querySelectorAll('.batch-chk:checked').length;
+  document.getElementById('batch-selected-count').textContent=`${selected} of ${total} selected`;
+  document.getElementById('batch-select-all').checked=selected===total&&total>0;
+  document.getElementById('batch-select-all').indeterminate=selected>0&&selected<total;
 }
 
 async function saveBatchEntries(){
   const btn=document.getElementById('batch-save-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
-  try{
-    const workers=allWorkers.filter(w=>batchSelectedIds.has(w.id));
-    const yearMonth=batchDate.substring(0,7);
-    const payloads=[];
-    workers.forEach(w=>{
-      const td=batchTimeData[w.id]||{};
-      if(!td.in||!td.out)return;
-      const{total}=calcHours(td.in,td.out,td.break||30);
-      const soFar=getWorkerMonthHours(w.id,yearMonth);
-      const pay=calcPayPreview(total,w.hourly_rate||0,batchDate,soFar);
-      payloads.push({
-        worker_id:w.id,worker_name:w.name,entry_date:batchDate,
-        clock_in:td.in,clock_out:td.out,break_minutes:td.break||30,
-        total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
-        hourly_rate:parseFloat(w.hourly_rate||0),
-        ot_rate:parseFloat(w.ot_rate||w.hourly_rate||0)*1.5,
-        is_weekend:isDoubleTimeDay(batchDate),
-        day_type:getDayType(batchDate),
-        regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
-        notes:td.notes||''
-      });
-    });
-    if(!payloads.length){showToast('No valid entries to save','err');btn.disabled=false;btn.textContent='💾 Save All Entries';return;}
-    const results=await Promise.all(payloads.map(p=>sbPost('timesheet_entries',p)));
-    results.forEach(r=>{if(r&&r[0])allEntries.unshift(r[0]);});
-    btn.innerHTML='<span class="spinner"></span>Recalculating…';
-    const affected=[...new Set(payloads.map(p=>p.worker_id))];
-    await Promise.all(affected.map(wid=>{
-      const w=allWorkers.find(x=>x.id===wid)||{};
-      return patchMonthRecalc(wid,yearMonth,w.hourly_rate||0);
-    }));
-    showToast(`✅ ${payloads.length} entr${payloads.length===1?'y':'ies'} saved`);
-    closeModal('batch');
-    document.getElementById('daily-date').value=batchDate;
-    renderStats();renderDailyTab();
-  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
-  btn.disabled=false;btn.textContent='💾 Save All Entries';
-}
+  const date=document.getElementById('batch-date').value;
+  if(!date){showToast('Select a date first','err');return;}
+  const checked=[...document.querySelectorAll('.batch-chk:checked')];
+  if(!checked.length){showToast('Select at least one worker','err');return;}
 
-// ── PHANTOM PROJECT CLEANER ───────────────────────────────────────────────────
-let phantomData = {};       // { projectName: { reportIds[], workerIds[], reports[] } }
-let phantomFullReports = []; // full report objects fetched for preview
-
-async function openPhantomCleaner(){
-  // Reset to step 1
-  document.getElementById('phantom-step1').style.display='block';
-  document.getElementById('phantom-step2').style.display='none';
-  document.getElementById('modal-phantom-title')||null;
-  document.getElementById('phantom-loading').style.display='block';
-  document.getElementById('phantom-list').style.display='none';
-  document.getElementById('phantom-empty').style.display='none';
-  document.getElementById('phantom-footer').style.display='none';
-  document.getElementById('modal-phantom').classList.add('open');
-  phantomData={};
-  phantomFullReports=[];
-
-  try{
-    const projects = await sbGet('projects','select=name&order=name.asc');
-    const realNames = new Set((projects||[]).map(p=>(p.name||'').toLowerCase().trim()));
-
-    // Fetch full daily_reports for preview details
-    phantomFullReports = await sbGet('daily_reports','select=id,project,report_date,reporter,location,workers,total_cost,costs&order=project.asc,report_date.asc')||[];
-
-    phantomFullReports.forEach(r=>{
-      const pn=(r.project||'').trim();
-      if(!pn||realNames.has(pn.toLowerCase())) return;
-      if(!phantomData[pn]) phantomData[pn]={reportIds:[],workerIds:[],reports:[]};
-      phantomData[pn].reportIds.push(r.id);
-      phantomData[pn].reports.push(r);
-    });
-
-    const workers = await sbGet('workers','select=id,name,project_name&order=name.asc');
-    (workers||[]).forEach(w=>{
-      const pn=(w.project_name||'').trim();
-      if(!pn||realNames.has(pn.toLowerCase())) return;
-      if(!phantomData[pn]) phantomData[pn]={reportIds:[],workerIds:[],reports:[]};
-      phantomData[pn].workerIds.push({id:w.id,name:w.name});
-    });
-
-    document.getElementById('phantom-loading').style.display='none';
-
-    const phantomNames=Object.keys(phantomData);
-    if(!phantomNames.length){
-      document.getElementById('phantom-empty').style.display='block';
-      return;
-    }
-
-    const listEl=document.getElementById('phantom-list');
-    listEl.style.display='block';
-    listEl.innerHTML=`
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <span style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${phantomNames.length} phantom project${phantomNames.length>1?'s':''} found</span>
-        <label style="font-size:12px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px">
-          <input type="checkbox" id="phantom-select-all" onchange="phantomToggleAll(this.checked)" style="cursor:pointer"/> Select All
-        </label>
-      </div>
-      <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
-        ${phantomNames.map((name,i)=>{
-          const d=phantomData[name];
-          const parts=[];
-          if(d.reportIds.length) parts.push(`${d.reportIds.length} field report${d.reportIds.length>1?'s':''}`);
-          if(d.workerIds.length) parts.push(`${d.workerIds.length} worker${d.workerIds.length>1?'s':''}`);
-          const totalCost=d.reports.reduce((s,r)=>s+(parseFloat(r.total_cost)||0),0);
-          return`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${i%2===0?'var(--bg3)':'var(--bg2)'};border-bottom:1px solid var(--border)">
-            <input type="checkbox" class="phantom-cb" data-name="${name}" checked style="cursor:pointer;width:16px;height:16px;flex-shrink:0" onchange="updatePhantomPreviewBtn()"/>
-            <div style="flex:1;min-width:0">
-              <div style="font-weight:600;color:var(--text);font-size:13px">${name}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px">${parts.join(' · ')||'No linked data'}</div>
-              ${d.workerIds.length?`<div style="font-size:11px;color:var(--text2);margin-top:2px">Workers: ${d.workerIds.map(w=>w.name).join(', ')}</div>`:''}
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-              ${totalCost>0?`<div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--red)">R ${totalCost.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text3)">total costs</div>`:'<div style="font-size:11px;color:var(--text3)">R 0</div>'}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
-
-    document.getElementById('phantom-select-all').checked=true;
-    document.getElementById('phantom-footer').style.display='flex';
-    updatePhantomPreviewBtn();
-  }catch(e){
-    document.getElementById('phantom-loading').innerHTML='<span style="color:var(--red)">Error scanning: '+e.message+'</span>';
-    console.error(e);
-  }
-}
-
-function phantomToggleAll(checked){
-  document.querySelectorAll('.phantom-cb').forEach(cb=>cb.checked=checked);
-  updatePhantomPreviewBtn();
-}
-
-function updatePhantomPreviewBtn(){
-  const selected=[...document.querySelectorAll('.phantom-cb:checked')];
-  const totalReports=selected.reduce((s,cb)=>s+(phantomData[cb.dataset.name]?.reportIds.length||0),0);
-  const totalWorkers=selected.reduce((s,cb)=>s+(phantomData[cb.dataset.name]?.workerIds.length||0),0);
-  const btn=document.getElementById('phantom-preview-btn');
-  if(selected.length===0){
-    btn.textContent='Preview Records →';
-    btn.disabled=true;
-  } else {
-    btn.textContent=`Preview ${totalReports} Report${totalReports!==1?'s':''}${totalWorkers>0?' + '+totalWorkers+' Worker'+(totalWorkers>1?'s':''):''} →`;
-    btn.disabled=false;
-  }
-}
-
-function backToPhantomStep1(){
-  document.getElementById('phantom-step1').style.display='block';
-  document.getElementById('phantom-step2').style.display='none';
-}
-
-async function showPhantomPreview(){
-  const selected=[...document.querySelectorAll('.phantom-cb:checked')].map(cb=>cb.dataset.name);
-  if(!selected.length){showToast('Select at least one phantom project','err');return;}
-
-  // Switch to step 2
-  document.getElementById('phantom-step1').style.display='none';
-  document.getElementById('phantom-step2').style.display='block';
-
-  const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-  let totalReports=0,totalCost=0,totalWorkers=0;
-  const sections=selected.map(name=>{
-    const d=phantomData[name];
-    totalReports+=d.reportIds.length;
-    totalWorkers+=d.workerIds.length;
-    const projCost=d.reports.reduce((s,r)=>s+(parseFloat(r.total_cost)||0),0);
-    totalCost+=projCost;
-
-    const reportRows=d.reports.length?`
-      <div style="margin-top:8px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding:0 12px">Field Reports to be deleted:</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead><tr style="background:var(--bg3)">
-            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Date</th>
-            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Reporter</th>
-            <th style="padding:6px 12px;text-align:left;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Location</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Workers</th>
-            <th style="padding:6px 12px;text-align:right;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase">Cost</th>
-          </tr></thead>
-          <tbody>
-            ${d.reports.map((r,i)=>`<tr style="background:${i%2===0?'var(--bg2)':'var(--bg3)'}">
-              <td style="padding:7px 12px;color:var(--text)">${r.report_date||'—'}</td>
-              <td style="padding:7px 12px;color:var(--text2)">${r.reporter||'—'}</td>
-              <td style="padding:7px 12px;color:var(--text2)">${r.location||'—'}</td>
-              <td style="padding:7px 12px;text-align:right;color:var(--text2)">${r.workers||0}</td>
-              <td style="padding:7px 12px;text-align:right;font-weight:600;color:${(r.total_cost||0)>0?'var(--red)':'var(--text3)'}">${fmt(r.total_cost)}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`:'<div style="padding:8px 12px;font-size:12px;color:var(--text3)">No field reports — only worker assignments will be cleared.</div>';
-
-    const workerNote=d.workerIds.length
-      ?`<div style="padding:8px 12px;font-size:12px;color:var(--text2);border-top:1px solid var(--border)">
-          👷 Workers to be unassigned: <strong>${d.workerIds.map(w=>w.name).join(', ')}</strong>
-        </div>`:'';
-
-    return`<div style="border-bottom:2px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(239,68,68,0.06)">
-        <div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text)">${name}</div>
-        <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--red)">${fmt(projCost)}</div>
-      </div>
-      ${reportRows}
-      ${workerNote}
-    </div>`;
+  // Validate all checked rows have clock-in and clock-out
+  const invalid=checked.filter(chk=>{
+    const wid=chk.dataset.wid;
+    const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`);
+    const co=document.querySelector(`.batch-co[data-wid="${wid}"]`);
+    return !ci||!ci.value||!co||!co.value;
   });
-
-  document.getElementById('phantom-preview-content').innerHTML=sections.join('');
-  document.getElementById('phantom-preview-summary').innerHTML=
-    `⚠ <strong>Confirm deletion:</strong> ${totalReports} field report${totalReports!==1?'s':''} totalling <strong>${fmt(totalCost)}</strong> in costs will be <strong>permanently deleted</strong>${totalWorkers>0?`, and ${totalWorkers} worker assignment${totalWorkers!==1?'s':''} cleared`:''}. This cannot be undone.`;
-
-  // Store selected for deletion
-  document.getElementById('phantom-delete-btn').dataset.selected=JSON.stringify(selected);
-}
-
-async function deleteSelectedPhantoms(){
-  const btn=document.getElementById('phantom-delete-btn');
-  const selected=JSON.parse(btn.dataset.selected||'[]');
-  if(!selected.length){showToast('Nothing to delete','err');return;}
-
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span> Deleting…';
-
-  try{
-    const reportIds=selected.flatMap(name=>phantomData[name]?.reportIds||[]);
-    if(reportIds.length){
-      const batchSize=50;
-      for(let i=0;i<reportIds.length;i+=batchSize){
-        const batch=reportIds.slice(i,i+batchSize);
-        await sb('DELETE','daily_reports',null,'id=in.('+batch.join(',')+')');
-      }
-    }
-
-    const workerIds=selected.flatMap(name=>(phantomData[name]?.workerIds||[]).map(w=>w.id));
-    if(workerIds.length){
-      await Promise.all(workerIds.map(id=>sbPatch('workers',id,{project_name:null})));
-      allWorkers=allWorkers.map(w=>workerIds.includes(w.id)?{...w,project_name:null}:w);
-    }
-
-    showToast(`✅ Deleted ${reportIds.length} phantom report${reportIds.length!==1?'s':''}${workerIds.length?' + '+workerIds.length+' assignment'+(workerIds.length>1?'s':'')+' cleared':''}`, 'ok');
-    closeModal('phantom');
-    renderStats();
-    renderDailyTab();
-  }catch(e){
-    showToast('Delete failed: '+e.message,'err');
-    console.error(e);
-    btn.disabled=false;
-    btn.textContent='🗑 Confirm & Delete';
+  if(invalid.length){
+    const names=invalid.map(chk=>allWorkers.find(w=>w.id==chk.dataset.wid)?.name||'Worker').join(', ');
+    showToast(`Missing clock-in/out for: ${names}`,'err');
+    return;
   }
+
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
+  let saved=0,errors=0;
+  for(const chk of checked){
+    const wid=parseInt(chk.dataset.wid);
+    const w=allWorkers.find(x=>x.id==wid)||{};
+    const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`).value;
+    const co=document.querySelector(`.batch-co[data-wid="${wid}"]`).value;
+    const brk=parseInt(document.querySelector(`.batch-brk[data-wid="${wid}"]`).value)||0;
+    const {total}=calcHours(ci,co,brk);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    const payload={
+      worker_id:wid,worker_name:w.name,entry_date:date,
+      clock_in:ci,clock_out:co,break_minutes:brk,
+      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
+      ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,
+      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,notes:''
+    };
+    // Check for existing entry on this date for this worker
+    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
+    try{
+      if(existing){
+        await sbPatch('timesheet_entries',existing.id,payload);
+        allEntries=allEntries.map(e=>e.id==existing.id?{...e,...payload,id:existing.id}:e);
+      }else{
+        const result=await sbPost('timesheet_entries',payload);
+        if(result&&result[0])allEntries.unshift(result[0]);
+      }
+      saved++;
+    }catch(e){console.error('Batch save error for worker',wid,e);errors++;}
+  }
+  btn.disabled=false;btn.textContent='💾 Save All Entries';
+  if(errors>0){showToast(`${saved} saved, ${errors} failed`,'err');}
+  else{showToast(`${saved} entr${saved===1?'y':'ies'} saved`);}
+  closeModal('batch');
+  renderStats();
+  renderDailyTab();
 }
 
 // ── Close modals on backdrop click ────────────────────────────────────────────
