@@ -323,6 +323,14 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
+    <!-- Project selector -->
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">Project *</label>
+      <select class="form-select" id="entry-project">
+        <option value="">— Select Project —</option>
+      </select>
+    </div>
+
     <!-- Rates preview -->
     <div id="entry-rate-preview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
       <span id="entry-rate-text"></span>
@@ -429,13 +437,18 @@ tr:hover td{background:var(--bg3)}
       <button class="modal-close" onclick="closeModal('batch')">✕</button>
     </div>
 
-    <!-- Date + Quick Fill bar -->
-    <div style="display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
+    <!-- Date + Project + Quick Fill bar -->
+    <div style="display:grid;grid-template-columns:auto auto 1fr auto auto auto auto;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">Date *</label>
         <input class="form-input" type="date" id="batch-date" style="width:160px" onchange="renderBatchWorkers()"/>
       </div>
-      <div></div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Project *</label>
+        <select class="form-select" id="batch-project" style="width:200px" onchange="onBatchProjectChange()">
+          <option value="">— Select Project —</option>
+        </select>
+      </div>
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">Quick Fill — Clock In</label>
         <input class="form-input ts-time-input" type="time" id="batch-qf-in" style="width:110px"/>
@@ -512,6 +525,7 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
+let allProjects=[];  // projects table
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
@@ -520,16 +534,20 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries]=await Promise.all([
+    [allWorkers,allEntries,allProjects]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc')
+      sbGet('timesheet_entries','order=entry_date.desc'),
+      sbGet('projects','order=name.asc')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
   }catch(e){
     // If timesheet_entries table doesn't exist yet, workers still load
-    try{allWorkers=await sbGet('workers','order=name.asc&active=eq.true');}catch(e2){}
+    try{
+      allWorkers=await sbGet('workers','order=name.asc&active=eq.true');
+      allProjects=await sbGet('projects','order=name.asc');
+    }catch(e2){}
     allEntries=[];
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
@@ -568,6 +586,7 @@ function showTableSetupBanner(){
   ot_pay NUMERIC(12,2),
   total_pay NUMERIC(12,2),
   notes TEXT,
+  project_name TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 -- Also add rate columns to workers table:
@@ -583,6 +602,10 @@ function populateWorkerSelects(){
   const opts='<option value="">— Select Worker —</option>'+allWorkers.map(w=>`<option value="${w.id}">${w.name} ${w.role?'('+w.role+')':''}</option>`).join('');
   document.getElementById('entry-worker').innerHTML=opts;
   document.getElementById('rate-worker').innerHTML=opts;
+
+  const projOpts='<option value="">— Select Project —</option>'+
+    (allProjects||[]).map(p=>`<option value="${p.name}">${p.name}${p.type?' · '+p.type:''}</option>`).join('');
+  document.getElementById('entry-project').innerHTML=projOpts;
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -702,6 +725,7 @@ function renderDailyTab(){
       return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 10px;margin-bottom:6px;display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 80px;gap:10px;align-items:center">
         <div>
           <div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>
+          ${e.project_name?`<div style="font-size:11px;color:var(--teal);margin-top:1px">📁 ${e.project_name}</div>`:''}
           ${isWknd?'<span class="ot-label">Weekend</span>':''}
           ${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}
         </div>
@@ -914,11 +938,13 @@ function openEntryModal(entryId=null){
       document.getElementById('entry-clock-out').value=e.clock_out||'';
       document.getElementById('entry-break').value=e.break_minutes??60;
       document.getElementById('entry-notes').value=e.notes||'';
+      document.getElementById('entry-project').value=e.project_name||'';
       onWorkerSelect();
       recalcEntryHours();
     }
   }else{
     document.getElementById('entry-worker').value='';
+    document.getElementById('entry-project').value='';
     document.getElementById('entry-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
     document.getElementById('entry-clock-in').value='';
     document.getElementById('entry-clock-out').value='';
@@ -944,6 +970,12 @@ function onWorkerSelect(){
   const wid=document.getElementById('entry-worker').value;
   const w=allWorkers.find(x=>x.id==wid);
   const preview=document.getElementById('entry-rate-preview');
+
+  // Auto-fill project from worker's assigned project
+  if(w&&w.project_name){
+    document.getElementById('entry-project').value=w.project_name;
+  }
+
   if(w&&(w.hourly_rate||w.ot_rate)){
     document.getElementById('entry-rate-text').innerHTML=
       `👷 <strong>${w.name}</strong> — Hourly: <strong style="color:var(--teal)">R${parseFloat(w.hourly_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT: <strong style="color:var(--purple)">R${parseFloat(w.ot_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT threshold: <strong>${w.ot_threshold||8}h/day</strong>`;
@@ -985,6 +1017,8 @@ async function saveEntry(){
     const clockIn=document.getElementById('entry-clock-in').value;
     const clockOut=document.getElementById('entry-clock-out').value;
     if(!date||!clockIn||!clockOut){showToast('Date, clock-in and clock-out are required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
+    const projectName=document.getElementById('entry-project').value;
+    if(!projectName){showToast('Select a project','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const breakMins=parseInt(document.getElementById('entry-break').value)||0;
     const {total}=calcHours(clockIn,clockOut,breakMins);
     const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
@@ -992,6 +1026,7 @@ async function saveEntry(){
     const payload={
       worker_id:parseInt(wid),
       worker_name:w.name,
+      project_name:projectName,
       entry_date:date,
       clock_in:clockIn,
       clock_out:clockOut,
@@ -1087,7 +1122,25 @@ function openBatchModal(){
   document.getElementById('batch-qf-out').value='';
   document.getElementById('batch-qf-break').value='60';
   document.getElementById('batch-select-all').checked=false;
+
+  // Populate project dropdown
+  const projOpts='<option value="">— Select Project —</option>'+
+    (allProjects||[]).map(p=>`<option value="${p.name}">${p.name}${p.type?' · '+p.type:''}</option>`).join('');
+  document.getElementById('batch-project').innerHTML=projOpts;
+
   renderBatchWorkers();
+}
+
+function onBatchProjectChange(){
+  // Auto-tick workers assigned to this project, untick others
+  const proj=document.getElementById('batch-project').value;
+  if(!proj)return;
+  document.querySelectorAll('.batch-chk').forEach(chk=>{
+    const wid=chk.dataset.wid;
+    const w=allWorkers.find(x=>x.id==wid)||{};
+    chk.checked=(w.project_name===proj);
+  });
+  updateBatchSelectedCount();
 }
 
 function renderBatchWorkers(){
@@ -1107,7 +1160,7 @@ function renderBatchWorkers(){
       <input type="checkbox" class="batch-chk" data-wid="${w.id}" onchange="updateBatchSelectedCount()" style="cursor:pointer;accent-color:var(--accent)" ${existingEntry?'checked':''}>
       <div>
         <div style="font-weight:500;font-size:13px">${w.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${w.role||'—'}${hasRate?` · R${parseFloat(w.hourly_rate||0).toFixed(0)}/hr`:' · <span style="color:var(--red)">No rate</span>'}</div>
+        <div style="font-size:11px;color:var(--text3)">${w.role||'—'}${hasRate?` · R${parseFloat(w.hourly_rate||0).toFixed(0)}/hr`:' · <span style="color:var(--red)">No rate</span>'}${w.project_name?` <span style="color:var(--teal)">· ${w.project_name}</span>`:''}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:3px">
         <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Clock In</div>
@@ -1184,6 +1237,8 @@ async function saveBatchEntries(){
   const btn=document.getElementById('batch-save-btn');
   const date=document.getElementById('batch-date').value;
   if(!date){showToast('Select a date first','err');return;}
+  const projectName=document.getElementById('batch-project').value;
+  if(!projectName){showToast('Select a project first','err');return;}
   const checked=[...document.querySelectorAll('.batch-chk:checked')];
   if(!checked.length){showToast('Select at least one worker','err');return;}
 
@@ -1211,7 +1266,7 @@ async function saveBatchEntries(){
     const {total}=calcHours(ci,co,brk);
     const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
     const payload={
-      worker_id:wid,worker_name:w.name,entry_date:date,
+      worker_id:wid,worker_name:w.name,project_name:projectName,entry_date:date,
       clock_in:ci,clock_out:co,break_minutes:brk,
       total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
       hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
