@@ -538,8 +538,27 @@ tr:hover td{background:var(--bg3)}
 
     <!-- ISSUES -->
     <div class="page" id="page-issues">
-      <div class="page-header"><div><div class="page-title">Issues &amp; Risks</div><div class="page-sub">HSE, delays, blockers</div></div><button class="btn btn-primary btn-sm">+ Log Issue</button></div>
-      <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Description</th><th>Category</th><th>Project</th><th>Priority</th><th>Status</th><th>Owner</th></tr></thead><tbody id="issues-table"></tbody></table></div></div></div>
+      <div class="page-header">
+        <div><div class="page-title">Issues &amp; Risks</div><div class="page-sub">Live from Supabase — HSE, delays, blockers &amp; risks</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('risk')">+ Log Issue</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Active Issues &amp; Risks</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select class="form-select" id="issues-filter-project" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderIssues()"><option value="">All Projects</option></select>
+            <select class="form-select" id="issues-filter-status" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderIssues()">
+              <option value="">All Statuses</option>
+              <option value="open">Open</option>
+              <option value="investigating">Investigating</option>
+              <option value="monitoring">Monitoring</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Description</th><th>Category</th><th>Project</th><th>Priority</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody id="issues-table"></tbody></table></div></div>
+      </div>
       <div class="ai-box">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><div class="ai-dot"></div><div class="ai-title">Risk AI</div></div>
         <div style="display:flex;gap:8px"><input class="ai-input" id="ai-input-issues" placeholder="e.g. HSE risks for tower climbing, draft mitigation plan" onkeydown="if(event.key==='Enter')askAI('issues')"/><button class="btn btn-primary btn-sm" onclick="askAI('issues')">Ask &#8599;</button></div>
@@ -642,8 +661,12 @@ tr:hover td{background:var(--bg3)}
       <div class="card mt1">
         <div class="card-header">
           <div class="card-title">All Submitted Reports</div>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <select class="form-select" id="report-filter-project" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderReportsPage()"><option value="">All Projects</option></select>
+            <input class="form-input" id="report-filter-search" type="text" placeholder="Search reporter, location, notes..." style="width:220px;font-size:12px;padding:4px 8px" oninput="renderReportsPage()"/>
+            <input class="form-input" id="report-filter-date-from" type="date" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderReportsPage()" title="From date"/>
+            <input class="form-input" id="report-filter-date-to" type="date" style="width:auto;font-size:12px;padding:4px 8px" onchange="renderReportsPage()" title="To date"/>
+            <button class="btn btn-ghost btn-sm" onclick="clearReportFilters()">&#10005; Clear</button>
             <button class="btn btn-ghost btn-sm" onclick="loadAllData()">&#8635; Refresh</button>
           </div>
         </div>
@@ -791,7 +814,7 @@ const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 function getH(){
   try{
     const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
-    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    const token=(sess&&sess.access_token&&sess.expires_at*1000>Date.now())?sess.access_token:SK;
     return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
   }catch(e){
     return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
@@ -811,7 +834,7 @@ const ISSUES_DATA=[{id:'ISS-001',desc:'Cable tray blocked — permit pending',ca
 
 let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allEquipment=[],allCostCats=[],allRisks=[],allRevenue=[];
 let activeTaskFilter='all';
-const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
 const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
 const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open');};
@@ -850,7 +873,7 @@ function isForeman(){return ['admin','pm','foreman'].includes(getUserRole());}
 
 function requireAuth(){
   const s=getSession();
-  if(!s||s.expires_at<Date.now()){window.location.href='login.html';return false;}
+  if(!s||s.expires_at*1000<Date.now()){window.location.href='login.html';return false;}
   return true;
 }
 
@@ -860,7 +883,7 @@ async function loadAndCacheProfile(){
     const r=await fetch(`https://dovdqmzyfgmkxvqdaeyr.supabase.co/rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
       {headers:getH()});
     if(r.ok){const d=await r.json();if(d[0]){s.profile=d[0];localStorage.setItem('sc_session',JSON.stringify(s));return d[0];}}
-  }catch(e){}
+  }catch(e){console.error(e);}
   return null;
 }
 
@@ -1215,33 +1238,32 @@ async function markRead(id){
   try{
     await sbPatch('notifications',id,{read:true,read_at:new Date().toISOString()});
     await loadNotifications();
-  }catch(e){}
+  }catch(e){console.error(e);}
 }
 async function markAllRead(){
   try{
     await Promise.all(allNotifications.filter(n=>!n.read).map(n=>sbPatch('notifications',n.id,{read:true,read_at:new Date().toISOString()})));
     await loadNotifications();
     document.getElementById('notif-panel').classList.remove('open');
-  }catch(e){}
+  }catch(e){console.error(e);}
 }
 
 // Auto-generate budget alert notifications
 async function checkBudgetAlerts(){
   const pc=bpc();
-  const alerts=allProjects.filter(p=>{
-    const total=(p.contract_spend||0)+(pc[p.name]||{}).totalCost||0;
+  // Include approved labour costs for accurate budget usage
+  const labourByProj=getLabourByProject('','approved');
+  for(const p of allProjects){
+    const fieldCost=(pc[p.name]||{}).totalCost||0;
+    const labourCost=(labourByProj&&labourByProj[p.name]||{}).totalPay||0;
+    const total=(p.contract_spend||0)+fieldCost+labourCost;
     const pct=p.budget>0?Math.round(total/p.budget*100):0;
-    return pct>=75;
-  });
-  for(const p of alerts){
-    const total=(p.contract_spend||0)+((pc[p.name]||{}).totalCost||0);
-    const pct=p.budget>0?Math.round(total/p.budget*100):0;
-    // Check if notification already exists for this threshold
+    if(pct<75)continue;
     const exists=allNotifications.some(n=>n.project_name===p.name&&n.type==='budget_alert'&&!n.read);
     if(!exists&&pct>=90){
       try{
-        await sbPost('notifications',{project_name:p.name,type:'budget_alert',severity:pct>100?'critical':'warning',title:`Budget ${pct>100?'Exceeded':'Alert'} — ${p.name}`,message:`Project spend is at ${pct}% of budget. ${pct>100?'Budget has been exceeded.':'Review costs urgently.'}`,triggered_by:'system',read:false});
-      }catch(e){}
+        await sbPost('notifications',{project_name:p.name,type:'budget_alert',severity:pct>100?'critical':'warning',title:`Budget ${pct>100?'Exceeded':'Alert'} — ${p.name}`,message:`Project spend is at ${pct}% of budget (incl. labour). ${pct>100?'Budget has been exceeded.':'Review costs urgently.'}`,triggered_by:'system',read:false});
+      }catch(e){console.error('Budget alert error:',e);}
     }
   }
 }
@@ -1559,7 +1581,33 @@ function renderTasksTable(){
 }
 
 // ── Issues ────────────────────────────────────────────────────────────────────
-function renderIssues(){const cC={Regulatory:'badge-blue',HSE:'badge-red',Resource:'badge-amber','Supply Chain':'badge-purple',Technical:'badge-teal'};const sC={open:'badge-red',investigating:'badge-amber',monitoring:'badge-blue',resolved:'badge-green'};document.getElementById('issues-table').innerHTML=ISSUES_DATA.map(i=>`<tr><td style="font-family:var(--font-d);font-size:12px;color:var(--text3)">${i.id}</td><td>${i.desc}</td><td><span class="badge ${cC[i.cat]||'badge-gray'}">${i.cat}</span></td><td style="color:var(--text2)">${i.project}</td><td><span class="badge badge-${i.prio==='high'?'red':i.prio==='med'?'amber':'green'}">${i.prio}</span></td><td><span class="badge ${sC[i.status]}">${i.status}</span></td><td style="color:var(--text2)">${i.owner}</td></tr>`).join('');}
+function renderIssues(){
+  const cC={Regulatory:'badge-blue',HSE:'badge-red',Resource:'badge-amber','Supply Chain':'badge-purple',Technical:'badge-teal',Financial:'badge-purple',Safety:'badge-red',Other:'badge-gray'};
+  const sC={open:'badge-red',investigating:'badge-amber',monitoring:'badge-blue',resolved:'badge-green',closed:'badge-gray'};
+  const projFilter=(document.getElementById('issues-filter-project')||{}).value||'';
+  const statusFilter=(document.getElementById('issues-filter-status')||{}).value||'';
+  let risks=allRisks;
+  if(projFilter)risks=risks.filter(r=>r.project_name===projFilter);
+  if(statusFilter)risks=risks.filter(r=>r.status===statusFilter);
+  // populate project filter
+  const pSel=document.getElementById('issues-filter-project');
+  if(pSel){const cur=pSel.value;pSel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');pSel.value=cur;}
+  document.getElementById('issues-table').innerHTML=!risks.length
+    ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No issues logged yet. Click <strong style="color:var(--accent)">+ Log Issue</strong> to add one.</td></tr>`
+    :risks.map(r=>`<tr>
+      <td style="font-family:var(--font-d);font-size:12px;color:var(--text3)">${r.risk_id||r.id}</td>
+      <td><div style="font-weight:500;max-width:280px">${r.description||r.title||'—'}</div></td>
+      <td><span class="badge ${cC[r.category]||'badge-gray'}">${r.category||'—'}</span></td>
+      <td style="color:var(--text2)">${r.project_name||'—'}</td>
+      <td><span class="badge badge-${r.likelihood==='high'||r.priority==='high'?'red':r.likelihood==='medium'||r.priority==='med'?'amber':'green'}">${r.priority||r.likelihood||'—'}</span></td>
+      <td><span class="badge ${sC[r.status]||'badge-gray'}">${r.status||'open'}</span></td>
+      <td style="color:var(--text2)">${r.owner||r.risk_owner||'—'}</td>
+      <td><div class="tbl-actions">
+        ${isPM()?`<button class="btn btn-ghost btn-sm" onclick='openModal("risk",${JSON.stringify(r).replace(/'/g,"&#39;")})'>Edit</button>`:''}
+        ${isAdmin()?`<button class="btn btn-danger btn-sm" onclick="deleteRecord('project_risks',${r.id},'${(r.description||r.title||'Issue').replace(/'/g,"\\'")}')">Del</button>`:''}
+      </div></td>
+    </tr>`).join('');
+}
 
 // ── Workforce ─────────────────────────────────────────────────────────────────
 function renderWorkforce(){
@@ -1683,9 +1731,25 @@ function renderReportsPage(){
   if(filterSel){
     const cur=filterSel.value;
     filterSel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
+    filterSel.value=cur;
   }
   const projFilter=filterSel?filterSel.value:'';
-  const filteredReports=projFilter?allReports.filter(r=>r.project===projFilter):allReports;
+  const searchFilter=(document.getElementById('report-filter-search')||{}).value?.toLowerCase()||'';
+  const dateFrom=(document.getElementById('report-filter-date-from')||{}).value||'';
+  const dateTo=(document.getElementById('report-filter-date-to')||{}).value||'';
+
+  let filteredReports=allReports;
+  if(projFilter)filteredReports=filteredReports.filter(r=>r.project===projFilter);
+  if(dateFrom)filteredReports=filteredReports.filter(r=>r.report_date>=dateFrom);
+  if(dateTo)filteredReports=filteredReports.filter(r=>r.report_date<=dateTo);
+  if(searchFilter)filteredReports=filteredReports.filter(r=>
+    (r.reporter||'').toLowerCase().includes(searchFilter)||
+    (r.location||'').toLowerCase().includes(searchFilter)||
+    (r.progress_note||'').toLowerCase().includes(searchFilter)||
+    (r.blockers||'').toLowerCase().includes(searchFilter)||
+    (r.project||'').toLowerCase().includes(searchFilter)
+  );
+
   const pc=bpc();
   const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);const tw=filteredReports.reduce((a,r)=>a+(r.workers||0),0);const tt=filteredReports.reduce((a,r)=>a+(r.tasks||[]).length,0);
   document.getElementById('reports-stats').innerHTML=`<div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${allReports.length}</div><div class="stat-l">Total Reports</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${allReports.filter(r=>!r.approval_status||r.approval_status==='pending').length}</div><div class="stat-l">Pending Review</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${allReports.filter(r=>r.approval_status==='approved').length}</div><div class="stat-l">Approved</div></div><div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">${allReports.filter(r=>r.approval_status==='rejected').length}</div><div class="stat-l">Rejected</div></div><div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tf)}</div><div class="stat-l">Total Field Costs</div></div><div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${tt}</div><div class="stat-l">Task Updates</div></div><div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${tw}</div><div class="stat-l">Worker Days</div></div>`;
@@ -1724,6 +1788,14 @@ function renderReportsPage(){
         </div>
       </div>
     </div>`).join('');
+}
+
+function clearReportFilters(){
+  const s=document.getElementById('report-filter-search');if(s)s.value='';
+  const df=document.getElementById('report-filter-date-from');if(df)df.value='';
+  const dt=document.getElementById('report-filter-date-to');if(dt)dt.value='';
+  const p=document.getElementById('report-filter-project');if(p)p.value='';
+  renderReportsPage();
 }
 
 // ── Report Edit / Delete ──────────────────────────────────────────────────────
@@ -1878,10 +1950,28 @@ async function saveReportEdit(){
 }
 
 async function deleteReport(id,project,date){
-  if(!confirm(`Delete the report for "${project}" on ${date}?\n\nNote: Task quantities logged in this report will NOT be automatically reversed. Adjust task quantities manually if needed.`))return;
+  if(!confirm(`Delete the report for "${project}" on ${date}?\n\nTask quantities logged in this report will be automatically reversed.`))return;
   try{
+    // Reverse task quantities before deleting
+    const report=allReports.find(x=>x.id===id);
+    if(report&&(report.tasks||[]).length){
+      const adjustments={};
+      (report.tasks||[]).forEach(t=>{
+        if(!t.task_id||!t.qty_done)return;
+        if(!adjustments[t.task_id])adjustments[t.task_id]=0;
+        adjustments[t.task_id]-=parseFloat(t.qty_done)||0;
+      });
+      await Promise.all(Object.entries(adjustments).map(async([taskId,diff])=>{
+        if(diff===0)return;
+        const tasks=await sbGet('project_tasks','id=eq.'+taskId);
+        const task=tasks&&tasks[0];
+        if(!task)return;
+        const corrected=Math.max(0,(parseFloat(task.qty_done)||0)+diff);
+        await sbPatch('project_tasks',taskId,{qty_done:corrected});
+      }));
+    }
     await sb('DELETE','daily_reports',null,'id=eq.'+id);
-    showToast('Report deleted');
+    showToast('Report deleted — task quantities reversed');
     await loadAllData();
     renderReportsPage();
   }catch(e){showToast('Delete failed','err');console.error(e);}
@@ -1975,9 +2065,10 @@ async function askAI(page,preq){
   re.innerHTML='<span class="spinner"></span> Analysing...';
   const pc=bpc();const tf=Object.values(pc).reduce((a,p)=>a+p.totalCost,0);
   const ac={};allCostCats.forEach(c=>{ac[c.name]=Object.values(pc).reduce((a,p)=>a+(p.cb[c.name]||0),0);});
+  const taskSummary=allProjects.map(p=>{const pt=allTasks.filter(t=>t.project_name===p.name);if(!pt.length)return null;const avg=Math.round(pt.reduce((a,t)=>a+(parseFloat(t.progress)||0),0)/pt.length);return p.name+': '+avg+'% avg ('+pt.length+' tasks, '+pt.filter(t=>t.status==='blocked').length+' blocked)';}).filter(Boolean).join('; ');
   const ctx=`You are an AI assistant for SiteCommand, a construction and telecoms PM platform in South Africa.
 Projects: ${allProjects.map(p=>p.name+' ('+p.status+', budget '+fmt(p.budget)+')').join('; ')}.
-Task progress: ${allTasks.slice(0,8).map(t=>t.title+' '+t.progress+'%').join('; ')}.
+Task progress by project: ${taskSummary||'No tasks'}.
 Workforce: ${allWorkers.length} workers, ${allWorkers.filter(w=>w.status==='cert-expiring').length} cert expiring, ${allWorkers.filter(w=>w.status==='leave').length} on leave.
 Equipment: ${allEquipment.length} items, ${allEquipment.filter(e=>e.status==='due-service').length} due service, ${allEquipment.filter(e=>e.status==='grounded').length} grounded.
 Field reports: ${allReports.length} total, ${fmt(tf)} total field costs.
@@ -2088,7 +2179,7 @@ function downloadPDF(){
     <div class="stat"><div class="stat-n">${allProjects.length}</div><div class="stat-l">Projects</div></div>
     <div class="stat"><div class="stat-n">${allReports.length}</div><div class="stat-l">Reports</div></div>
     <div class="stat"><div class="stat-n">${allTasks.length}</div><div class="stat-l">Tasks</div></div>
-    <div class="stat"><div class="stat-n">R${Math.round(tf/1000)}k</div><div class="stat-l">Field Costs</div></div>
+    <div class="stat"><div class="stat-n">R${(tf/1000).toFixed(1)}k</div><div class="stat-l">Field Costs</div></div>
   </div>
 
   <h2>Budget Status by Project</h2>
@@ -2160,12 +2251,12 @@ function downloadPDF(){
           <div style="font-size:11px;color:#555;margin-top:1px">${r.workers||0} workers &nbsp;|&nbsp; ${r.weather||''} ${r.temp?r.temp+'\u00b0C':''} &nbsp;|&nbsp; <span style="color:${r.hse==='none'?'#155724':'#721c24'};font-weight:700">${r.hse==='none'?'HSE clear':r.hse}</span></div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:20px;font-weight:800;color:#f5a623">R${Math.round(r.total_cost||0).toLocaleString('en-ZA')}</div>
+          <div style="font-size:20px;font-weight:800;color:#f5a623">R${Number(r.total_cost||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
           <div style="font-size:10px;color:#aaa">total cost</div>
         </div>
       </div>
       ${(r.tasks||[]).filter(t=>t.qty_done>0).length?`<div style="margin:6px 0">${(r.tasks||[]).filter(t=>t.qty_done>0).map(t=>`<div class="task-line">\u2713 <strong>${t.title}</strong>: ${fmtN(t.qty_done)} ${t.unit||''} \u2014 <em>${t.status||''}</em></div>`).join('')}</div>`:''}
-      ${r.costs?`<div style="margin-top:6px">${Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span class="cost-pill">${k}: R${Math.round(v).toLocaleString('en-ZA')}</span>`).join('')}</div>`:''}
+      ${r.costs?`<div style="margin-top:6px">${Object.entries(r.costs).filter(([k,v])=>k!=='notes'&&v>0).map(([k,v])=>`<span class="cost-pill">${k}: R${Number(v).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>`).join('')}</div>`:''}
       ${r.progress_note?`<div style="margin-top:6px;font-size:11px;color:#555;font-style:italic">${r.progress_note}</div>`:''}
       ${r.blockers?`<div style="margin-top:5px;font-size:11px;color:#721c24">\u26a0 ${r.blockers}</div>`:''}
     </div>`).join('')}

@@ -654,7 +654,7 @@ function updateSummary(){
   const w=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
   document.getElementById('sum-workers').textContent=w;
   const{total}=getCosts();
-  const fmtC='R '+Number(total||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtC='R '+Math.round(total).toLocaleString('en-ZA');
   document.getElementById('sum-cost').textContent=fmtC;
   const d=document.getElementById('cost-total-display');if(d)d.textContent=fmtC;
 }
@@ -725,7 +725,7 @@ function buildReview(){
   const weather=document.querySelector('input[name="weather"]:checked');
   const hse=document.getElementById('f-hse').value;
   const blockers=document.getElementById('f-blockers').value;
-  const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
   document.getElementById('review-content').innerHTML=`
     <div class="card" style="margin-bottom:12px"><div class="card-inner">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
@@ -817,6 +817,39 @@ function resetForm(){
 }
 
 init();
+
+// ── Unsaved form navigation warning ──────────────────────────────────────────
+let formDirty=false;
+document.addEventListener('input',()=>{formDirty=true;});
+document.addEventListener('change',()=>{formDirty=true;});
+window.addEventListener('beforeunload',e=>{
+  if(formDirty){e.preventDefault();e.returnValue='You have unsaved report data. Are you sure you want to leave?';}
+});
+// Clear dirty flag on successful submit
+const origReset=resetForm;
+function resetForm(){formDirty=false;origReset();}
+
+// ── Backdate warning ──────────────────────────────────────────────────────────
+function checkBackdate(){
+  const dateEl=document.getElementById('f-date');
+  const today=new Date().toISOString().split('T')[0];
+  let notice=document.getElementById('backdate-notice');
+  if(!notice){
+    notice=document.createElement('div');notice.id='backdate-notice';
+    notice.style.cssText='display:none;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--accent);margin-top:6px;';
+    dateEl.parentNode.appendChild(notice);
+  }
+  if(dateEl.value&&dateEl.value!==today){
+    notice.style.display='block';
+    notice.textContent='⚠ You are submitting for '+dateEl.value+' — not today ('+today+')';
+  } else {
+    notice.style.display='none';
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const d=document.getElementById('f-date');
+  if(d)d.addEventListener('change',checkBackdate);
+});
 </script>
 <div class="bottom-nav">
   <a href="index.html" class="bn-item "><span class="bn-icon">⬛</span>Dashboard</a>
