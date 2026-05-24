@@ -1604,6 +1604,7 @@ async function saveBatchEntries(){
     const brk=parseInt(document.querySelector(`.batch-brk[data-wid="${wid}"]`).value)||0;
     const {total}=calcHours(ci,co,brk);
     const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
     const payload={
       worker_id:wid,worker_name:w.name,project_name:projectName,entry_date:date,
       status:existing?existing.status||'draft':'draft',
