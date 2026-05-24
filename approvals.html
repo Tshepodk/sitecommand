@@ -342,8 +342,6 @@ tr:hover td{background:var(--bg3)}
 
 <script>
 // ── Supabase ──────────────────────────────────────────────────────────────────
-const SB='https://';
-const SK='';
 function getH(){try{const s=JSON.parse(localStorage.getItem('sc_session')||'null');const t=(s&&s.access_token&&s.expires_at>Date.now())?s.access_token:SK;return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+t};}catch(e){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}}
 async function sb(method,table,data=null,query=''){const h=getH();const o={method,headers:h};if(data){o.body=JSON.stringify(data);o.headers['Prefer']='return=representation';}const r=await fetch(`${SB}/rest/v1/${table}?${query}`,o);if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return null;}if(!r.ok)throw new Error(await r.text());if(r.status===204)return null;const txt=await r.text();return txt?JSON.parse(txt):null;}
 const sbGet=(t,q)=>sb('GET',t,null,q);
