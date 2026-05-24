@@ -283,6 +283,7 @@ tr:hover td{background:var(--bg3)}
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <a href="intake.html" class="btn-intake">&#128203; Daily Intake</a>
       <button style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:15px" onclick="loadAllData()" title="Refresh">&#8635;</button>
+      <button style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);height:32px;padding:0 10px;display:flex;align-items:center;cursor:pointer;color:var(--text2);font-size:12px;font-family:var(--font-d);font-weight:600;letter-spacing:0.04em;gap:4px" onclick="document.getElementById('modal-app-help').classList.add('open')" title="App Help">❓ HELP</button>
       <div class="notif-bell" onclick="toggleNotif()" title="Notifications">&#128276;<span class="notif-count" id="notif-count">0</span></div>
       <div class="user-chip" id="user-chip" onclick="signOut()"><span>&#128100;</span><span id="user-name">...</span><span id="user-role-badge" style="font-size:9px;color:var(--text3);font-family:var(--font-d);font-weight:700;letter-spacing:0.06em">GUEST</span></div>
     </div>
