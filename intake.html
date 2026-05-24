@@ -377,8 +377,8 @@ function requireAuth(){
 async function loadAndCacheProfile(){
   const s=getSession();if(!s)return null;
   try{
-    const r=await fetch(`https://dovdqmzyfgmkxvqdaeyr.supabase.co/rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
-      {headers:{'apikey':'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq','Authorization':'Bearer '+s.access_token}});
+    const r=await fetch(`https:///rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
+      {headers:{'apikey':'','Authorization':'Bearer '+s.access_token}});
     if(r.ok){const d=await r.json();if(d[0]){s.profile=d[0];localStorage.setItem('sc_session',JSON.stringify(s));return d[0];}}
   }catch(e){}
   return null;
@@ -478,8 +478,8 @@ async function initRBAC(){
   applyRBAC();
 }
 
-const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
-const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+const SB='https://';
+const SK='';
 // ── Dynamic auth headers — always uses live session token ──────────────────
 function getH(){
   try{
