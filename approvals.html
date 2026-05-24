@@ -166,7 +166,7 @@ tr:hover td{background:var(--bg3)}
 
       <!-- Tabs -->
       <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('pending',this)">⏳ Pending <span id="pending-count-tab" style="background:var(--accent);color:#000;border-radius:10px;padding:0px 7px;font-size:11px;font-weight:800;font-family:var(--font-d);margin-left:4px">0</span></button>
+        <button class="tab-btn active" onclick="switchTab('draft',this)">⏳ Pending <span id="pending-count-tab" style="background:var(--accent);color:#000;border-radius:10px;padding:0px 7px;font-size:11px;font-weight:800;font-family:var(--font-d);margin-left:4px">0</span></button>
         <button class="tab-btn" onclick="switchTab('byworker',this)">👷 By Worker</button>
         <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly Payroll</button>
         <button class="tab-btn" onclick="switchTab('history',this)">📋 All History</button>
@@ -384,7 +384,7 @@ function switchTab(name,el){
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   if(el)el.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  if(name==='pending')renderPending();
+  if(name==='draft')renderPending();
   if(name==='byworker')renderByWorker();
   if(name==='monthly')renderMonthlyPayroll();
   if(name==='history')renderHistory();
@@ -467,7 +467,7 @@ function renderStats(){
   const submitted=allEntries.filter(e=>e.status==='submitted').length;
   const approved=allEntries.filter(e=>e.status==='approved').length;
   const rejected=allEntries.filter(e=>e.status==='rejected').length;
-  const pending=allEntries.filter(e=>!e.status||e.status==='pending').length;
+  const pending=allEntries.filter(e=>!e.status||e.status==='draft').length;
   const thisMonth=new Date().toISOString().substring(0,7);
   const moApproved=allEntries.filter(e=>e.status==='approved'&&(e.entry_date||'').startsWith(thisMonth));
   const moPayroll=moApproved.reduce((a,e)=>a+(e.total_pay||0),0);
@@ -531,7 +531,7 @@ function renderPending(forceStatus=null){
       <td style="color:var(--text2)">${fmt(e.regular_pay||0)}</td>
       <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</td>
       <td style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.notes||'—'}</td>
-      <td>${stLabel(e.status||'pending')}</td>
+      <td>${stLabel(e.status||'draft')}</td>
       <td><div style="display:flex;gap:4px">
         <button class="btn btn-green btn-sm" onclick="approveOne(${e.id})">✓</button>
         <button class="btn btn-danger btn-sm" onclick="openReject(${e.id})">✕</button>
@@ -627,9 +627,9 @@ function openUnlock(id){document.getElementById('unlock-id').value=id;document.g
 async function confirmUnlock(){
   const id=parseInt(document.getElementById('unlock-id').value);
   try{
-    await sbPatch('timesheet_entries',id,{status:'pending',approved_at:null,rejection_reason:null,submitted_at:null});
+    await sbPatch('timesheet_entries',id,{status:'draft',approved_at:null,rejection_reason:null,submitted_at:null});
     const idx=allEntries.findIndex(e=>e.id===id);
-    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'pending',approved_at:null,rejection_reason:null};
+    if(idx>=0)allEntries[idx]={...allEntries[idx],status:'draft',approved_at:null,rejection_reason:null};
     showToast('Entry unlocked');closeModal('unlock');
     renderStats();renderPending();renderHistory();
   }catch(e){showToast('Failed: '+e.message,'err');}
@@ -644,7 +644,7 @@ function renderByWorker(){
 
   let entries=allEntries;
   if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
-  if(statusF)entries=entries.filter(e=>(e.status||'pending')===statusF);
+  if(statusF)entries=entries.filter(e=>(e.status||'draft')===statusF);
 
   const byW={};
   entries.forEach(e=>{
@@ -659,7 +659,7 @@ function renderByWorker(){
     byW[e.worker_id].totalHrs+=(e.total_hours||0);
     byW[e.worker_id].otHrs+=(e.ot_hours||0);
     byW[e.worker_id].totalPay+=(e.total_pay||0);
-    byW[e.worker_id].statuses.add(e.status||'pending');
+    byW[e.worker_id].statuses.add(e.status||'draft');
   });
 
   const workers=Object.values(byW).sort((a,b)=>a.name.localeCompare(b.name));
@@ -926,7 +926,7 @@ function renderHistory(){
   const worker=document.getElementById('hf-worker').value;
 
   let entries=[...allEntries];
-  if(statusF)entries=entries.filter(e=>(e.status||'pending')===statusF);
+  if(statusF)entries=entries.filter(e=>(e.status||'draft')===statusF);
   if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
   if(worker)entries=entries.filter(e=>e.worker_id==worker);
   entries.sort((a,b)=>b.entry_date.localeCompare(a.entry_date));
@@ -935,7 +935,7 @@ function renderHistory(){
     ?`<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:2rem">No entries match this filter.</td></tr>`
     :entries.map(e=>{
       const w=allWorkers.find(x=>x.id==e.worker_id)||{};
-      const st=e.status||'pending';
+      const st=e.status||'draft';
       const locked=st==='approved';
       return`<tr>
         <td><div style="font-weight:500">${e.worker_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></td>
