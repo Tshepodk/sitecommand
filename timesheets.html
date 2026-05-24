@@ -1120,7 +1120,6 @@ async function saveEntry(){
       notes:document.getElementById('entry-notes').value.trim()
     };
 
-    let entryId=document.getElementById('entry-id').value;
     if(entryId){
       await sbPatch('timesheet_entries',entryId,payload);
       allEntries=allEntries.map(e=>e.id==entryId?{...e,...payload,id:parseInt(entryId)}:e);
