@@ -1640,5 +1640,75 @@ document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',f
 // ── Boot ──────────────────────────────────────────────────────────────────────
 init();
 </script>
+
+<!-- ════════════════════ MODAL: HELP ════════════════════ -->
+<div class="modal-bg" id="modal-help">
+  <div class="modal modal-wide" style="max-width:560px">
+    <div class="modal-title">
+      <span>📋 Timesheet Workflow Guide</span>
+      <button class="modal-close" onclick="document.getElementById('modal-help').classList.remove('open')">✕</button>
+    </div>
+    <div style="padding:1.25rem;overflow-y:auto;max-height:70vh">
+
+      <div style="background:var(--bg3);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2);line-height:1.7">
+        Timesheets follow a 3-step flow: <strong style="color:var(--accent)">Draft → Submitted → Approved</strong>. Labour costs only post to project budgets once entries are approved.
+      </div>
+
+      <!-- Step 1 -->
+      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">1</div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Capture Time <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">Foreman / Supervisor</span></div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">Use <strong>+ LOG TIME ENTRY</strong> for a single worker or <strong>⚡ BATCH ENTRY</strong> for the whole crew at once. Select the project, enter clock in/out times, and save. Entries start as <span style="color:var(--accent);font-weight:600">DRAFT</span>.</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--teal);color:#000;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">2</div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Submit for Approval <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">Foreman / Supervisor</span></div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">On the <strong>Daily Entry</strong> tab, each draft entry has a green <strong>SUBMIT</strong> button. Click it to send the entry to the PM/Admin approval queue. You can also go to the <strong>Approvals</strong> tab and use <strong>Submit All</strong> to submit in bulk.</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
+        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--green);color:#000;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">3</div>
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Approve / Reject <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">PM / Admin only</span></div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">Go to <strong>PMO Approvals</strong> (approvals.html) → <strong>Pending</strong> tab. Review submitted entries and click <strong>✓ Approve</strong> or <strong>✗ Reject</strong>. Approved entries lock and their labour costs auto-post to the project budget. Rejected entries return to the foreman for correction.</div>
+        </div>
+      </div>
+
+      <!-- Status legend -->
+      <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:0.5rem">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Status Legend</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--text2)">DRAFT</span> Captured, not yet submitted</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--blue)">SUBMITTED</span> Awaiting PM review</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--green)">APPROVED</span> Locked, costs posted</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--red)">REJECTED</span> Returned for correction</div>
+        </div>
+      </div>
+
+      <!-- Tips -->
+      <div style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 12px;margin-top:1rem">
+        <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:5px">💡 TIPS</div>
+        <ul style="font-size:12px;color:var(--text2);line-height:1.8;padding-left:1rem">
+          <li>Use <strong>Batch Entry</strong> to log the whole crew in under 60 seconds</li>
+          <li>Entries must have a <strong>project assigned</strong> to post labour costs correctly</li>
+          <li>Only <strong>approved</strong> entries appear in EAC/ETC and budget calculations</li>
+          <li>The <strong>195h monthly threshold</strong> triggers OT after 195 regular hours</li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="document.getElementById('modal-help').classList.remove('open')">Got it</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
