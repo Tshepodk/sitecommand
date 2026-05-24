@@ -1098,6 +1098,7 @@ async function saveEntry(){
     const {total}=calcHours(clockIn,clockOut,breakMins);
     const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
 
+    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
     const payload={
       worker_id:parseInt(wid),
       worker_name:w.name,
@@ -1613,7 +1614,6 @@ async function saveBatchEntries(){
       regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,notes:''
     };
     // Check for existing entry on this date for this worker
-    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
     try{
       if(existing){
         await sbPatch('timesheet_entries',existing.id,payload);
