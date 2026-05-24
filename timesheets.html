@@ -1088,6 +1088,7 @@ async function saveEntry(){
     if(!wid){showToast('Select a worker','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const w=allWorkers.find(x=>x.id==wid)||{};
     const date=document.getElementById('entry-date').value;
+    const entryId=document.getElementById('entry-id').value;
     const clockIn=document.getElementById('entry-clock-in').value;
     const clockOut=document.getElementById('entry-clock-out').value;
     if(!date||!clockIn||!clockOut){showToast('Date, clock-in and clock-out are required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
@@ -1119,7 +1120,7 @@ async function saveEntry(){
       notes:document.getElementById('entry-notes').value.trim()
     };
 
-    const entryId=document.getElementById('entry-id').value;
+    let entryId=document.getElementById('entry-id').value;
     if(entryId){
       await sbPatch('timesheet_entries',entryId,payload);
       allEntries=allEntries.map(e=>e.id==entryId?{...e,...payload,id:parseInt(entryId)}:e);
