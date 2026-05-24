@@ -424,6 +424,7 @@ tr:hover td{background:var(--bg3)}
         <button class="pmo-tab" onclick="setPMOTab('risks',this)">⚠️ Risks</button>
         <button class="pmo-tab" onclick="setPMOTab('revenue',this)">💰 Revenue</button>
         <button class="pmo-tab" onclick="setPMOTab('lessons',this)">📖 Lessons</button>
+        <button class="pmo-tab" onclick="setPMOTab('eac',this)">📐 EAC/ETC</button>
       </div>
 
       <!-- Portfolio tab -->
@@ -498,6 +499,34 @@ tr:hover td{background:var(--bg3)}
         <div id="pmo-lessons-list"></div>
         <div style="margin-top:1rem;text-align:center">
           <a href="pmo.html" class="btn btn-ghost btn-sm" target="_blank">+ Add Lesson in PMO Hub &#8599;</a>
+        </div>
+      </div>
+
+      <!-- EAC / ETC tab -->
+      <div class="pmo-tab-content" id="pmotab-eac" style="display:none">
+        <div class="stats-grid" id="pmo-eac-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+        <div class="card" style="margin-bottom:0.875rem">
+          <div class="card-header">
+            <div class="card-title">Earned Value &amp; Forecast</div>
+            <div style="font-size:11px;color:var(--text3)">EAC = BAC ÷ CPI &nbsp;|&nbsp; ETC = EAC − AC &nbsp;|&nbsp; VAC = BAC − EAC &nbsp;|&nbsp; AC includes field costs + approved labour</div>
+          </div>
+          <div class="card-body" style="padding:0"><div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Project</th><th title="Budget at Completion">BAC</th><th title="Actual Cost (field+labour)">AC</th>
+                <th title="Labour (approved timesheets)">Labour AC</th>
+                <th title="Earned Value = BAC × % complete">EV</th><th title="Cost Performance Index">CPI</th>
+                <th title="Schedule Performance Index">SPI</th><th title="Estimate at Completion">EAC</th>
+                <th title="Estimate to Complete">ETC</th><th title="Variance at Completion">VAC</th>
+                <th title="To-Complete Performance Index">TCPI</th><th>Status</th>
+              </tr></thead>
+              <tbody id="pmo-eac-table"></tbody>
+            </table>
+          </div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Burn Rate (Cost per % Progress)</div></div>
+          <div class="card-body" id="pmo-burn-bars"></div>
         </div>
       </div>
 
@@ -1136,6 +1165,34 @@ async function submitApprovalAction(){
       reviewed_at:new Date().toISOString()
     });
 
+    // ── Labour auto-post: approve/reject matching timesheet entries ──
+    if(action==='approve'||action==='reject'){
+      try{
+        const r=allReports.find(x=>x.id==reportId);
+        if(r){
+          // Find timesheet entries matching this project and report date
+          const matchingEntries=await sbGet(
+            'timesheet_entries',
+            'project_name=eq.'+encodeURIComponent(r.project)+'&entry_date=eq.'+r.report_date+'&status=neq.approved'
+          ).catch(()=>[]);
+          if(matchingEntries&&matchingEntries.length){
+            const newTsStatus=action==='approve'?'approved':'pending';
+            await Promise.all(matchingEntries.map(e=>
+              sbPatch('timesheet_entries',e.id,{
+                status:newTsStatus,
+                approved_by:reviewerName,
+                approved_at:new Date().toISOString()
+              }).catch(err=>console.warn('TS entry patch failed:',err))
+            ));
+            const totalLabour=matchingEntries.reduce((a,e)=>a+(parseFloat(e.total_pay)||0),0);
+            if(action==='approve'&&totalLabour>0){
+              showToast('Report approved — R'+totalLabour.toLocaleString('en-ZA',{minimumFractionDigits:2})+' labour auto-posted','success');
+            }
+          }
+        }
+      }catch(labErr){console.warn('Labour auto-post error:',labErr);}
+    }
+
     // Post notification for the submitter
     const r=allReports.find(x=>x.id==reportId);
     if(r&&action!=='reset'){
@@ -1257,7 +1314,7 @@ document.addEventListener('click',e=>{
 
 async function loadAllData(){
   try{
-    [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats,allRisks,allRevenue]=await Promise.all([
+    [allProjects,allTasks,allReports,allWorkers,allEquipment,allCostCats,allRisks,allRevenue,allTimesheetEntries]=await Promise.all([
       sbGet('projects','order=created_at.asc&active=eq.true'),
       sbGet('project_tasks','order=created_at.asc&active=eq.true'),
       sbGet('daily_reports','order=created_at.desc'),
@@ -1265,7 +1322,8 @@ async function loadAllData(){
       sbGet('equipment','order=name.asc&active=eq.true'),
       sbGet('cost_categories','order=sort_order.asc&active=eq.true'),
       sbGet('project_risks','order=created_at.desc&active=eq.true'),
-      sbGet('revenue_entries','order=entry_date.asc')
+      sbGet('revenue_entries','order=entry_date.asc'),
+      sbGet('timesheet_entries','order=entry_date.desc&status=eq.approved').catch(()=>[])
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
@@ -1602,6 +1660,7 @@ function renderBudget(){
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent)">${fmt(tB)}</div><div class="stat-l">Total Budget</div></div>
     <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue)">${fmt(tC)}</div><div class="stat-l">Contracted</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal)">${fmt(tF)}</div><div class="stat-l">Field Reported</div><div class="stat-sub">${allReports.length} reports</div></div>
+    <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple)">${fmt(Object.values(pmoLabour()).reduce((a,v)=>a+v,0))}</div><div class="stat-l">Labour (Approved)</div><div class="stat-sub">${allTimesheetEntries.length} entries</div></div>
     <div class="stat-card ${rem<0?'s-red':overCount>0?'s-red':warnCount>0?'s-amber':'s-green'}">
       <div class="stat-n" style="color:${rem<0?'var(--red)':'var(--green)'}">${fmt(Math.abs(rem))}</div>
       <div class="stat-l">${rem<0?'Over Budget':'Remaining'}</div>
@@ -2241,11 +2300,22 @@ function renderPMOPage(){
 }
 
 function renderPMOTab(name){
-  ({portfolio:renderPMOPortfolio,gates:renderPMOGates,kpi:renderPMOKPI,risks:renderPMORisks,revenue:renderPMORevenue,lessons:renderPMOLessons}[name]||Function())();
+  ({portfolio:renderPMOPortfolio,gates:renderPMOGates,kpi:renderPMOKPI,risks:renderPMORisks,revenue:renderPMORevenue,lessons:renderPMOLessons,eac:renderPMOEAC}[name]||Function())();
 }
 
 // ── helpers ────────────────────────────────────────────────────────
 function pmoFC(){const fc={};allProjects.forEach(p=>fc[p.name]=0);allReports.forEach(r=>{fc[r.project]=(fc[r.project]||0)+(r.total_cost||0);});return fc;}
+function pmoLabour(){
+  // Returns {projectName: totalApprovedLabourCost}
+  const lc={};
+  allProjects.forEach(p=>lc[p.name]=0);
+  allTimesheetEntries.forEach(e=>{
+    if(e.project_name&&e.status==='approved'){
+      lc[e.project_name]=(lc[e.project_name]||0)+(parseFloat(e.total_pay)||0);
+    }
+  });
+  return lc;
+}
 function pmoAvgProg(name){const t=allTasks.filter(x=>x.project_name===name);return t.length?Math.round(t.reduce((a,x)=>a+(parseFloat(x.progress)||0),0)/t.length):0;}
 function pmoBP(p,fc){const tot=(p.contract_spend||0)+(fc[p.name]||0);return p.budget>0?Math.round(tot/p.budget*100):0;}
 function pmoLatestKPI(name){return allKPIs.filter(k=>k.project_name===name).sort((a,b)=>b.kpi_date.localeCompare(a.kpi_date))[0]||null;}
@@ -2643,6 +2713,101 @@ function renderPMOLessons(){
 
 // Ensure PMO data loads when PMO page is shown
 // PMO tab logic merged into showPage below
+
+
+// ── EAC / ETC (Earned Value Management) ───────────────────────────
+function renderPMOEAC(){
+  const fc=pmoFC();
+  const lc=pmoLabour();
+
+  const rows=allProjects.map(p=>{
+    const BAC=p.budget||0;
+    const fieldAC=fc[p.name]||0;
+    const labourAC=lc[p.name]||0;
+    const contractAC=p.contract_spend||0;
+    const AC=fieldAC+labourAC+contractAC;
+    const prog=pmoAvgProg(p.name)/100;
+    const EV=BAC*prog;
+    const CPI=AC>0?EV/AC:1;
+    const PV=BAC*prog;
+    const SPI=PV>0?EV/PV:1;
+    const EAC=CPI>0?BAC/CPI:BAC;
+    const ETC=EAC-AC;
+    const VAC=BAC-EAC;
+    const TCPI=BAC>0&&AC<BAC?(BAC-EV)/(BAC-AC):null;
+    return{p,BAC,AC,EV,CPI,SPI,EAC,ETC,VAC,TCPI,prog,labourAC};
+  });
+
+  const totBAC=rows.reduce((a,r)=>a+r.BAC,0);
+  const totAC =rows.reduce((a,r)=>a+r.AC ,0);
+  const totEV =rows.reduce((a,r)=>a+r.EV ,0);
+  const totEAC=rows.reduce((a,r)=>a+r.EAC,0);
+  const totLabour=rows.reduce((a,r)=>a+r.labourAC,0);
+  const portVAC=totBAC-totEAC;
+
+  const cpiC=v=>v>=1?'var(--green)':v>=0.85?'var(--accent)':'var(--red)';
+  const vacC=v=>v>=0?'var(--green)':'var(--red)';
+
+  document.getElementById('pmo-eac-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(totBAC)}</div><div class="stat-l">Total BAC</div><div class="stat-sub">Budget at Completion</div></div>
+    <div class="stat-card s-blue"><div class="stat-n" style="color:var(--blue);font-size:18px">${fmt(totAC)}</div><div class="stat-l">Total AC</div><div class="stat-sub">Field + Labour + Contract</div></div>
+    <div class="stat-card s-purple"><div class="stat-n" style="color:var(--purple);font-size:18px">${fmt(totLabour)}</div><div class="stat-l">Labour AC</div><div class="stat-sub">${allTimesheetEntries.length} approved entries</div></div>
+    <div class="stat-card ${portVAC>=0?'s-green':'s-red'}"><div class="stat-n" style="color:${vacC(portVAC)};font-size:18px">${fmt(portVAC)}</div><div class="stat-l">Portfolio VAC</div><div class="stat-sub">Variance at Completion</div></div>`;
+
+  document.getElementById('pmo-eac-table').innerHTML=rows.length===0
+    ?`<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:2rem">No projects yet.</td></tr>`
+    :rows.map(({p,BAC,AC,EV,CPI,SPI,EAC,ETC,VAC,TCPI,prog,labourAC})=>{
+      const vacBadge=VAC>=0?'badge-green':'badge-red';
+      const tcpiStr=TCPI!==null?TCPI.toFixed(2):'—';
+      const tcpiCol=TCPI!==null?(TCPI<=1?'var(--green)':TCPI<=1.1?'var(--accent)':'var(--red)'):'var(--text3)';
+      let statusLabel='On Track',statusCls='badge-green';
+      if(CPI<0.85||ETC<0){statusLabel='Over Budget';statusCls='badge-red';}
+      else if(CPI<1){statusLabel='Cost Risk';statusCls='badge-amber';}
+      if(SPI<0.85){statusLabel='Behind';statusCls='badge-red';}
+      return`<tr>
+        <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${Math.round(prog*100)}% complete</div></td>
+        <td style="font-family:var(--font-d);color:var(--text2)">${fmt(BAC)}</td>
+        <td style="font-family:var(--font-d);color:var(--text2)">${fmt(AC)}</td>
+        <td style="font-family:var(--font-d);color:var(--purple)">${labourAC>0?fmt(labourAC):'<span style="color:var(--text3)">—</span>'}</td>
+        <td style="font-family:var(--font-d);color:var(--teal)">${fmt(EV)}</td>
+        <td style="font-family:var(--font-d);font-weight:700;color:${cpiC(CPI)}">${CPI.toFixed(2)}</td>
+        <td style="font-family:var(--font-d);font-weight:700;color:${cpiC(SPI)}">${SPI.toFixed(2)}</td>
+        <td style="font-family:var(--font-d);font-weight:700;color:${EAC>BAC?'var(--red)':'var(--green)'}">${fmt(EAC)}</td>
+        <td style="font-family:var(--font-d);color:${ETC<0?'var(--red)':'var(--text)'}">${fmt(ETC)}</td>
+        <td><span class="badge ${vacBadge}">${fmt(VAC)}</span></td>
+        <td style="font-family:var(--font-d);font-weight:700;color:${tcpiCol}">${tcpiStr}</td>
+        <td><span class="badge ${statusCls}">${statusLabel}</span></td>
+      </tr>`;
+    }).join('');
+
+  document.getElementById('pmo-burn-bars').innerHTML=rows.length===0
+    ?`<p style="color:var(--text3);text-align:center">No data.</p>`
+    :rows.map(({p,BAC,AC,EAC,prog,labourAC})=>{
+      const idealBurn=BAC>0?Math.round(prog*100):0;
+      const actualBurn=BAC>0?Math.round(AC/BAC*100):0;
+      const forecastBurn=BAC>0?Math.round(EAC/BAC*100):0;
+      const overC=actualBurn>idealBurn+5?'var(--red)':actualBurn>idealBurn?'var(--accent)':'var(--green)';
+      return`<div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <span style="font-size:12px;font-weight:500">${p.name}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:11px;color:var(--text3)">Ideal: ${idealBurn}%</span>
+            <span style="font-size:11px;font-weight:600;color:${overC}">Actual: ${actualBurn}%</span>
+            <span style="font-size:11px;color:var(--teal)">Forecast: ${forecastBurn}%</span>
+            ${labourAC>0?`<span style="font-size:11px;color:var(--purple)">Labour: ${fmt(labourAC)}</span>`:''}
+          </div>
+        </div>
+        <div style="position:relative;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(idealBurn,100)}%;background:var(--border2);border-radius:5px"></div>
+          <div style="position:absolute;left:0;top:0;height:100%;width:${Math.min(actualBurn,100)}%;background:${overC};border-radius:5px;opacity:0.9"></div>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:3px">
+          <span style="font-size:10px;color:var(--text3)">AC ${fmt(AC)} vs BAC ${fmt(BAC)}</span>
+          <span style="font-size:10px;color:var(--teal);margin-left:auto">EAC ${fmt(EAC)}</span>
+        </div>
+      </div>`;
+    }).join('');
+}
 
 setInterval(loadAllData,30000);
 setInterval(loadNotifications,60000);
