@@ -12,7 +12,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh;overflow:hidden}
 .topbar{grid-column:1/-1;grid-row:1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;flex-wrap:wrap}
 .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto;min-width:220px;width:220px;grid-column:1;grid-row:2}
-.main{background:var(--bg);overflow:auto;min-width:0;grid-column:2;grid-row:2}
+.main{background:var(--bg);overflow:auto;min-width:0;grid-column:2;grid-row:2;align-self:start}
 .logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
 .logo span{color:var(--text2);font-weight:400}
 .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background 0.3s;flex-shrink:0}
@@ -32,8 +32,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .nb-blue{background:var(--blue);color:#fff}
 .nb-green{background:var(--green);color:#000}
 .sidebar-footer{margin-top:auto;padding:0.75rem;border-top:1px solid var(--border)}
-.page{padding:1.5rem;display:none}
-.page.active{display:block}
+.page{padding:1.5rem;display:none;min-height:0}
+.page.active{display:block;min-height:0}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
 .page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
 .page-sub{color:var(--text2);font-size:13px;margin-top:2px}
