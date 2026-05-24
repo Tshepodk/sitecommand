@@ -1,0 +1,25 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tshepodk/sitecommand.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Tshepodk/sitecommand/issues"
+  },
+  "homepage": "https://github.com/Tshepodk/sitecommand#readme",
+  "devDependencies": {
+    "cypress": "^15.15.0",
+    "http-server": "^14.1.1"
+  }
+}
