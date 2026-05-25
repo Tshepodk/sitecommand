@@ -1023,7 +1023,7 @@ function renderRatesTab(){
     <td><span class="badge badge-gray" style="font-size:10px">${w.type||'—'}</span></td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${w.hourly_rate?'R '+parseFloat(w.hourly_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${w.ot_rate?'R '+parseFloat(w.ot_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
-    <td style="color:var(--text2)">${</td>
+    <td style="color:var(--text2)">195h/month</td>
     <td><span class="badge ${w.status==='active'?'badge-green':w.status==='leave'?'badge-amber':'badge-gray'}">${w.status||'—'}</span></td>
     <td><button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal(${w.id})">⚙ Set Rate</button></td>
   </tr>`).join('');
