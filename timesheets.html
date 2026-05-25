@@ -302,7 +302,7 @@ tr:hover td{background:var(--bg3)}
           </div>
         </div>
         <div style="margin-top:1rem;padding:1rem;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)">
-          ⚙ <strong>OT Calculation:</strong> Regular hours are worked up to the OT threshold per day. Hours beyond that threshold are billed at the worker's custom OT rate. Weekend days (Sat/Sun) are always treated as OT rate. Rates are stored against each worker profile.
+          ⚙ <strong>OT Calculation (195h Monthly Threshold):</strong> Mon–Fri and Saturday hours count toward the 195h monthly total at standard rate. Once 195h is exceeded, additional hours are billed at 1.5× hourly. Sunday and Public Holidays are always 2× hourly and do not count toward 195h. Set OT Rate = hourly × 1.5 using the 1.5× button.
         </div>
       </div>
 
@@ -469,8 +469,11 @@ tr:hover td{background:var(--bg3)}
         <input class="form-input" type="number" id="rate-hourly" placeholder="e.g. 120" min="0" step="0.01"/>
       </div>
       <div class="form-group">
-        <label class="form-label">OT Rate (R/hr)</label>
-        <input class="form-input" type="number" id="rate-ot" placeholder="e.g. 180" min="0" step="0.01"/>
+        <label class="form-label">OT Rate (R/hr) <span style="color:var(--text3);font-size:10px;font-weight:400">(auto = hourly × 1.5)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input" type="number" id="rate-ot" placeholder="e.g. 56.25" min="0" step="0.01" style="flex:1"/>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="autoCalcOT()" title="Set to 1.5× hourly rate">1.5×</button>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">OT Threshold (hrs/day)</label>
@@ -720,23 +723,54 @@ function calcHours(clockIn,clockOut,breakMins){
   return{total:Math.round(netMins/60*100)/100,raw:rawMins/60};
 }
 
-function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType){
-  const weekend=isWeekend(dateStr);
-  let regularHours,otHours,regularPay,otPay;
-  if(weekend){
-    // Full day at weekend rate
+function getDayType(dateStr){
+  if(!dateStr)return'weekday';
+  const d=new Date(dateStr+'T00:00:00');
+  const dow=d.getDay(); // 0=Sun,6=Sat
+  if(dow===0)return'sunday';
+  if(dow===6)return'saturday';
+  return'weekday';
+}
+
+// 195h monthly OT logic:
+// Mon-Fri: standard hourly, counts toward 195h
+// Saturday: standard hourly (counts toward 195h) — above 195h cumulative → 1.5×
+// Sunday: always 2× hourly, does NOT count toward 195h
+// Public Holiday: always 2× hourly, does NOT count toward 195h
+// monthlyHoursToDate = cumulative regular hours worked this month BEFORE this entry
+function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType,monthlyHoursToDate){
+  const dayType=getDayType(dateStr);
+  const monthly195=195; // qualifying threshold
+  const prevHrs=monthlyHoursToDate||0;
+  const actualOTRate=otRate>10?otRate:Math.round(hourlyRate*1.5*100)/100; // guard: if stored as multiplier use 1.5×
+  let regularHours=0,otHours=0,regularPay=0,otPay=0;
+
+  if(dayType==='sunday'){
+    // Always 2× hourly, does not count toward 195h
     regularHours=0;
     otHours=totalHours;
-    const wRate=weekendRateType==='double'?hourlyRate*2:weekendRateType==='standard'?hourlyRate:otRate;
-    regularPay=0;
-    otPay=Math.round(otHours*wRate*100)/100;
-  }else{
-    regularHours=Math.min(totalHours,otThreshold||8);
-    otHours=Math.max(0,totalHours-(otThreshold||8));
-    regularPay=Math.round(regularHours*(hourlyRate||0)*100)/100;
-    otPay=Math.round(otHours*(otRate||0)*100)/100;
+    otPay=Math.round(otHours*(hourlyRate*2)*100)/100;
+  } else if(dayType==='saturday'){
+    // Counts toward 195h at standard rate; above 195h → 1.5×
+    const remaining195=Math.max(0,monthly195-prevHrs);
+    const standardHrs=Math.min(totalHours,remaining195);
+    const aboveHrs=Math.max(0,totalHours-remaining195);
+    regularHours=standardHrs;
+    otHours=aboveHrs;
+    regularPay=Math.round(standardHrs*(hourlyRate||0)*100)/100;
+    otPay=Math.round(aboveHrs*actualOTRate*100)/100;
+  } else {
+    // Mon-Fri: standard hourly up to 195h cumulative, then 1.5×
+    const remaining195=Math.max(0,monthly195-prevHrs);
+    const standardHrs=Math.min(totalHours,remaining195);
+    const aboveHrs=Math.max(0,totalHours-remaining195);
+    regularHours=standardHrs;
+    otHours=aboveHrs;
+    regularPay=Math.round(standardHrs*(hourlyRate||0)*100)/100;
+    otPay=Math.round(aboveHrs*actualOTRate*100)/100;
   }
-  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend:weekend};
+  const isWeekend=dayType==='saturday'||dayType==='sunday';
+  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend,dayType,countsToward195:dayType!=='sunday'};
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -1149,6 +1183,14 @@ async function deleteEntry(id){
 }
 
 // ── RATE MODAL ────────────────────────────────────────────────────────────────
+function autoCalcOT(){
+  const hourly=parseFloat(document.getElementById('rate-hourly').value)||0;
+  if(hourly>0){
+    document.getElementById('rate-ot').value=Math.round(hourly*1.5*100)/100;
+    showToast('OT rate set to '+Math.round(hourly*1.5*100)/100+' (1.5× hourly)');
+  } else showToast('Enter hourly rate first','err');
+}
+
 function openWorkerRateModal(workerId=null){
   document.getElementById('modal-rate').classList.add('open');
   if(workerId){
