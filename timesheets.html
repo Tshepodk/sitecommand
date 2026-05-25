@@ -840,7 +840,7 @@ function renderDailyTab(){
         <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text2)">${fmtH(e.regular_hours||0)}</div>
         <div>
           <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>
-          ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${e.ot_rate||0}/hr</div>`:''}
+          ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${allWorkers.find(x=>x.id==e.worker_id)?.ot_rate||e.ot_rate||0}/hr</div>`:''}
         </div>
         <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
@@ -954,8 +954,8 @@ function renderMonthlyTab(){
       const wkr=allWorkers.find(w=>w.id==e.worker_id)||{};
       byWorker[e.worker_id]={
         name:e.worker_name,worker_id:e.worker_id,role:wkr.role,
-        hourlyRate:e.hourly_rate||wkr.hourly_rate||0,
-        otRate:e.ot_rate||wkr.ot_rate||0,
+        hourlyRate:wkr.hourly_rate||e.hourly_rate||0,
+        otRate:wkr.ot_rate||e.ot_rate||0,
         days:new Set(),totalHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0
       };
     }
