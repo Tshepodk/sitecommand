@@ -232,6 +232,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
           <div class="form-group">
             <label class="form-label">Project <span class="req">*</span></label>
             <select class="form-select" id="f-project" onchange="onProjectChange()"><option value="">— Select project —</option></select>
+            <div id="po-info-strip" style="display:none;margin-top:8px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:7px 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <span style="font-family:var(--font-d);font-weight:800;font-size:14px;color:var(--accent)" id="po-strip-number"></span>
+              <span style="font-size:11px;color:var(--text3)" id="po-strip-client"></span>
+              <span style="font-size:11px;color:var(--text3)" id="po-strip-loc"></span>
+              <span style="font-size:11px;color:var(--text3)" id="po-strip-foreman"></span>
+            </div>
           </div>
           <div class="form-group"><label class="form-label">Report Date <span class="req">*</span></label><input class="form-input" type="date" id="f-date"/></div>
           <div class="form-group"><label class="form-label">Site Location / Zone</label><input class="form-input" type="text" id="f-location" placeholder="e.g. Sector 4, km 47–52"/></div>
@@ -356,7 +362,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 
 <div class="toast" id="toast"></div>
 
-<script src="config.js"></script>
 <script>
 
 // ═══════════════════════════════════════════════════════════════════
@@ -378,8 +383,8 @@ function requireAuth(){
 async function loadAndCacheProfile(){
   const s=getSession();if(!s)return null;
   try{
-    const r=await fetch(`https:///rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
-      {headers:{'apikey':'','Authorization':'Bearer '+s.access_token}});
+    const r=await fetch(`https://dovdqmzyfgmkxvqdaeyr.supabase.co/rest/v1/user_profiles?id=eq.${s.user.id}&limit=1`,
+      {headers:{'apikey':'sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq','Authorization':'Bearer '+s.access_token}});
     if(r.ok){const d=await r.json();if(d[0]){s.profile=d[0];localStorage.setItem('sc_session',JSON.stringify(s));return d[0];}}
   }catch(e){}
   return null;
@@ -479,6 +484,8 @@ async function initRBAC(){
   applyRBAC();
 }
 
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 // ── Dynamic auth headers — always uses live session token ──────────────────
 function getH(){
   try{
@@ -511,7 +518,7 @@ async function init(){
     ]);
     // Populate project dropdown
     const ps=document.getElementById('f-project');
-    ps.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`).join('');
+    ps.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.id}" data-name="${p.name}" data-po="${p.po_number||''}" data-loc="${p.location||''}" data-client="${p.client||''}" data-foreman="${p.foreman||''}">${p.po_number?'['+p.po_number+'] ':''} ${p.name}</option>`).join('');
     // Populate reporter dropdown from workers
     const rs=document.getElementById('f-reporter-sel');
     rs.innerHTML='<option value="">— Select worker —</option>'+allWorkers.map(w=>`<option value="${w.name}" data-role="${w.role||''}">${w.name}${w.role?' — '+w.role:''}</option>`).join('');
@@ -566,7 +573,20 @@ async function onProjectChange(){
   updateSummary();
   const el=document.getElementById('f-project');
   const projId=el.value;
-  if(!projId){projectTasks=[];renderTaskQtyRows();return;}
+  const opt=el.options[el.selectedIndex];
+  const strip=document.getElementById('po-info-strip');
+  if(!projId){projectTasks=[];renderTaskQtyRows();strip.style.display='none';return;}
+  // Show PO strip
+  const po=opt?opt.dataset.po:'';const loc=opt?opt.dataset.loc:'';const client=opt?opt.dataset.client:'';const foreman=opt?opt.dataset.foreman:'';
+  if(po){
+    document.getElementById('po-strip-number').textContent='🧾 '+po;
+    document.getElementById('po-strip-client').textContent=client?'Client: '+client:'';
+    document.getElementById('po-strip-loc').textContent=loc?'📍 '+loc:'';
+    document.getElementById('po-strip-foreman').textContent=foreman?'Foreman: '+foreman:'';
+    strip.style.display='flex';
+  }else{strip.style.display='none';}
+  // Pre-fill location from project if empty
+  const locField=document.getElementById('f-location');if(locField&&!locField.value&&loc)locField.value=loc;
   try{
     projectTasks=await sbGet('project_tasks',`project_id=eq.${projId}&active=eq.true&order=created_at.asc`);
     renderTaskQtyRows();
@@ -816,39 +836,6 @@ function resetForm(){
 }
 
 init();
-
-// ── Unsaved form navigation warning ──────────────────────────────────────────
-let formDirty=false;
-document.addEventListener('input',()=>{formDirty=true;});
-document.addEventListener('change',()=>{formDirty=true;});
-window.addEventListener('beforeunload',e=>{
-  if(formDirty){e.preventDefault();e.returnValue='You have unsaved report data. Are you sure you want to leave?';}
-});
-// Clear dirty flag on successful submit
-const origReset=resetForm;
-function resetForm(){formDirty=false;origReset();}
-
-// ── Backdate warning ──────────────────────────────────────────────────────────
-function checkBackdate(){
-  const dateEl=document.getElementById('f-date');
-  const today=new Date().toISOString().split('T')[0];
-  let notice=document.getElementById('backdate-notice');
-  if(!notice){
-    notice=document.createElement('div');notice.id='backdate-notice';
-    notice.style.cssText='display:none;background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--accent);margin-top:6px;';
-    dateEl.parentNode.appendChild(notice);
-  }
-  if(dateEl.value&&dateEl.value!==today){
-    notice.style.display='block';
-    notice.textContent='⚠ You are submitting for '+dateEl.value+' — not today ('+today+')';
-  } else {
-    notice.style.display='none';
-  }
-}
-document.addEventListener('DOMContentLoaded',()=>{
-  const d=document.getElementById('f-date');
-  if(d)d.addEventListener('change',checkBackdate);
-});
 </script>
 <div class="bottom-nav">
   <a href="index.html" class="bn-item "><span class="bn-icon">⬛</span>Dashboard</a>

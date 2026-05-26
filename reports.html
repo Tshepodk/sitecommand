@@ -118,7 +118,6 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Quick Links</div>
       <div class="nav-item" onclick="switchTab('timesheet',document.querySelector('[data-tab=timesheet]'))"><span class="nav-icon">💰</span>Labour Costs</div>
-      <div class="nav-item" onclick="switchTab('employee',document.querySelector('[data-tab=employee]'))"><span class="nav-icon">👷</span>Employee Summary</div>
       <div class="nav-item" onclick="switchTab('project',document.querySelector('[data-tab=project]'))"><span class="nav-icon">📋</span>Project Costs</div>
       <div class="nav-item" onclick="switchTab('daily',document.querySelector('[data-tab=daily]'))"><span class="nav-icon">📅</span>Daily Labour</div>
       <div class="nav-item" onclick="switchTab('budget',document.querySelector('[data-tab=budget]'))"><span class="nav-icon">📈</span>Budget Impact</div>
@@ -144,7 +143,6 @@ tr:hover td{background:var(--bg3)}
       <!-- Tabs -->
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="timesheet" onclick="switchTab('timesheet',this)">💰 Timesheet Report</button>
-        <button class="tab-btn" data-tab="employee" onclick="switchTab('employee',this)">👷 Employee Summary</button>
         <button class="tab-btn" data-tab="project" onclick="switchTab('project',this)">📋 Project Cost Summary</button>
         <button class="tab-btn" data-tab="daily" onclick="switchTab('daily',this)">📅 Daily Labour Log</button>
         <button class="tab-btn" data-tab="budget" onclick="switchTab('budget',this)">📈 Budget Impact</button>
@@ -165,42 +163,6 @@ tr:hover td{background:var(--bg3)}
         </div>
 
         <div id="ts-report-content"></div>
-      </div>
-
-      <!-- ── EMPLOYEE SUMMARY TAB ───────────────────────────────────────────── -->
-      <div class="tab-content" id="tab-employee">
-        <div class="filter-bar">
-          <input type="month" class="form-input" id="emp-filter-month" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderEmployeeSummary()"/>
-          <select class="form-select" id="emp-filter-project" style="width:180px;font-size:12px;padding:5px 8px" onchange="renderEmployeeSummary()"><option value="">All Projects</option></select>
-          <button class="btn btn-ghost btn-sm" onclick="clearFilter('emp')">Clear</button>
-          <button class="btn btn-teal btn-sm" style="margin-left:auto" onclick="exportEmployeeCSV()">⬇ Export Employee Report</button>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📋 Employee Timesheet Summary</div>
-            <div style="font-size:12px;color:var(--text2)" id="emp-period-label">All periods</div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Employee</th><th>Project</th><th>Role</th><th>Hourly Rate</th><th>Days Worked</th><th>Regular Hrs</th><th>OT 1.5× Hrs</th><th>OT 2× Hrs</th><th>Total Hours</th><th>Reg Pay</th><th>OT Pay</th><th>Cost to Company</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="emp-table-body"></tbody>
-            </table>
-          </div>
-          <div id="emp-totals-bar" style="display:none;padding:1rem 1.5rem;border-top:2px solid rgba(245,166,35,0.25);background:rgba(245,166,35,0.04);border-radius:0 0 var(--rl) var(--rl)">
-            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Employees</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="emp-tot-workers">0</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Regular Hrs</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--text)" id="emp-tot-reg">0h</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT 1.5× Hrs</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--accent)" id="emp-tot-ot15">0h</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT 2× Hrs</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="emp-tot-ot2">0h</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="emp-tot-hrs">0h</div></div>
-              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Cost to Company</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="emp-tot-cost">R 0</div></div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ── PROJECT COST SUMMARY TAB ─────────────────────────────────────── -->
@@ -278,9 +240,10 @@ tr:hover td{background:var(--bg3)}
 
 <div class="toast" id="toast"></div>
 
-<script src="config.js"></script>
 <script>
 // ── Supabase ──────────────────────────────────────────────────────────────────
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 function getH(){try{const s=JSON.parse(localStorage.getItem('sc_session')||'null');const t=(s&&s.access_token&&s.expires_at>Date.now())?s.access_token:SK;return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+t};}catch(e){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}}
 async function sbGet(table,query=''){const r=await fetch(`${SB}/rest/v1/${table}?${query}`,{headers:getH()});if(!r.ok)throw new Error(await r.text());const txt=await r.text();return txt?JSON.parse(txt):[];}
 
@@ -313,7 +276,6 @@ function switchTab(name,el){
   if(el)el.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='timesheet')renderTimesheetReport();
-  if(name==='employee')renderEmployeeSummary();
   if(name==='project')renderProjectCosts();
   if(name==='daily')renderDailyLabour();
   if(name==='budget')renderBudgetImpact();
@@ -325,7 +287,6 @@ function clearFilter(prefix){
     else el.value='';
   });
   if(prefix==='ts')renderTimesheetReport();
-  if(prefix==='emp')renderEmployeeSummary();
   if(prefix==='pc')renderProjectCosts();
   if(prefix==='dl')renderDailyLabour();
   if(prefix==='bi')renderBudgetImpact();
@@ -368,13 +329,10 @@ async function init(){
 
   // Populate project filters
   const projOpts='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-  ['ts-filter-project','emp-filter-project','pc-filter-project','dl-filter-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
-  const empMonthEl=document.getElementById('emp-filter-month');
-  if(empMonthEl)empMonthEl.value=thisMonth;
+  ['ts-filter-project','pc-filter-project','dl-filter-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
 
   renderStats();
   renderTimesheetReport();
-  renderEmployeeSummary();
 }
 
 // ── Link worker to project ─────────────────────────────────────────────────────
@@ -493,7 +451,10 @@ function renderTimesheetReport(){
     return`<div class="ts-proj-block">
       <div class="ts-proj-header" onclick="toggleProjBlock('${projName.replace(/'/g,"\\'")}')" id="hdr-${projName.replace(/[^a-z0-9]/gi,'_')}">
         <div style="display:flex;align-items:center;gap:12px">
-          <div class="proj-name">${projName}</div>
+          <div>
+            ${proj.po_number?`<div style="font-family:var(--font-d);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.06em">🧾 ${proj.po_number}</div>`:''}
+            <div class="proj-name">${projName}</div>
+          </div>
           <span class="badge badge-gray">${pd.entries} entries</span>
           ${pct195>=100?'<span class="badge badge-red">195h OT triggered</span>':pct195>=75?'<span class="badge badge-amber">'+pct195+'% to 195h</span>':''}
         </div>
@@ -574,7 +535,7 @@ function renderProjectCosts(){
     const budget=p.budget||0;
     const remaining=budget-totalSpend;
     const pct=budget>0?Math.round(totalSpend/budget*100):0;
-    return{name:p.name,phase:p.phase,fc,lc,contractSpend,totalSpend,budget,remaining,pct};
+    return{name:p.name,phase:p.phase,po_number:p.po_number||'',location:p.location||'',fc,lc,contractSpend,totalSpend,budget,remaining,pct};
   });
 
   const totField=rows.reduce((a,r)=>a+r.fc,0);
@@ -586,8 +547,9 @@ function renderProjectCosts(){
     ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No projects.</div>`
     :rows.map(r=>`<div class="proj-cost-row">
       <div>
+        ${r.po_number?`<div style="font-family:var(--font-d);font-size:12px;font-weight:700;color:var(--accent);margin-bottom:2px">🧾 ${r.po_number}</div>`:''}
         <div style="font-weight:500">${r.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${r.phase||''}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.phase||''}${r.location?' · 📍'+r.location:''}</div>
         <div class="cost-bar"><div class="cost-bar-fill${r.pct>100?' over-budget':''}" style="width:${Math.min(r.pct,100)}%;background:${budgetColor(r.pct)}"></div></div>
       </div>
       <div><div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmt(r.fc)}</div><div style="font-size:10px;color:var(--text3)">Field reported</div></div>
@@ -781,196 +743,6 @@ function exportCSV(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download=`SiteCommand_Labour_${month||'All'}.csv`;a.click();
   showToast('CSV exported');
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// EMPLOYEE SUMMARY — one row per employee, OT 1.5×, OT 2×, cost to company
-// ══════════════════════════════════════════════════════════════════════════════
-function renderEmployeeSummary(){
-  const monthFilter=document.getElementById('emp-filter-month').value;
-  const projFilter=document.getElementById('emp-filter-project').value;
-
-  // Period label
-  const periodLabel=document.getElementById('emp-period-label');
-  if(periodLabel)periodLabel.textContent=monthFilter?('Period: '+monthFilter):'All periods';
-
-  let entries=[...allEntries];
-  if(monthFilter)entries=entries.filter(e=>(e.entry_date||'').startsWith(monthFilter));
-
-  // Build per-employee map
-  const byWorker={};
-  entries.forEach(e=>{
-    const proj=getWorkerProject(e.worker_id,e.worker_name);
-    if(projFilter&&proj!==projFilter)return;
-    const wkey=e.worker_name||('w'+e.worker_id);
-    if(!byWorker[wkey]){
-      const wInfo=allWorkers.find(x=>x.id==e.worker_id||(e.worker_name&&x.name===e.worker_name));
-      byWorker[wkey]={
-        name:e.worker_name||'—',
-        project:proj,
-        role:wInfo?.role||wInfo?.type||'—',
-        rate:parseFloat(e.hourly_rate||wInfo?.hourly_rate||0),
-        days:new Set(),
-        regularHrs:0,
-        ot15Hrs:0,   // 1.5× OT (Mon–Sat, above threshold)
-        ot2Hrs:0,    // 2× OT (Sunday & public holidays)
-        totalHrs:0,
-        regularPay:0,
-        otPay:0,
-        totalPay:0,
-        statuses:new Set()
-      };
-    }
-    byWorker[wkey].days.add(e.entry_date);
-    byWorker[wkey].regularHrs+=(parseFloat(e.regular_hours)||0);
-    byWorker[wkey].totalHrs+=(parseFloat(e.total_hours)||0);
-    byWorker[wkey].regularPay+=(parseFloat(e.regular_pay)||0);
-    byWorker[wkey].otPay+=(parseFloat(e.ot_pay)||0);
-    byWorker[wkey].totalPay+=(parseFloat(e.total_pay)||0);
-    byWorker[wkey].statuses.add(e.status||'pending');
-
-    // Classify OT hours: double-time day = 2×, otherwise 1.5×
-    const otHrs=parseFloat(e.ot_hours)||0;
-    if(otHrs>0){
-      if(getDayType(e.entry_date||'')==='double'){
-        byWorker[wkey].ot2Hrs+=otHrs;
-      } else {
-        byWorker[wkey].ot15Hrs+=otHrs;
-      }
-    }
-    // Update rate to latest entry's rate if available
-    if(e.hourly_rate)byWorker[wkey].rate=parseFloat(e.hourly_rate);
-  });
-
-  const workers=Object.values(byWorker).sort((a,b)=>a.name.localeCompare(b.name));
-  const tbody=document.getElementById('emp-table-body');
-
-  if(!workers.length){
-    tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:2.5rem;color:var(--text3)">No entries match the current filters.</td></tr>`;
-    document.getElementById('emp-totals-bar').style.display='none';
-    return;
-  }
-
-  tbody.innerHTML=workers.map(w=>{
-    const allApproved=[...w.statuses].every(s=>s==='approved');
-    const hasPending=w.statuses.has('submitted');
-    const statusBadge=allApproved
-      ?`<span class="badge badge-green">✓ Approved</span>`
-      :hasPending?`<span class="badge badge-blue">⏳ Pending</span>`
-      :`<span class="badge badge-gray">Draft</span>`;
-    return`<tr>
-      <td><div style="font-weight:600">${w.name}</div></td>
-      <td style="color:var(--text2);font-size:12px">${w.project}</td>
-      <td style="color:var(--text2);font-size:12px">${w.role}</td>
-      <td style="font-family:var(--font-d);color:var(--teal);font-weight:700">R${w.rate.toFixed(0)}/h</td>
-      <td style="font-family:var(--font-d);font-weight:700;color:var(--blue)">${w.days.size}</td>
-      <td style="font-family:var(--font-d);font-weight:700">${fmtH(w.regularHrs)}</td>
-      <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${w.ot15Hrs>0?fmtH(w.ot15Hrs):'—'}</td>
-      <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)">${w.ot2Hrs>0?fmtH(w.ot2Hrs):'—'}</td>
-      <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(w.totalHrs)}</td>
-      <td style="color:var(--text2)">${fmt(w.regularPay)}</td>
-      <td style="color:${(w.ot15Hrs+w.ot2Hrs)>0?'var(--purple)':'var(--text3)'}">${(w.ot15Hrs+w.ot2Hrs)>0?fmt(w.otPay):'—'}</td>
-      <td style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(w.totalPay)}</td>
-      <td>${statusBadge}</td>
-    </tr>`;
-  }).join('');
-
-  // Totals row
-  const totReg=workers.reduce((a,w)=>a+w.regularHrs,0);
-  const totOT15=workers.reduce((a,w)=>a+w.ot15Hrs,0);
-  const totOT2=workers.reduce((a,w)=>a+w.ot2Hrs,0);
-  const totHrs=workers.reduce((a,w)=>a+w.totalHrs,0);
-  const totCost=workers.reduce((a,w)=>a+w.totalPay,0);
-
-  // Append totals row in table
-  tbody.innerHTML+=`<tr style="background:rgba(245,166,35,0.06);border-top:2px solid rgba(245,166,35,0.25)">
-    <td colspan="5" style="font-family:var(--font-d);font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2)">GRAND TOTAL — ${workers.length} Employee${workers.length!==1?'s':''}</td>
-    <td style="font-family:var(--font-d);font-weight:700">${fmtH(totReg)}</td>
-    <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${totOT15>0?fmtH(totOT15):'—'}</td>
-    <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)">${totOT2>0?fmtH(totOT2):'—'}</td>
-    <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--teal)">${fmtH(totHrs)}</td>
-    <td></td><td></td>
-    <td style="font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent)">${fmt(totCost)}</td>
-    <td></td>
-  </tr>`;
-
-  // Footer bar
-  document.getElementById('emp-tot-workers').textContent=workers.length;
-  document.getElementById('emp-tot-reg').textContent=fmtH(totReg);
-  document.getElementById('emp-tot-ot15').textContent=fmtH(totOT15);
-  document.getElementById('emp-tot-ot2').textContent=fmtH(totOT2);
-  document.getElementById('emp-tot-hrs').textContent=fmtH(totHrs);
-  document.getElementById('emp-tot-cost').textContent=fmt(totCost);
-  document.getElementById('emp-totals-bar').style.display='block';
-}
-
-// ── Export Employee Summary CSV ───────────────────────────────────────────────
-function exportEmployeeCSV(){
-  const monthFilter=document.getElementById('emp-filter-month').value;
-  const projFilter=document.getElementById('emp-filter-project').value;
-
-  let entries=[...allEntries];
-  if(monthFilter)entries=entries.filter(e=>(e.entry_date||'').startsWith(monthFilter));
-
-  const byWorker={};
-  entries.forEach(e=>{
-    const proj=getWorkerProject(e.worker_id,e.worker_name);
-    if(projFilter&&proj!==projFilter)return;
-    const wkey=e.worker_name||('w'+e.worker_id);
-    if(!byWorker[wkey]){
-      const wInfo=allWorkers.find(x=>x.id==e.worker_id||(e.worker_name&&x.name===e.worker_name));
-      byWorker[wkey]={
-        name:e.worker_name||'—',project:proj,
-        role:wInfo?.role||wInfo?.type||'—',
-        rate:parseFloat(e.hourly_rate||wInfo?.hourly_rate||0),
-        days:new Set(),regularHrs:0,ot15Hrs:0,ot2Hrs:0,
-        totalHrs:0,regularPay:0,otPay:0,totalPay:0,statuses:new Set()
-      };
-    }
-    byWorker[wkey].days.add(e.entry_date);
-    byWorker[wkey].regularHrs+=(parseFloat(e.regular_hours)||0);
-    byWorker[wkey].totalHrs+=(parseFloat(e.total_hours)||0);
-    byWorker[wkey].regularPay+=(parseFloat(e.regular_pay)||0);
-    byWorker[wkey].otPay+=(parseFloat(e.ot_pay)||0);
-    byWorker[wkey].totalPay+=(parseFloat(e.total_pay)||0);
-    byWorker[wkey].statuses.add(e.status||'pending');
-    const otHrs=parseFloat(e.ot_hours)||0;
-    if(otHrs>0){
-      if(getDayType(e.entry_date||'')==='double'){byWorker[wkey].ot2Hrs+=otHrs;}
-      else{byWorker[wkey].ot15Hrs+=otHrs;}
-    }
-    if(e.hourly_rate)byWorker[wkey].rate=parseFloat(e.hourly_rate);
-  });
-
-  const workers=Object.values(byWorker).sort((a,b)=>a.name.localeCompare(b.name));
-  const rows=[['Employee','Project','Role','Hourly Rate (R/h)','Days Worked','Regular Hours','OT 1.5x Hours','OT 2x Hours','Total Hours','Regular Pay (R)','OT Pay (R)','Cost to Company (R)','Status']];
-  workers.forEach(w=>{
-    rows.push([
-      w.name,w.project,w.role,w.rate.toFixed(2),w.days.size,
-      w.regularHrs.toFixed(2),w.ot15Hrs.toFixed(2),w.ot2Hrs.toFixed(2),w.totalHrs.toFixed(2),
-      w.regularPay.toFixed(2),w.otPay.toFixed(2),w.totalPay.toFixed(2),
-      [...w.statuses].join('/')
-    ]);
-  });
-  // Totals row
-  rows.push([
-    'GRAND TOTAL','','','',
-    workers.reduce((a,w)=>a+w.days.size,0),
-    workers.reduce((a,w)=>a+w.regularHrs,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.ot15Hrs,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.ot2Hrs,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.totalHrs,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.regularPay,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.otPay,0).toFixed(2),
-    workers.reduce((a,w)=>a+w.totalPay,0).toFixed(2),''
-  ]);
-
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download=`SiteCommand_EmployeeSummary_${monthFilter||'All'}.csv`;
-  a.click();
-  showToast('Employee report exported');
 }
 
 init();
