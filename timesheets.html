@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SiteCommand — Timesheets</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="config.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -124,13 +122,7 @@ tr:hover td{background:var(--bg3)}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* OT indicator */
 .ot-label{font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.06em;text-transform:uppercase}
-/* Approval status badges */
-.status-draft{background:rgba(139,144,160,0.12);color:var(--text2);border:1px solid rgba(139,144,160,0.2)}
-.status-submitted{background:rgba(59,130,246,0.12);color:#60a5fa;border:1px solid rgba(59,130,246,0.25)}
-.status-approved{background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25)}
-.status-rejected{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.25)}
-.appr-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:6px;display:grid;gap:10px;align-items:center}
-
+/* Empty state */
 .empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
 .empty-state h3{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase}
 /* Summary table highlight */
@@ -180,7 +172,6 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
-          <button class="btn btn-teal" onclick="openBatchModal()">⚡ Batch Entry</button>
           <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
         </div>
       </div>
@@ -193,7 +184,6 @@ tr:hover td{background:var(--bg3)}
         <button class="tab-btn active" onclick="switchTab('daily',this)">📅 Daily Entry</button>
         <button class="tab-btn" onclick="switchTab('weekly',this)">📆 Weekly Summary</button>
         <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly Summary</button>
-        <button class="tab-btn" onclick="switchTab('approvals',this)">✅ Approvals <span id="approval-badge" style="display:none;background:var(--accent);color:#000;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:4px">0</span></button>
         <button class="tab-btn" onclick="switchTab('workers',this)">👷 Worker Rates</button>
       </div>
 
@@ -295,71 +285,14 @@ tr:hover td{background:var(--bg3)}
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Name</th><th>Role</th><th>Type</th><th>Hourly Rate (R)</th><th>OT Rate (R/hr)</th><th>195h Threshold</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Name</th><th>Role</th><th>Type</th><th>Hourly Rate (R)</th><th>OT Rate (R/hr)</th><th>OT Threshold</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody id="rates-table"></tbody>
             </table>
           </div>
         </div>
         <div style="margin-top:1rem;padding:1rem;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)">
-          ⚙ <strong>OT Calculation (195h Monthly Threshold):</strong> Mon–Fri and Saturday hours count toward the 195h monthly total at standard rate. Once 195h is exceeded, additional hours are billed at 1.5× hourly. Sunday and Public Holidays are always 2× hourly and do not count toward 195h. Set OT Rate = hourly × 1.5 using the 1.5× button.
-        </div>
-      </div>
-
-      <!-- ── TAB: APPROVALS ────────────────────────────────────────── -->
-      <div class="tab-content" id="tab-approvals">
-        <!-- Stats row -->
-        <div class="stats-grid" id="appr-stats" style="grid-template-columns:repeat(5,1fr);margin-bottom:1.5rem"></div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title" id="appr-queue-title">✅ Approval Queue</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-              <select class="form-select" id="appr-filter-status" onchange="renderApprovalsTab()" style="width:auto;font-size:12px;padding:5px 10px">
-                <option value="submitted">⏳ Pending Review</option>
-                <option value="draft">📝 Draft</option>
-                <option value="approved">✅ Approved</option>
-                <option value="rejected">❌ Rejected</option>
-                <option value="all">All Entries</option>
-              </select>
-              <select class="form-select" id="appr-filter-project" onchange="renderApprovalsTab()" style="width:auto;font-size:12px;padding:5px 10px">
-                <option value="">All Projects</option>
-              </select>
-              <input type="month" class="form-input" id="appr-filter-month" onchange="renderApprovalsTab()" style="width:150px;font-size:12px;padding:5px 8px"/>
-              <button class="btn btn-ghost btn-sm" onclick="exportPayrollExcel()">⬇ Export Excel</button>
-            </div>
-          </div>
-
-          <!-- Bulk action bar -->
-          <div id="appr-bulk-bar" style="display:none;padding:10px 1.25rem;background:rgba(245,166,35,0.06);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-            <span id="appr-selected-label" style="font-size:12px;color:var(--text2)">0 selected</span>
-            <button class="btn btn-teal btn-sm" onclick="bulkApprove()">✅ Approve Selected</button>
-            <button class="btn btn-danger btn-sm" onclick="bulkReject()">❌ Reject Selected</button>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:36px"><input type="checkbox" id="appr-select-all" onchange="toggleApprSelectAll(this.checked)" style="accent-color:var(--accent)"/></th>
-                  <th>Worker</th><th>Project</th><th>Date</th><th>Clock In/Out</th><th>Total Hrs</th><th>OT Hrs</th><th>Reg Pay</th><th>Total Pay</th><th>Status</th><th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="appr-table"></tbody>
-            </table>
-          </div>
-          <div id="appr-totals-bar" style="display:none;padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--bg3);border-radius:0 0 var(--rl) var(--rl)">
-            <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Entries</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="appr-tot-count">0</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="appr-tot-hrs">0h</div></div>
-              <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="appr-tot-ot">0h</div></div>
-              <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">Filtered Payroll</div><div style="font-family:var(--font-d);font-size:28px;font-weight:800;color:var(--accent)" id="appr-tot-pay">R 0</div></div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:1rem;padding:1rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)">
-          💡 <strong>Workflow:</strong> New entries start as <em>Draft</em>. Supervisors submit them for review → <em>Pending</em>. PMO approves or rejects. Only <em>Approved</em> entries count toward payroll in Reports. Edit is locked once Approved — reject first to unlock.
+          ⚙ <strong>OT Calculation:</strong> Regular hours are worked up to the OT threshold per day. Hours beyond that threshold are billed at the worker's custom OT rate. Weekend days (Sat/Sun) are always treated as OT rate. Rates are stored against each worker profile.
         </div>
       </div>
 
@@ -389,14 +322,6 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
-    <!-- Project selector -->
-    <div class="form-group" style="margin-bottom:1rem">
-      <label class="form-label">Project *</label>
-      <select class="form-select" id="entry-project">
-        <option value="">— Select Project —</option>
-      </select>
-    </div>
-
     <!-- Rates preview -->
     <div id="entry-rate-preview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
       <span id="entry-rate-text"></span>
@@ -423,8 +348,8 @@ tr:hover td{background:var(--bg3)}
     <div class="form-group" style="margin-bottom:1rem">
       <label class="form-label">Break / Lunch Deduction (minutes)</label>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input class="form-input" type="number" id="entry-break" min="0" max="180" value="60" style="width:100px" oninput="recalcEntryHours()"/>
-        <span style="font-size:12px;color:var(--text3)">Subtract from total hours worked</span>
+        <input class="form-input" type="number" id="entry-break" min="0" max="180" value="0" style="width:100px" oninput="this.dataset.manualOverride='1';recalcEntryHours()"/>
+        <span style="font-size:12px;color:var(--text3)">Auto: 60min if ≥ 8hrs worked, 0 if less</span>
       </div>
     </div>
 
@@ -469,14 +394,11 @@ tr:hover td{background:var(--bg3)}
         <input class="form-input" type="number" id="rate-hourly" placeholder="e.g. 120" min="0" step="0.01"/>
       </div>
       <div class="form-group">
-        <label class="form-label">OT Rate (R/hr) <span style="color:var(--text3);font-size:10px;font-weight:400">(auto = hourly × 1.5)</span></label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input class="form-input" type="number" id="rate-ot" placeholder="e.g. 56.25" min="0" step="0.01" style="flex:1"/>
-          <button class="btn btn-ghost btn-sm" type="button" onclick="autoCalcOT()" title="Set to 1.5× hourly rate">1.5×</button>
-        </div>
+        <label class="form-label">OT Rate (R/hr)</label>
+        <input class="form-input" type="number" id="rate-ot" placeholder="e.g. 180" min="0" step="0.01"/>
       </div>
       <div class="form-group">
-        <label class="form-label">195h/Month (hrs/day)</label>
+        <label class="form-label">OT Threshold (hrs/day)</label>
         <input class="form-input" type="number" id="rate-ot-threshold" placeholder="e.g. 8" min="1" max="24" value="8" step="0.5"/>
       </div>
       <div class="form-group">
@@ -498,65 +420,13 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
-<!-- ════════════════════ MODAL: BATCH ENTRY ════════════════════ -->
-<div class="modal-bg" id="modal-batch">
-  <div class="modal" style="width:860px;max-width:98vw">
-    <div class="modal-title">
-      <span>⚡ Batch Time Entry</span>
-      <button class="modal-close" onclick="closeModal('batch')">✕</button>
-    </div>
-
-    <!-- Date + Project + Quick Fill bar -->
-    <div style="display:grid;grid-template-columns:auto auto 1fr auto auto auto auto;gap:10px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Date *</label>
-        <input class="form-input" type="date" id="batch-date" style="width:160px" onchange="renderBatchWorkers()"/>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Project *</label>
-        <select class="form-select" id="batch-project" style="width:200px" onchange="onBatchProjectChange()">
-          <option value="">— Select Project —</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Quick Fill — Clock In</label>
-        <input class="form-input ts-time-input" type="time" id="batch-qf-in" style="width:110px"/>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Clock Out</label>
-        <input class="form-input ts-time-input" type="time" id="batch-qf-out" style="width:110px"/>
-      </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">Break (min)</label>
-        <input class="form-input" type="number" id="batch-qf-break" value="60" min="0" max="180" style="width:80px"/>
-      </div>
-      <button class="btn btn-teal" onclick="applyQuickFill()" style="align-self:flex-end">Apply to Selected</button>
-    </div>
-
-    <!-- Select all -->
-    <div style="display:flex;align-items:center;gap:10px;padding:6px 4px;margin-bottom:6px;border-bottom:1px solid var(--border)">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text2);user-select:none">
-        <input type="checkbox" id="batch-select-all" onchange="toggleSelectAllBatch(this.checked)" style="cursor:pointer;accent-color:var(--accent)"/>
-        <strong>Select All Workers</strong>
-      </label>
-      <span style="font-size:11px;color:var(--text3)" id="batch-selected-count">0 selected</span>
-    </div>
-
-    <!-- Worker rows -->
-    <div id="batch-workers-list" style="max-height:420px;overflow-y:auto;padding-right:4px"></div>
-
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
-      <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">💾 Save All Entries</button>
-    </div>
-  </div>
-</div>
-
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ── Supabase config (mirrors index.html) ──────────────────────────────────────
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
 
 function getH(){
   try{
@@ -592,7 +462,6 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
-let allProjects=[];  // projects table
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
@@ -601,20 +470,16 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries,allProjects]=await Promise.all([
+    [allWorkers,allEntries]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc'),
-      sbGet('projects','order=name.asc')
+      sbGet('timesheet_entries','order=entry_date.desc')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
     document.getElementById('conn-label').style.color='var(--green)';
   }catch(e){
     // If timesheet_entries table doesn't exist yet, workers still load
-    try{
-      allWorkers=await sbGet('workers','order=name.asc&active=eq.true');
-      allProjects=await sbGet('projects','order=name.asc');
-    }catch(e2){}
+    try{allWorkers=await sbGet('workers','order=name.asc&active=eq.true');}catch(e2){}
     allEntries=[];
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
@@ -627,7 +492,6 @@ async function init(){
   renderStats();
   renderDailyTab();
   renderRatesTab();
-  updateApprovalBadge();
 }
 
 function showTableSetupBanner(){
@@ -642,7 +506,7 @@ function showTableSetupBanner(){
   entry_date DATE NOT NULL,
   clock_in TIME NOT NULL,
   clock_out TIME NOT NULL,
-  break_minutes INT DEFAULT 30,
+  break_minutes INT DEFAULT 0,
   total_hours NUMERIC(5,2),
   regular_hours NUMERIC(5,2),
   ot_hours NUMERIC(5,2),
@@ -654,8 +518,6 @@ function showTableSetupBanner(){
   ot_pay NUMERIC(12,2),
   total_pay NUMERIC(12,2),
   notes TEXT,
-  project_name TEXT,
-  status TEXT DEFAULT 'draft',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 -- Also add rate columns to workers table:
@@ -671,10 +533,6 @@ function populateWorkerSelects(){
   const opts='<option value="">— Select Worker —</option>'+allWorkers.map(w=>`<option value="${w.id}">${w.name} ${w.role?'('+w.role+')':''}</option>`).join('');
   document.getElementById('entry-worker').innerHTML=opts;
   document.getElementById('rate-worker').innerHTML=opts;
-
-  const projOpts='<option value="">— Select Project —</option>'+
-    (allProjects||[]).map(p=>`<option value="${p.name}">${p.name}${p.type?' · '+p.type:''}</option>`).join('');
-  document.getElementById('entry-project').innerHTML=projOpts;
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -686,7 +544,6 @@ function switchTab(name,el){
   if(name==='weekly')renderWeeklyTab();
   if(name==='monthly')renderMonthlyTab();
   if(name==='workers')renderRatesTab();
-  if(name==='approvals')renderApprovalsTab();
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -723,54 +580,23 @@ function calcHours(clockIn,clockOut,breakMins){
   return{total:Math.round(netMins/60*100)/100,raw:rawMins/60};
 }
 
-function getDayType(dateStr){
-  if(!dateStr)return'weekday';
-  const d=new Date(dateStr+'T00:00:00');
-  const dow=d.getDay(); // 0=Sun,6=Sat
-  if(dow===0)return'sunday';
-  if(dow===6)return'saturday';
-  return'weekday';
-}
-
-// 195h monthly OT logic:
-// Mon-Fri: standard hourly, counts toward 195h
-// Saturday: standard hourly (counts toward 195h) — above 195h cumulative → 1.5×
-// Sunday: always 2× hourly, does NOT count toward 195h
-// Public Holiday: always 2× hourly, does NOT count toward 195h
-// monthlyHoursToDate = cumulative regular hours worked this month BEFORE this entry
-function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType,monthlyHoursToDate){
-  const dayType=getDayType(dateStr);
-  const monthly195=195; // qualifying threshold
-  const prevHrs=monthlyHoursToDate||0;
-  const actualOTRate=otRate>10?otRate:Math.round(hourlyRate*1.5*100)/100; // guard: if stored as multiplier use 1.5×
-  let regularHours=0,otHours=0,regularPay=0,otPay=0;
-
-  if(dayType==='sunday'){
-    // Always 2× hourly, does not count toward 195h
+function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType){
+  const weekend=isWeekend(dateStr);
+  let regularHours,otHours,regularPay,otPay;
+  if(weekend){
+    // Full day at weekend rate
     regularHours=0;
     otHours=totalHours;
-    otPay=Math.round(otHours*(hourlyRate*2)*100)/100;
-  } else if(dayType==='saturday'){
-    // Counts toward 195h at standard rate; above 195h → 1.5×
-    const remaining195=Math.max(0,monthly195-prevHrs);
-    const standardHrs=Math.min(totalHours,remaining195);
-    const aboveHrs=Math.max(0,totalHours-remaining195);
-    regularHours=standardHrs;
-    otHours=aboveHrs;
-    regularPay=Math.round(standardHrs*(hourlyRate||0)*100)/100;
-    otPay=Math.round(aboveHrs*actualOTRate*100)/100;
-  } else {
-    // Mon-Fri: standard hourly up to 195h cumulative, then 1.5×
-    const remaining195=Math.max(0,monthly195-prevHrs);
-    const standardHrs=Math.min(totalHours,remaining195);
-    const aboveHrs=Math.max(0,totalHours-remaining195);
-    regularHours=standardHrs;
-    otHours=aboveHrs;
-    regularPay=Math.round(standardHrs*(hourlyRate||0)*100)/100;
-    otPay=Math.round(aboveHrs*actualOTRate*100)/100;
+    const wRate=weekendRateType==='double'?hourlyRate*2:weekendRateType==='standard'?hourlyRate:otRate;
+    regularPay=0;
+    otPay=Math.round(otHours*wRate*100)/100;
+  }else{
+    regularHours=Math.min(totalHours,otThreshold||8);
+    otHours=Math.max(0,totalHours-(otThreshold||8));
+    regularPay=Math.round(regularHours*(hourlyRate||0)*100)/100;
+    otPay=Math.round(otHours*(otRate||0)*100)/100;
   }
-  const isWeekend=dayType==='saturday'||dayType==='sunday';
-  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend,dayType,countsToward195:dayType!=='sunday'};
+  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend:weekend};
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -810,7 +636,7 @@ function renderDailyTab(){
 
   const dayWeekend=isWeekend(date);
   container.innerHTML=`
-    <div style="display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 110px;gap:10px;align-items:center;padding:6px 4px;margin-bottom:4px">
+    <div style="display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 80px;gap:10px;align-items:center;padding:6px 4px;margin-bottom:4px">
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Worker</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Clock In</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Clock Out</div>
@@ -819,17 +645,13 @@ function renderDailyTab(){
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Regular</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Overtime</div>
       <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Earnings</div>
-      <div style="font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600">Status / Actions</div>
+      <div></div>
     </div>
     ${dayEntries.map(e=>{
       const isWknd=isWeekend(e.entry_date||date);
-      const st=e.status||'draft';
-      const isApproved=st==='approved';
-      const statusBadge=statusBadgeHtml(st);
-      return`<div style="background:var(--bg3);border:1px solid ${isApproved?'rgba(34,197,94,0.25)':st==='submitted'?'rgba(59,130,246,0.25)':st==='rejected'?'rgba(239,68,68,0.25)':'var(--border)'};border-radius:var(--r);padding:10px 10px;margin-bottom:6px;display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 110px;gap:10px;align-items:center">
+      return`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 10px;margin-bottom:6px;display:grid;grid-template-columns:200px 90px 90px 40px 80px 100px 110px 100px 80px;gap:10px;align-items:center">
         <div>
           <div style="font-weight:500;font-size:13px">${e.worker_name||'—'}</div>
-          ${e.project_name?`<div style="font-size:11px;color:var(--teal);margin-top:1px">📁 ${e.project_name}</div>`:''}
           ${isWknd?'<span class="ot-label">Weekend</span>':''}
           ${e.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${e.notes}</div>`:''}
         </div>
@@ -840,16 +662,12 @@ function renderDailyTab(){
         <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--text2)">${fmtH(e.regular_hours||0)}</div>
         <div>
           <div style="font-family:var(--font-d);font-size:16px;font-weight:700;color:var(--purple)">${fmtH(e.ot_hours||0)}</div>
-          ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${allWorkers.find(x=>x.id==e.worker_id)?.ot_rate||e.ot_rate||0}/hr</div>`:''}
+          ${(e.ot_hours||0)>0?`<div style="font-size:10px;color:var(--text3)">@ R${e.ot_rate||0}/hr</div>`:''}
         </div>
         <div style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</div>
-        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
-          ${statusBadge}
-          <div style="display:flex;gap:4px;margin-top:2px">
-            ${!isApproved?`<button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})" title="Edit entry">✏</button>`:''}
-            ${st==='draft'?`<button class="btn btn-teal btn-sm" onclick="submitEntry(${e.id})" title="Submit for approval" style="font-size:10px;padding:3px 7px">▲ Submit</button>`:''}
-            ${!isApproved?`<button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})" title="Delete">✕</button>`:''}
-          </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})" title="Edit">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEntry(${e.id})" title="Delete">✕</button>
         </div>
       </div>`;
     }).join('')}`;
@@ -954,8 +772,8 @@ function renderMonthlyTab(){
       const wkr=allWorkers.find(w=>w.id==e.worker_id)||{};
       byWorker[e.worker_id]={
         name:e.worker_name,worker_id:e.worker_id,role:wkr.role,
-        hourlyRate:wkr.hourly_rate||e.hourly_rate||0,
-        otRate:wkr.ot_rate||e.ot_rate||0,
+        hourlyRate:e.hourly_rate||wkr.hourly_rate||0,
+        otRate:e.ot_rate||wkr.ot_rate||0,
         days:new Set(),totalHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0
       };
     }
@@ -1023,7 +841,7 @@ function renderRatesTab(){
     <td><span class="badge badge-gray" style="font-size:10px">${w.type||'—'}</span></td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${w.hourly_rate?'R '+parseFloat(w.hourly_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
     <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--purple)">${w.ot_rate?'R '+parseFloat(w.ot_rate).toFixed(2):'<span style="color:var(--text3)">Not set</span>'}</td>
-    <td style="color:var(--text2)">195h/month</td>
+    <td style="color:var(--text2)">${w.ot_threshold||8}h/day</td>
     <td><span class="badge ${w.status==='active'?'badge-green':w.status==='leave'?'badge-amber':'badge-gray'}">${w.status||'—'}</span></td>
     <td><button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal(${w.id})">⚙ Set Rate</button></td>
   </tr>`).join('');
@@ -1044,19 +862,18 @@ function openEntryModal(entryId=null){
       document.getElementById('entry-date').value=e.entry_date||'';
       document.getElementById('entry-clock-in').value=e.clock_in||'';
       document.getElementById('entry-clock-out').value=e.clock_out||'';
-      document.getElementById('entry-break').value=e.break_minutes??60;
+      document.getElementById('entry-break').value=e.break_minutes??0;
+      delete document.getElementById('entry-break').dataset.manualOverride;
       document.getElementById('entry-notes').value=e.notes||'';
-      document.getElementById('entry-project').value=e.project_name||'';
       onWorkerSelect();
       recalcEntryHours();
     }
   }else{
     document.getElementById('entry-worker').value='';
-    document.getElementById('entry-project').value='';
     document.getElementById('entry-date').value=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
     document.getElementById('entry-clock-in').value='';
     document.getElementById('entry-clock-out').value='';
-    document.getElementById('entry-break').value='60';
+    const bf=document.getElementById('entry-break');bf.value='0';delete bf.dataset.manualOverride;
     document.getElementById('entry-notes').value='';
     document.getElementById('entry-rate-preview').style.display='none';
     document.getElementById('ep-total').textContent='0.00h';
@@ -1078,15 +895,9 @@ function onWorkerSelect(){
   const wid=document.getElementById('entry-worker').value;
   const w=allWorkers.find(x=>x.id==wid);
   const preview=document.getElementById('entry-rate-preview');
-
-  // Auto-fill project from worker's assigned project
-  if(w&&w.project_name){
-    document.getElementById('entry-project').value=w.project_name;
-  }
-
   if(w&&(w.hourly_rate||w.ot_rate)){
     document.getElementById('entry-rate-text').innerHTML=
-      `👷 <strong>${w.name}</strong> — Hourly: <strong style="color:var(--teal)">R${parseFloat(w.hourly_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT: <strong style="color:var(--purple)">R${parseFloat(w.ot_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT threshold: <strong>195h/month</strong>`;
+      `👷 <strong>${w.name}</strong> — Hourly: <strong style="color:var(--teal)">R${parseFloat(w.hourly_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT: <strong style="color:var(--purple)">R${parseFloat(w.ot_rate||0).toFixed(2)}/hr</strong> &nbsp;|&nbsp; OT threshold: <strong>${w.ot_threshold||8}h/day</strong>`;
     preview.style.display='block';
   }else if(w){
     document.getElementById('entry-rate-text').innerHTML=`⚠ <strong>${w.name}</strong> has no rates configured. <a href="#" onclick="closeModal('entry');openWorkerRateModal(${w.id});return false;" style="color:var(--accent)">Set rates now →</a>`;
@@ -1102,8 +913,14 @@ function recalcEntryHours(){
   const w=allWorkers.find(x=>x.id==wid)||{};
   const clockIn=document.getElementById('entry-clock-in').value;
   const clockOut=document.getElementById('entry-clock-out').value;
-  const breakMins=parseInt(document.getElementById('entry-break').value)||0;
-  const date=document.getElementById('entry-date').value||new Date().toISOString().split('T')[0];
+  const date=document.getElementById('entry-date').value;
+  const breakField=document.getElementById('entry-break');
+  // Auto-set lunch: 60min if raw hours >= 8, else 0
+  if(clockIn&&clockOut&&!breakField.dataset.manualOverride){
+    const raw=calcHours(clockIn,clockOut,0).total;
+    breakField.value=raw>=8?60:0;
+  }
+  const breakMins=parseInt(breakField.value)||0;
 
   const {total}=calcHours(clockIn,clockOut,breakMins);
   const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
@@ -1122,23 +939,17 @@ async function saveEntry(){
     if(!wid){showToast('Select a worker','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const w=allWorkers.find(x=>x.id==wid)||{};
     const date=document.getElementById('entry-date').value;
-    const entryId=document.getElementById('entry-id').value;
     const clockIn=document.getElementById('entry-clock-in').value;
     const clockOut=document.getElementById('entry-clock-out').value;
     if(!date||!clockIn||!clockOut){showToast('Date, clock-in and clock-out are required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
-    const projectName=document.getElementById('entry-project').value;
-    if(!projectName){showToast('Select a project','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const breakMins=parseInt(document.getElementById('entry-break').value)||0;
     const {total}=calcHours(clockIn,clockOut,breakMins);
     const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
 
-    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
     const payload={
       worker_id:parseInt(wid),
       worker_name:w.name,
-      project_name:projectName,
       entry_date:date,
-      status:entryId?(allEntries.find(x=>x.id==entryId)?.status||'draft'):'draft',
       clock_in:clockIn,
       clock_out:clockOut,
       break_minutes:breakMins,
@@ -1155,6 +966,7 @@ async function saveEntry(){
       notes:document.getElementById('entry-notes').value.trim()
     };
 
+    const entryId=document.getElementById('entry-id').value;
     if(entryId){
       await sbPatch('timesheet_entries',entryId,payload);
       allEntries=allEntries.map(e=>e.id==entryId?{...e,...payload,id:parseInt(entryId)}:e);
@@ -1183,14 +995,6 @@ async function deleteEntry(id){
 }
 
 // ── RATE MODAL ────────────────────────────────────────────────────────────────
-function autoCalcOT(){
-  const hourly=parseFloat(document.getElementById('rate-hourly').value)||0;
-  if(hourly>0){
-    document.getElementById('rate-ot').value=Math.round(hourly*1.5*100)/100;
-    showToast('OT rate set to '+Math.round(hourly*1.5*100)/100+' (1.5× hourly)');
-  } else showToast('Enter hourly rate first','err');
-}
-
 function openWorkerRateModal(workerId=null){
   document.getElementById('modal-rate').classList.add('open');
   if(workerId){
@@ -1231,526 +1035,11 @@ async function saveRate(){
   btn.disabled=false;btn.textContent='Save Rate';
 }
 
-// ── STATUS HELPERS ────────────────────────────────────────────────────────────
-function statusBadgeHtml(status){
-  const map={
-    draft:`<span class="badge status-draft" style="font-size:10px">✎ Draft</span>`,
-    submitted:`<span class="badge status-submitted" style="font-size:10px">⏳ Pending</span>`,
-    approved:`<span class="badge status-approved" style="font-size:10px">✅ Approved</span>`,
-    rejected:`<span class="badge status-rejected" style="font-size:10px">❌ Rejected</span>`
-  };
-  return map[status]||map.draft;
-}
-
-function updateApprovalBadge(){
-  const count=allEntries.filter(e=>(e.status||'draft')==='submitted').length;
-  const badge=document.getElementById('approval-badge');
-  if(badge){badge.textContent=count;badge.style.display=count>0?'inline':'none';}
-}
-
-// ── SUBMIT / APPROVE / REJECT single entry ────────────────────────────────────
-async function submitEntry(id){
-  const e=allEntries.find(x=>x.id===id);
-  if(!e)return;
-  if((e.status||'draft')==='approved'){showToast('Already approved','err');return;}
-  try{
-    await sbPatch('timesheet_entries',id,{status:'submitted'});
-    allEntries=allEntries.map(x=>x.id===id?{...x,status:'submitted'}:x);
-    showToast('Submitted for approval');
-    renderDailyTab();
-    updateApprovalBadge();
-    renderApprovalsTab();
-  }catch(err){showToast('Submit failed: '+err.message,'err');}
-}
-
-async function approveEntry(id){
-  try{
-    await sbPatch('timesheet_entries',id,{status:'approved'});
-    allEntries=allEntries.map(x=>x.id===id?{...x,status:'approved'}:x);
-    showToast('Entry approved ✅');
-    renderApprovalsTab();renderDailyTab();updateApprovalBadge();
-  }catch(err){showToast('Error: '+err.message,'err');}
-}
-
-async function rejectEntry(id){
-  const reason=prompt('Reason for rejection (optional):');
-  if(reason===null)return; // cancelled
-  try{
-    await sbPatch('timesheet_entries',id,{status:'rejected',notes:(allEntries.find(x=>x.id===id)?.notes||'')+(reason?` [Rejected: ${reason}]`:'')});
-    allEntries=allEntries.map(x=>x.id===id?{...x,status:'rejected'}:x);
-    showToast('Entry rejected — returned to draft');
-    renderApprovalsTab();renderDailyTab();updateApprovalBadge();
-  }catch(err){showToast('Error: '+err.message,'err');}
-}
-
-// ── BULK APPROVE / REJECT ─────────────────────────────────────────────────────
-async function bulkApprove(){
-  const ids=[...document.querySelectorAll('.appr-chk:checked')].map(c=>parseInt(c.dataset.id));
-  if(!ids.length){showToast('Select entries first','err');return;}
-  let done=0;
-  for(const id of ids){
-    try{await sbPatch('timesheet_entries',id,{status:'approved'});
-      allEntries=allEntries.map(x=>x.id===id?{...x,status:'approved'}:x);done++;}catch(e){}
-  }
-  showToast(`${done} entr${done===1?'y':'ies'} approved ✅`);
-  renderApprovalsTab();renderDailyTab();updateApprovalBadge();
-}
-
-async function bulkReject(){
-  const ids=[...document.querySelectorAll('.appr-chk:checked')].map(c=>parseInt(c.dataset.id));
-  if(!ids.length){showToast('Select entries first','err');return;}
-  let done=0;
-  for(const id of ids){
-    try{await sbPatch('timesheet_entries',id,{status:'rejected'});
-      allEntries=allEntries.map(x=>x.id===id?{...x,status:'rejected'}:x);done++;}catch(e){}
-  }
-  showToast(`${done} entr${done===1?'y':'ies'} rejected`,'err');
-  renderApprovalsTab();renderDailyTab();updateApprovalBadge();
-}
-
-function toggleApprSelectAll(checked){
-  document.querySelectorAll('.appr-chk').forEach(c=>c.checked=checked);
-  updateApprBulkBar();
-}
-function updateApprBulkBar(){
-  const sel=document.querySelectorAll('.appr-chk:checked').length;
-  const bar=document.getElementById('appr-bulk-bar');
-  if(bar){bar.style.display=sel>0?'flex':'none';document.getElementById('appr-selected-label').textContent=`${sel} selected`;}
-}
-
-// ── APPROVALS TAB RENDER ──────────────────────────────────────────────────────
-function renderApprovalsTab(){
-  const statusF=document.getElementById('appr-filter-status')?.value||'submitted';
-  const projF=document.getElementById('appr-filter-project')?.value||'';
-  const monthF=document.getElementById('appr-filter-month')?.value||'';
-
-  // Populate project filter
-  const pSel=document.getElementById('appr-filter-project');
-  if(pSel){
-    const cur=pSel.value;
-    pSel.innerHTML='<option value="">All Projects</option>'+
-      (allProjects||[]).map(p=>`<option value="${p.name}"${p.name===cur?' selected':''}>${p.name}</option>`).join('');
-    pSel.value=cur;
-  }
-
-  // Stats
-  const draft=allEntries.filter(e=>(e.status||'draft')==='draft').length;
-  const submitted=allEntries.filter(e=>(e.status||'draft')==='submitted').length;
-  const approved=allEntries.filter(e=>(e.status||'draft')==='approved').length;
-  const rejected=allEntries.filter(e=>(e.status||'draft')==='rejected').length;
-  const approvedPay=allEntries.filter(e=>e.status==='approved').reduce((a,e)=>a+(e.total_pay||0),0);
-  document.getElementById('appr-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-n" style="color:var(--text2)">${draft}</div><div class="stat-l">Draft</div><div class="stat-sub">Not yet submitted</div></div>
-    <div class="stat-card s-blue"><div class="stat-n" style="color:#60a5fa">${submitted}</div><div class="stat-l">Pending Review</div><div class="stat-sub">Awaiting approval</div></div>
-    <div class="stat-card s-green"><div class="stat-n" style="color:var(--green)">${approved}</div><div class="stat-l">Approved</div><div class="stat-sub">Locked for payroll</div></div>
-    <div class="stat-card s-red"><div class="stat-n" style="color:var(--red)">0</div><div class="stat-l">Rejected</div><div class="stat-sub" style="display:none"></div></div>
-    <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(approvedPay)}</div><div class="stat-l">Approved Payroll</div></div>`;
-  // Fix rejected count
-  document.querySelector('#appr-stats .stat-card.s-red .stat-n').textContent=rejected;
-
-  // Filter
-  let entries=[...allEntries];
-  if(statusF!=='all')entries=entries.filter(e=>(e.status||'draft')===statusF);
-  if(projF)entries=entries.filter(e=>e.project_name===projF);
-  if(monthF)entries=entries.filter(e=>(e.entry_date||'').startsWith(monthF));
-  entries.sort((a,b)=>new Date(b.entry_date)-new Date(a.entry_date));
-
-  const totHrs=entries.reduce((a,e)=>a+(e.total_hours||0),0);
-  const totOT=entries.reduce((a,e)=>a+(e.ot_hours||0),0);
-  const totPay=entries.reduce((a,e)=>a+(e.total_pay||0),0);
-  document.getElementById('appr-tot-count').textContent=entries.length;
-  document.getElementById('appr-tot-hrs').textContent=fmtH(totHrs);
-  document.getElementById('appr-tot-ot').textContent=fmtH(totOT);
-  document.getElementById('appr-tot-pay').textContent=fmt(totPay);
-  document.getElementById('appr-totals-bar').style.display=entries.length?'flex':'none';
-
-  const tbody=document.getElementById('appr-table');
-  if(!entries.length){
-    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:2rem">No entries match this filter.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML=entries.map(e=>{
-    const st=e.status||'draft';
-    const isApproved=st==='approved';
-    const d=new Date(e.entry_date+'T00:00:00');
-    const dayLabel=d.toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'});
-    return`<tr>
-      <td><input type="checkbox" class="appr-chk" data-id="${e.id}" onchange="updateApprBulkBar()" style="accent-color:var(--accent)" ${isApproved?'disabled':''}></td>
-      <td><div style="font-weight:500">${e.worker_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${e.hourly_rate?'R'+parseFloat(e.hourly_rate).toFixed(0)+'/hr':'No rate'}</div></td>
-      <td style="font-size:12px;color:var(--teal)">${e.project_name||'—'}</td>
-      <td><div style="font-family:var(--font-d);font-weight:600">${e.entry_date||'—'}</div><div style="font-size:11px;color:var(--text3)">${dayLabel}</div></td>
-      <td style="font-family:var(--font-d);font-size:13px;color:var(--teal)">${e.clock_in||'—'} → ${e.clock_out||'—'}<div style="font-size:10px;color:var(--text3)">${e.break_minutes||0}min break</div></td>
-      <td style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--text)">${fmtH(e.total_hours||0)}</td>
-      <td style="font-family:var(--font-d);font-size:14px;font-weight:700;color:${(e.ot_hours||0)>0?'var(--purple)':'var(--text3)'}">${(e.ot_hours||0)>0?fmtH(e.ot_hours):'—'}</td>
-      <td style="color:var(--text2)">${fmt(e.regular_pay||0)}</td>
-      <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">${fmt(e.total_pay||0)}</td>
-      <td>${statusBadgeHtml(st)}</td>
-      <td>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-          ${st==='submitted'?`<button class="btn btn-teal btn-sm" onclick="approveEntry(${e.id})" title="Approve">✅</button><button class="btn btn-danger btn-sm" onclick="rejectEntry(${e.id})" title="Reject">❌</button>`:''}
-          ${!isApproved?`<button class="btn btn-ghost btn-sm" onclick="openEntryModal(${e.id})" title="Edit">✏</button>`:''}
-          ${st==='draft'?`<button class="btn btn-teal btn-sm" onclick="submitEntry(${e.id})" title="Submit" style="font-size:10px">▲</button>`:''}
-          ${st==='approved'?`<button class="btn btn-danger btn-sm" onclick="rejectEntry(${e.id})" title="Reject to unlock">↩</button>`:''}
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-  document.getElementById('appr-bulk-bar').style.display='none';
-  document.getElementById('appr-select-all').checked=false;
-}
-
-// ── EXCEL PAYROLL EXPORT ──────────────────────────────────────────────────────
-function exportPayrollExcel(){
-  const monthF=document.getElementById('appr-filter-month')?.value||'';
-  const projF=document.getElementById('appr-filter-project')?.value||'';
-
-  let entries=[...allEntries].filter(e=>e.status==='approved');
-  if(monthF)entries=entries.filter(e=>(e.entry_date||'').startsWith(monthF));
-  if(projF)entries=entries.filter(e=>e.project_name===projF);
-  entries.sort((a,b)=>(a.worker_name||'').localeCompare(b.worker_name||'')||(a.entry_date||'').localeCompare(b.entry_date||''));
-
-  if(!entries.length){showToast('No approved entries to export','err');return;}
-
-  const wb=XLSX.utils.book_new();
-
-  // ── Sheet 1: Detail ──────────────────────────────────────────────────────
-  const detailHeaders=['Worker','Project','Date','Day','Clock In','Clock Out','Break (min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate (R)','OT Rate (R)','Regular Pay (R)','OT Pay (R)','Total Pay (R)','Status','Notes'];
-  const detailRows=entries.map(e=>{
-    const d=new Date(e.entry_date+'T00:00:00');
-    return[
-      e.worker_name||'',e.project_name||'',e.entry_date||'',
-      d.toLocaleDateString('en-ZA',{weekday:'long'}),
-      e.clock_in||'',e.clock_out||'',
-      e.break_minutes||0,
-      parseFloat((e.total_hours||0).toFixed(2)),
-      parseFloat((e.regular_hours||0).toFixed(2)),
-      parseFloat((e.ot_hours||0).toFixed(2)),
-      parseFloat(e.hourly_rate||0),
-      parseFloat(e.ot_rate||0),
-      parseFloat((e.regular_pay||0).toFixed(2)),
-      parseFloat((e.ot_pay||0).toFixed(2)),
-      parseFloat((e.total_pay||0).toFixed(2)),
-      e.status||'draft',
-      e.notes||''
-    ];
-  });
-  const detailSheet=XLSX.utils.aoa_to_sheet([detailHeaders,...detailRows]);
-  detailSheet['!cols']=[{wch:22},{wch:22},{wch:12},{wch:12},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:10},{wch:14},{wch:12},{wch:16},{wch:14},{wch:16},{wch:10},{wch:30}];
-  XLSX.utils.book_append_sheet(wb,detailSheet,'Timesheet Detail');
-
-  // ── Sheet 2: Summary by Worker ────────────────────────────────────────────
-  const byWorker={};
-  entries.forEach(e=>{
-    const k=e.worker_name||('w'+e.worker_id);
-    if(!byWorker[k]){byWorker[k]={name:e.worker_name,project:e.project_name,rate:e.hourly_rate||0,otRate:e.ot_rate||0,days:new Set(),totalHrs:0,regularHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0};}
-    byWorker[k].days.add(e.entry_date);
-    byWorker[k].totalHrs+=e.total_hours||0;
-    byWorker[k].regularHrs+=e.regular_hours||0;
-    byWorker[k].otHrs+=e.ot_hours||0;
-    byWorker[k].regularPay+=e.regular_pay||0;
-    byWorker[k].otPay+=e.ot_pay||0;
-    byWorker[k].totalPay+=e.total_pay||0;
-  });
-  const summHeaders=['Worker','Project','Hourly Rate (R)','OT Rate (R)','Days Worked','Total Hrs','Regular Hrs','OT Hrs','Regular Pay (R)','OT Pay (R)','TOTAL PAY (R)'];
-  const summRows=Object.values(byWorker).map(w=>[
-    w.name,w.project||'',parseFloat(w.rate).toFixed(2),parseFloat(w.otRate).toFixed(2),
-    w.days.size,parseFloat(w.totalHrs.toFixed(2)),parseFloat(w.regularHrs.toFixed(2)),parseFloat(w.otHrs.toFixed(2)),
-    parseFloat(w.regularPay.toFixed(2)),parseFloat(w.otPay.toFixed(2)),parseFloat(w.totalPay.toFixed(2))
-  ]);
-  // Totals row
-  const totRow=['TOTAL','','','','',
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.totalHrs,0).toFixed(2)),
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.regularHrs,0).toFixed(2)),
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.otHrs,0).toFixed(2)),
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.regularPay,0).toFixed(2)),
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.otPay,0).toFixed(2)),
-    parseFloat(Object.values(byWorker).reduce((a,w)=>a+w.totalPay,0).toFixed(2))
-  ];
-  const summSheet=XLSX.utils.aoa_to_sheet([summHeaders,...summRows,totRow]);
-  summSheet['!cols']=[{wch:22},{wch:22},{wch:14},{wch:12},{wch:12},{wch:12},{wch:14},{wch:10},{wch:16},{wch:14},{wch:16}];
-  XLSX.utils.book_append_sheet(wb,summSheet,'Payroll Summary');
-
-  // ── Sheet 3: Project Cost ─────────────────────────────────────────────────
-  const byProj={};
-  entries.forEach(e=>{
-    const k=e.project_name||'Unassigned';
-    if(!byProj[k]){byProj[k]={project:k,workers:new Set(),days:new Set(),totalHrs:0,otHrs:0,totalPay:0};}
-    byProj[k].workers.add(e.worker_name);
-    byProj[k].days.add(e.entry_date);
-    byProj[k].totalHrs+=e.total_hours||0;
-    byProj[k].otHrs+=e.ot_hours||0;
-    byProj[k].totalPay+=e.total_pay||0;
-  });
-  const projHeaders=['Project','Workers','Days','Total Hrs','OT Hrs','Labour Cost (R)'];
-  const projRows=Object.values(byProj).map(p=>[p.project,p.workers.size,p.days.size,parseFloat(p.totalHrs.toFixed(2)),parseFloat(p.otHrs.toFixed(2)),parseFloat(p.totalPay.toFixed(2))]);
-  const projSheet=XLSX.utils.aoa_to_sheet([projHeaders,...projRows]);
-  projSheet['!cols']=[{wch:28},{wch:10},{wch:10},{wch:12},{wch:10},{wch:18}];
-  XLSX.utils.book_append_sheet(wb,projSheet,'Project Labour Cost');
-
-  const label=monthF||new Date().toISOString().split('T')[0];
-  const filename=`SiteCommand_Payroll_${label}${projF?'_'+projF.replace(/\s+/g,'_'):''}.xlsx`;
-  XLSX.writeFile(wb,filename);
-  showToast(`Exported: ${filename}`);
-}
-
-// ── BATCH ENTRY MODAL ─────────────────────────────────────────────────────────
-function openBatchModal(){
-  document.getElementById('modal-batch').classList.add('open');
-  const today=new Date().toISOString().split('T')[0];
-  document.getElementById('batch-date').value=document.getElementById('daily-date').value||today;
-  document.getElementById('batch-qf-in').value='';
-  document.getElementById('batch-qf-out').value='';
-  document.getElementById('batch-qf-break').value='60';
-  document.getElementById('batch-select-all').checked=false;
-
-  // Populate project dropdown
-  const projOpts='<option value="">— Select Project —</option>'+
-    (allProjects||[]).map(p=>`<option value="${p.name}">${p.name}${p.type?' · '+p.type:''}</option>`).join('');
-  document.getElementById('batch-project').innerHTML=projOpts;
-
-  renderBatchWorkers();
-}
-
-function onBatchProjectChange(){
-  // Auto-tick workers assigned to this project, untick others
-  const proj=document.getElementById('batch-project').value;
-  if(!proj)return;
-  document.querySelectorAll('.batch-chk').forEach(chk=>{
-    const wid=chk.dataset.wid;
-    const w=allWorkers.find(x=>x.id==wid)||{};
-    chk.checked=(w.project_name===proj);
-  });
-  updateBatchSelectedCount();
-}
-
-function renderBatchWorkers(){
-  const date=document.getElementById('batch-date').value||new Date().toISOString().split('T')[0];
-  const list=document.getElementById('batch-workers-list');
-  if(!allWorkers.length){
-    list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text3)">No workers found. Add workers in the Workforce page first.</div>';
-    return;
-  }
-  list.innerHTML=allWorkers.map(w=>{
-    const existingEntry=allEntries.find(e=>e.worker_id==w.id&&e.entry_date===date);
-    const ci=existingEntry?existingEntry.clock_in:'';
-    const co=existingEntry?existingEntry.clock_out:'';
-    const brk=existingEntry!=null?existingEntry.break_minutes:60;
-    const hasRate=w.hourly_rate||w.ot_rate;
-    return`<div class="worker-ts-row" id="brow-${w.id}" style="grid-template-columns:18px 160px 110px 110px 80px 1fr 80px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;display:grid;gap:10px;align-items:center">
-      <input type="checkbox" class="batch-chk" data-wid="${w.id}" onchange="updateBatchSelectedCount()" style="cursor:pointer;accent-color:var(--accent)" ${existingEntry?'checked':''}>
-      <div>
-        <div style="font-weight:500;font-size:13px">${w.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${w.role||'—'}${hasRate?` · R${parseFloat(w.hourly_rate||0).toFixed(0)}/hr`:' · <span style="color:var(--red)">No rate</span>'}${w.project_name?` <span style="color:var(--teal)">· ${w.project_name}</span>`:''}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Clock In</div>
-        <input type="time" class="ts-time-input batch-ci" data-wid="${w.id}" value="${ci}" oninput="recalcBatchRow(${w.id})" style="width:100px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-size:13px"/>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Clock Out</div>
-        <input type="time" class="ts-time-input batch-co" data-wid="${w.id}" value="${co}" oninput="recalcBatchRow(${w.id})" style="width:100px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-size:13px"/>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Break (min)</div>
-        <input type="number" class="batch-brk" data-wid="${w.id}" value="${brk}" min="0" max="180" oninput="recalcBatchRow(${w.id})" style="width:65px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r);padding:5px 7px;color:var(--text);font-family:var(--font-b);font-size:13px"/>
-      </div>
-      <div id="brow-calc-${w.id}" style="font-family:var(--font-d);font-size:13px;color:var(--text3)">—</div>
-      <div id="brow-pay-${w.id}" style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--accent);text-align:right">—</div>
-    </div>`;
-  }).join('');
-  updateBatchSelectedCount();
-  // Recalc any pre-filled rows
-  allWorkers.forEach(w=>{
-    const ci=document.querySelector(`.batch-ci[data-wid="${w.id}"]`);
-    if(ci&&ci.value)recalcBatchRow(w.id);
-  });
-}
-
-function recalcBatchRow(wid){
-  const w=allWorkers.find(x=>x.id==wid)||{};
-  const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`);
-  const co=document.querySelector(`.batch-co[data-wid="${wid}"]`);
-  const brk=document.querySelector(`.batch-brk[data-wid="${wid}"]`);
-  const calcEl=document.getElementById('brow-calc-'+wid);
-  const payEl=document.getElementById('brow-pay-'+wid);
-  if(!ci||!co||!calcEl||!payEl)return;
-  const date=document.getElementById('batch-date').value||new Date().toISOString().split('T')[0];
-  if(!ci.value||!co.value){calcEl.textContent='—';payEl.textContent='—';return;}
-  const {total}=calcHours(ci.value,co.value,parseInt(brk.value)||0);
-  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
-  calcEl.innerHTML=`<span style="color:var(--teal)">${fmtH(total)}</span>${pay.otHours>0?`<span style="color:var(--purple);font-size:11px;margin-left:4px">+${fmtH(pay.otHours)} OT</span>`:''}`;
-  payEl.textContent=w.hourly_rate?fmt(pay.totalPay):'No rate';
-  payEl.style.color=w.hourly_rate?'var(--accent)':'var(--text3)';
-}
-
-function applyQuickFill(){
-  const qfIn=document.getElementById('batch-qf-in').value;
-  const qfOut=document.getElementById('batch-qf-out').value;
-  const qfBrk=document.getElementById('batch-qf-break').value;
-  if(!qfIn&&!qfOut){showToast('Enter at least clock-in or clock-out time','err');return;}
-  const checked=document.querySelectorAll('.batch-chk:checked');
-  if(!checked.length){showToast('Select at least one worker first','err');return;}
-  checked.forEach(chk=>{
-    const wid=chk.dataset.wid;
-    if(qfIn){const el=document.querySelector(`.batch-ci[data-wid="${wid}"]`);if(el)el.value=qfIn;}
-    if(qfOut){const el=document.querySelector(`.batch-co[data-wid="${wid}"]`);if(el)el.value=qfOut;}
-    if(qfBrk){const el=document.querySelector(`.batch-brk[data-wid="${wid}"]`);if(el)el.value=qfBrk;}
-    recalcBatchRow(parseInt(wid));
-  });
-  showToast(`Applied to ${checked.length} worker${checked.length>1?'s':''}`);
-}
-
-function toggleSelectAllBatch(checked){
-  document.querySelectorAll('.batch-chk').forEach(chk=>chk.checked=checked);
-  updateBatchSelectedCount();
-}
-
-function updateBatchSelectedCount(){
-  const total=document.querySelectorAll('.batch-chk').length;
-  const selected=document.querySelectorAll('.batch-chk:checked').length;
-  document.getElementById('batch-selected-count').textContent=`${selected} of ${total} selected`;
-  document.getElementById('batch-select-all').checked=selected===total&&total>0;
-  document.getElementById('batch-select-all').indeterminate=selected>0&&selected<total;
-}
-
-async function saveBatchEntries(){
-  const btn=document.getElementById('batch-save-btn');
-  const date=document.getElementById('batch-date').value;
-  if(!date){showToast('Select a date first','err');return;}
-  const projectName=document.getElementById('batch-project').value;
-  if(!projectName){showToast('Select a project first','err');return;}
-  const checked=[...document.querySelectorAll('.batch-chk:checked')];
-  if(!checked.length){showToast('Select at least one worker','err');return;}
-
-  // Validate all checked rows have clock-in and clock-out
-  const invalid=checked.filter(chk=>{
-    const wid=chk.dataset.wid;
-    const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`);
-    const co=document.querySelector(`.batch-co[data-wid="${wid}"]`);
-    return !ci||!ci.value||!co||!co.value;
-  });
-  if(invalid.length){
-    const names=invalid.map(chk=>allWorkers.find(w=>w.id==chk.dataset.wid)?.name||'Worker').join(', ');
-    showToast(`Missing clock-in/out for: ${names}`,'err');
-    return;
-  }
-
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
-  let saved=0,errors=0;
-  for(const chk of checked){
-    const wid=parseInt(chk.dataset.wid);
-    const w=allWorkers.find(x=>x.id==wid)||{};
-    const ci=document.querySelector(`.batch-ci[data-wid="${wid}"]`).value;
-    const co=document.querySelector(`.batch-co[data-wid="${wid}"]`).value;
-    const brk=parseInt(document.querySelector(`.batch-brk[data-wid="${wid}"]`).value)||0;
-    const {total}=calcHours(ci,co,brk);
-    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
-    const existing=allEntries.find(e=>e.worker_id==wid&&e.entry_date===date);
-    const payload={
-      worker_id:wid,worker_name:w.name,project_name:projectName,entry_date:date,
-      status:existing?existing.status||'draft':'draft',
-      clock_in:ci,clock_out:co,break_minutes:brk,
-      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
-      hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
-      ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,
-      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,notes:''
-    };
-    // Check for existing entry on this date for this worker
-    try{
-      if(existing){
-        await sbPatch('timesheet_entries',existing.id,payload);
-        allEntries=allEntries.map(e=>e.id==existing.id?{...e,...payload,id:existing.id}:e);
-      }else{
-        const result=await sbPost('timesheet_entries',payload);
-        if(result&&result[0])allEntries.unshift(result[0]);
-      }
-      saved++;
-    }catch(e){console.error('Batch save error for worker',wid,e);errors++;}
-  }
-  btn.disabled=false;btn.textContent='💾 Save All Entries';
-  if(errors>0){showToast(`${saved} saved, ${errors} failed`,'err');}
-  else{showToast(`${saved} entr${saved===1?'y':'ies'} saved`);}
-  closeModal('batch');
-  renderStats();
-  renderDailyTab();
-}
-
 // ── Close modals on backdrop click ────────────────────────────────────────────
 document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 init();
 </script>
-
-<!-- ════════════════════ MODAL: HELP ════════════════════ -->
-<div class="modal-bg" id="modal-help">
-  <div class="modal modal-wide" style="max-width:560px">
-    <div class="modal-title">
-      <span>📋 Timesheet Workflow Guide</span>
-      <button class="modal-close" onclick="document.getElementById('modal-help').classList.remove('open')">✕</button>
-    </div>
-    <div style="padding:1.25rem;overflow-y:auto;max-height:70vh">
-
-      <div style="background:var(--bg3);border-radius:var(--r);padding:12px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2);line-height:1.7">
-        Timesheets follow a 3-step flow: <strong style="color:var(--accent)">Draft → Submitted → Approved</strong>. Labour costs only post to project budgets once entries are approved.
-      </div>
-
-      <!-- Step 1 -->
-      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
-        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">1</div>
-        <div>
-          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Capture Time <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">Foreman / Supervisor</span></div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.6">Use <strong>+ LOG TIME ENTRY</strong> for a single worker or <strong>⚡ BATCH ENTRY</strong> for the whole crew at once. Select the project, enter clock in/out times, and save. Entries start as <span style="color:var(--accent);font-weight:600">DRAFT</span>.</div>
-        </div>
-      </div>
-
-      <!-- Step 2 -->
-      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
-        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--teal);color:#000;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">2</div>
-        <div>
-          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Submit for Approval <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">Foreman / Supervisor</span></div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.6">On the <strong>Daily Entry</strong> tab, each draft entry has a green <strong>SUBMIT</strong> button. Click it to send the entry to the PM/Admin approval queue. You can also go to the <strong>Approvals</strong> tab and use <strong>Submit All</strong> to submit in bulk.</div>
-        </div>
-      </div>
-
-      <!-- Step 3 -->
-      <div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-start">
-        <div style="min-width:32px;height:32px;border-radius:50%;background:var(--green);color:#000;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;font-size:14px;flex-shrink:0">3</div>
-        <div>
-          <div style="font-weight:600;font-size:13px;margin-bottom:3px">Approve / Reject <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:4px">PM / Admin only</span></div>
-          <div style="font-size:12px;color:var(--text2);line-height:1.6">Go to <strong>PMO Approvals</strong> (approvals.html) → <strong>Pending</strong> tab. Review submitted entries and click <strong>✓ Approve</strong> or <strong>✗ Reject</strong>. Approved entries lock and their labour costs auto-post to the project budget. Rejected entries return to the foreman for correction.</div>
-        </div>
-      </div>
-
-      <!-- Status legend -->
-      <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:0.5rem">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Status Legend</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--text2)">DRAFT</span> Captured, not yet submitted</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--blue)">SUBMITTED</span> Awaiting PM review</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--green)">APPROVED</span> Locked, costs posted</div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--red)">REJECTED</span> Returned for correction</div>
-        </div>
-      </div>
-
-      <!-- Tips -->
-      <div style="background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 12px;margin-top:1rem">
-        <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:5px">💡 TIPS</div>
-        <ul style="font-size:12px;color:var(--text2);line-height:1.8;padding-left:1rem">
-          <li>Use <strong>Batch Entry</strong> to log the whole crew in under 60 seconds</li>
-          <li>Entries must have a <strong>project assigned</strong> to post labour costs correctly</li>
-          <li>Only <strong>approved</strong> entries appear in EAC/ETC and budget calculations</li>
-          <li>The <strong>195h monthly threshold</strong> triggers OT after 195 regular hours</li>
-        </ul>
-      </div>
-
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" onclick="document.getElementById('modal-help').classList.remove('open')">Got it</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
