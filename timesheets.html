@@ -172,6 +172,7 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
+          <button class="btn btn-teal" onclick="openBatchModal()">⚡ Batch Entry</button>
           <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
         </div>
       </div>
@@ -195,6 +196,7 @@ tr:hover td{background:var(--bg3)}
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <input type="date" class="form-input" id="daily-date" style="width:160px;font-size:12px;padding:5px 8px" onchange="renderDailyTab()"/>
               <button class="btn btn-ghost btn-sm" onclick="setToday()">Today</button>
+              <button class="btn btn-teal btn-sm" onclick="openBatchModal()">⚡ Batch</button>
               <button class="btn btn-primary btn-sm" onclick="openEntryModal()">+ Add Entry</button>
             </div>
           </div>
@@ -416,6 +418,78 @@ tr:hover td{background:var(--bg3)}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('rate')">Cancel</button>
       <button class="btn btn-primary" id="rate-save-btn" onclick="saveRate()">Save Rate</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ MODAL: BATCH ENTRY ════════════════════ -->
+<div class="modal-bg" id="modal-batch">
+  <div class="modal" style="width:820px;max-width:98vw">
+    <div class="modal-title">
+      <span>⚡ Batch Time Entry</span>
+      <button class="modal-close" onclick="closeModal('batch')">✕</button>
+    </div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1rem;padding:10px 12px;background:var(--bg3);border-radius:var(--r)">
+      <div class="form-group" style="margin:0;flex:0 0 160px">
+        <label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="batch-date" style="font-size:12px;padding:6px 8px"/>
+      </div>
+      <div class="form-group" style="margin:0;flex:0 0 110px">
+        <label class="form-label">Clock In</label>
+        <div style="display:flex;gap:4px">
+          <input class="form-input ts-time-input" type="time" id="batch-clock-in" style="font-size:12px;padding:6px 8px" oninput="applyBatchDefaults()"/>
+          <button class="clock-btn" style="padding:4px 8px;font-size:10px" onclick="stampTime('batch-clock-in');applyBatchDefaults()">⏱</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin:0;flex:0 0 110px">
+        <label class="form-label">Clock Out</label>
+        <div style="display:flex;gap:4px">
+          <input class="form-input ts-time-input" type="time" id="batch-clock-out" style="font-size:12px;padding:6px 8px" oninput="applyBatchDefaults()"/>
+          <button class="clock-btn" style="padding:4px 8px;font-size:10px" onclick="stampTime('batch-clock-out');applyBatchDefaults()">⏱</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin:0;flex:0 0 180px">
+        <label class="form-label">Project (optional)</label>
+        <select class="form-select" id="batch-project" style="font-size:12px;padding:6px 8px" onchange="renderBatchTable()">
+          <option value="">— All / Mixed —</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="selectAllBatchWorkers(true)" style="align-self:flex-end">✔ All</button>
+      <button class="btn btn-ghost btn-sm" onclick="selectAllBatchWorkers(false)" style="align-self:flex-end">✗ None</button>
+    </div>
+
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding:0 2px">
+      Select workers · adjust individual times if needed · lunch deduction auto-sets (60min if ≥8hrs)
+    </div>
+
+    <div style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)">
+      <table style="font-size:12px">
+        <thead style="position:sticky;top:0;background:var(--bg2);z-index:1">
+          <tr>
+            <th style="width:36px"><input type="checkbox" id="batch-check-all" onchange="selectAllBatchWorkers(this.checked)" style="cursor:pointer"/></th>
+            <th>Worker</th>
+            <th>Role</th>
+            <th>Rate</th>
+            <th style="width:100px">Clock In</th>
+            <th style="width:100px">Clock Out</th>
+            <th style="width:70px">Break</th>
+            <th style="width:80px">Hours</th>
+            <th style="width:90px">Earnings</th>
+          </tr>
+        </thead>
+        <tbody id="batch-workers-table"></tbody>
+      </table>
+    </div>
+
+    <div id="batch-summary" style="display:none;margin-top:10px;padding:10px 14px;background:var(--bg3);border-radius:var(--r);display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Workers</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--blue)" id="batch-count">0</div></div>
+      <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="batch-total-hrs">0h</div></div>
+      <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Payroll</div><div style="font-family:var(--font-d);font-size:24px;font-weight:800;color:var(--accent)" id="batch-total-pay">R 0</div></div>
+    </div>
+
+    <div class="modal-footer" style="margin-top:1rem">
+      <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
+      <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">⚡ Save All Entries</button>
     </div>
   </div>
 </div>
@@ -1033,6 +1107,183 @@ async function saveRate(){
     renderRatesTab();
   }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;btn.textContent='Save Rate';
+}
+
+// ── BATCH ENTRY ───────────────────────────────────────────────────────────────
+function openBatchModal(){
+  const modal=document.getElementById('modal-batch');
+  modal.classList.add('open');
+  // Pre-fill date from daily tab
+  const dateVal=document.getElementById('daily-date').value||new Date().toISOString().split('T')[0];
+  document.getElementById('batch-date').value=dateVal;
+  document.getElementById('batch-clock-in').value='';
+  document.getElementById('batch-clock-out').value='';
+  // Populate project dropdown
+  const ps=document.getElementById('batch-project');
+  ps.innerHTML='<option value="">— All / Mixed —</option>';
+  // Get unique project names from workers
+  const projs=[...new Set(allWorkers.filter(w=>w.project_name).map(w=>w.project_name))].sort();
+  projs.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;ps.appendChild(o);});
+  renderBatchTable();
+}
+
+function renderBatchTable(){
+  const tbody=document.getElementById('batch-workers-table');
+  const ci=document.getElementById('batch-clock-in').value;
+  const co=document.getElementById('batch-clock-out').value;
+  const date=document.getElementById('batch-date').value;
+  const filterProj=document.getElementById('batch-project').value;
+
+  const workers=filterProj?allWorkers.filter(w=>w.project_name===filterProj):allWorkers;
+
+  if(!workers.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No workers found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML=workers.map((w,i)=>{
+    const rowCi=ci||'';
+    const rowCo=co||'';
+    let autoBreak=0;
+    let totalH=0;let pay={regularHours:0,otHours:0,totalPay:0};
+    if(rowCi&&rowCo){
+      const raw=calcHours(rowCi,rowCo,0).total;
+      autoBreak=raw>=8?60:0;
+      const res=calcHours(rowCi,rowCo,autoBreak);
+      totalH=res.total;
+      pay=calcPay(totalH,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    }
+    return`<tr id="brow-${w.id}" style="background:${i%2===0?'var(--bg2)':'var(--bg3)'}">
+      <td style="text-align:center"><input type="checkbox" class="batch-chk" data-wid="${w.id}" onchange="updateBatchSummary()" checked style="cursor:pointer"/></td>
+      <td><div style="font-weight:500;font-size:12px">${w.name}</div></td>
+      <td style="color:var(--text2);font-size:11px">${w.role||'—'}</td>
+      <td style="font-family:var(--font-d);font-size:12px;color:var(--teal)">${w.hourly_rate?'R'+parseFloat(w.hourly_rate).toFixed(2):'-'}</td>
+      <td><input class="form-input ts-time-input batch-row-ci" type="time" data-wid="${w.id}" value="${rowCi}" style="font-size:11px;padding:4px 6px;width:88px" oninput="recalcBatchRow(${w.id})"/></td>
+      <td><input class="form-input ts-time-input batch-row-co" type="time" data-wid="${w.id}" value="${rowCo}" style="font-size:11px;padding:4px 6px;width:88px" oninput="recalcBatchRow(${w.id})"/></td>
+      <td><input class="form-input batch-row-brk" type="number" data-wid="${w.id}" value="${autoBreak}" min="0" max="180" style="font-size:11px;padding:4px 6px;width:58px" oninput="recalcBatchRow(${w.id})"/></td>
+      <td style="font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--teal)" id="brow-hrs-${w.id}">${totalH>0?fmtH(totalH):'—'}</td>
+      <td style="font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--accent)" id="brow-pay-${w.id}">${pay.totalPay>0?fmt(pay.totalPay):'—'}</td>
+    </tr>`;
+  }).join('');
+  updateBatchSummary();
+}
+
+function applyBatchDefaults(){
+  // Apply global ci/co to all rows that are checked
+  const ci=document.getElementById('batch-clock-in').value;
+  const co=document.getElementById('batch-clock-out').value;
+  document.querySelectorAll('.batch-row-ci').forEach(el=>{el.value=ci;});
+  document.querySelectorAll('.batch-row-co').forEach(el=>{el.value=co;});
+  // Recalc all rows
+  document.querySelectorAll('.batch-chk').forEach(chk=>{
+    recalcBatchRow(parseInt(chk.dataset.wid));
+  });
+}
+
+function recalcBatchRow(wid){
+  const w=allWorkers.find(x=>x.id==wid);if(!w)return;
+  const ci=document.querySelector(`.batch-row-ci[data-wid="${wid}"]`).value;
+  const co=document.querySelector(`.batch-row-co[data-wid="${wid}"]`).value;
+  const brkField=document.querySelector(`.batch-row-brk[data-wid="${wid}"]`);
+  const date=document.getElementById('batch-date').value;
+  // Auto lunch unless manually set
+  if(ci&&co){
+    const raw=calcHours(ci,co,0).total;
+    const autoBrk=raw>=8?60:0;
+    if(!brkField.dataset.manual) brkField.value=autoBrk;
+  }
+  const brk=parseInt(brkField.value)||0;
+  if(ci&&co){
+    const {total}=calcHours(ci,co,brk);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    document.getElementById('brow-hrs-'+wid).textContent=fmtH(total);
+    document.getElementById('brow-pay-'+wid).textContent=fmt(pay.totalPay);
+  }
+  // Mark manual override on break field
+  brkField.addEventListener('input',()=>{brkField.dataset.manual='1';},{ once:true });
+  updateBatchSummary();
+}
+
+function selectAllBatchWorkers(checked){
+  document.querySelectorAll('.batch-chk').forEach(c=>{c.checked=checked;});
+  document.getElementById('batch-check-all').checked=checked;
+  updateBatchSummary();
+}
+
+function updateBatchSummary(){
+  const date=document.getElementById('batch-date').value;
+  let count=0,totalHrs=0,totalPay=0;
+  document.querySelectorAll('.batch-chk:checked').forEach(chk=>{
+    const wid=parseInt(chk.dataset.wid);
+    const w=allWorkers.find(x=>x.id==wid);if(!w)return;
+    const ci=document.querySelector(`.batch-row-ci[data-wid="${wid}"]`).value;
+    const co=document.querySelector(`.batch-row-co[data-wid="${wid}"]`).value;
+    const brk=parseInt(document.querySelector(`.batch-row-brk[data-wid="${wid}"]`).value)||0;
+    if(ci&&co){
+      const {total}=calcHours(ci,co,brk);
+      const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+      totalHrs+=total;totalPay+=pay.totalPay;
+    }
+    count++;
+  });
+  document.getElementById('batch-count').textContent=count;
+  document.getElementById('batch-total-hrs').textContent=fmtH(totalHrs);
+  document.getElementById('batch-total-pay').textContent=fmt(totalPay);
+  document.getElementById('batch-summary').style.display=count>0?'flex':'none';
+}
+
+async function saveBatchEntries(){
+  const btn=document.getElementById('batch-save-btn');
+  const date=document.getElementById('batch-date').value;
+  if(!date){showToast('Select a date','err');return;}
+  const checked=[...document.querySelectorAll('.batch-chk:checked')];
+  if(!checked.length){showToast('Select at least one worker','err');return;}
+
+  // Validate all checked rows have ci+co
+  const invalid=checked.filter(chk=>{
+    const wid=chk.dataset.wid;
+    const ci=document.querySelector(`.batch-row-ci[data-wid="${wid}"]`).value;
+    const co=document.querySelector(`.batch-row-co[data-wid="${wid}"]`).value;
+    return !ci||!co;
+  });
+  if(invalid.length){showToast(`${invalid.length} worker(s) missing clock-in or clock-out times`,'err');return;}
+
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Saving…';
+  let saved=0;let failed=0;
+
+  for(const chk of checked){
+    const wid=parseInt(chk.dataset.wid);
+    const w=allWorkers.find(x=>x.id==wid);if(!w)continue;
+    const ci=document.querySelector(`.batch-row-ci[data-wid="${wid}"]`).value;
+    const co=document.querySelector(`.batch-row-co[data-wid="${wid}"]`).value;
+    const brk=parseInt(document.querySelector(`.batch-row-brk[data-wid="${wid}"]`).value)||0;
+    const {total}=calcHours(ci,co,brk);
+    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    const payload={
+      worker_id:wid,worker_name:w.name,entry_date:date,
+      clock_in:ci,clock_out:co,break_minutes:brk,
+      total_hours:total,regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      hourly_rate:parseFloat(w.hourly_rate||0),ot_rate:parseFloat(w.ot_rate||0),
+      ot_threshold:parseFloat(w.ot_threshold||8),is_weekend:pay.isWeekend,
+      regular_pay:pay.regularPay,ot_pay:pay.otPay,total_pay:pay.totalPay,
+      notes:''
+    };
+    try{
+      const result=await sbPost('timesheet_entries',payload);
+      if(result&&result[0])allEntries.unshift(result[0]);
+      saved++;
+    }catch(e){console.error('Batch save failed for '+w.name,e);failed++;}
+  }
+
+  btn.disabled=false;btn.textContent='⚡ Save All Entries';
+  if(failed===0){
+    showToast(`✅ ${saved} entr${saved===1?'y':'ies'} saved`);
+    closeModal('batch');
+    renderStats();
+    renderDailyTab();
+  }else{
+    showToast(`Saved ${saved}, failed ${failed} — check console`,'err');
+  }
 }
 
 // ── Close modals on backdrop click ────────────────────────────────────────────
