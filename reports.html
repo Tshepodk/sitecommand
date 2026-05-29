@@ -95,7 +95,13 @@ tr:hover td{background:var(--bg3)}
 .budget-impact-fill{height:100%;border-radius:5px;transition:width 0.6s}
 
 @media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)!important}.proj-cost-row,.proj-cost-hdr,.day-labour-row,.day-labour-hdr{grid-template-columns:1fr 1fr}}
+
+/* Export modal */
+.export-type-card{background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all 0.15s;text-align:center}
+.export-type-card:hover{border-color:var(--border2);background:var(--bg4)}
+.export-type-card.active{border-color:var(--accent);background:rgba(245,166,35,0.06)}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -134,6 +140,10 @@ tr:hover td{background:var(--bg3)}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="init()">↺ Refresh</button>
           <button class="btn btn-teal btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="openExportModal()" style="gap:6px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export Excel
+          </button>
         </div>
       </div>
 
@@ -235,6 +245,87 @@ tr:hover td{background:var(--bg3)}
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- ── EXPORT EXCEL MODAL ────────────────────────────────────────────────── -->
+<div id="export-modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;backdrop-filter:blur(4px)" onclick="closeExportModal()"></div>
+<div id="export-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:301;width:520px;max-width:95vw;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6)">
+  <!-- Modal header -->
+  <div style="background:var(--bg3);padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-family:var(--font-d);font-size:18px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px;margin-right:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export to Excel
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px">Select report type and filters — downloads formatted .xlsx</div>
+    </div>
+    <button onclick="closeExportModal()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;border-radius:4px" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text3)'">✕</button>
+  </div>
+
+  <!-- Report type selector -->
+  <div style="padding:1.5rem">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Report Type</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="export-type-grid">
+      <div class="export-type-card active" onclick="selectExportType('payroll')" id="etype-payroll">
+        <div style="font-size:20px;margin-bottom:6px">💰</div>
+        <div style="font-family:var(--font-d);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Payroll Summary</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Employee pay, hours & OT — for Finance / Salaries</div>
+      </div>
+      <div class="export-type-card" onclick="selectExportType('field')" id="etype-field">
+        <div style="font-size:20px;margin-bottom:6px">🏗️</div>
+        <div style="font-family:var(--font-d);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Field Cost Breakdown</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Materials, transport, equipment, subs per project</div>
+      </div>
+      <div class="export-type-card" onclick="selectExportType('project')" id="etype-project">
+        <div style="font-size:20px;margin-bottom:6px">📋</div>
+        <div style="font-family:var(--font-d);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Project Cost Summary</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Budget vs total spend per project</div>
+      </div>
+      <div class="export-type-card" onclick="selectExportType('full')" id="etype-full">
+        <div style="font-size:20px;margin-bottom:6px">📦</div>
+        <div style="font-family:var(--font-d);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em">Full Finance Package</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">All 3 reports in one workbook</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px">Filters</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Month</label>
+          <input type="month" id="exp-filter-month" class="form-input" style="width:100%;font-size:13px" />
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Project</label>
+          <select id="exp-filter-project" class="form-select" style="width:100%;font-size:13px">
+            <option value="">All Projects</option>
+          </select>
+        </div>
+      </div>
+      <!-- Payroll-only: status filter -->
+      <div id="exp-status-wrap" style="margin-top:10px">
+        <label style="font-size:11px;color:var(--text3);display:block;margin-bottom:4px">Timesheet Status</label>
+        <select id="exp-filter-status" class="form-select" style="width:100%;font-size:13px">
+          <option value="approved">Approved Only (recommended for payroll)</option>
+          <option value="">All Statuses</option>
+          <option value="submitted">Submitted / Pending</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Preview count -->
+    <div id="exp-preview" style="margin-top:1rem;padding:10px 14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);font-size:12px;color:var(--text2);min-height:36px"></div>
+  </div>
+
+  <!-- Modal footer -->
+  <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <button onclick="closeExportModal()" class="btn btn-ghost btn-sm">Cancel</button>
+    <button onclick="runExcelExport()" class="btn btn-primary" id="exp-btn" style="min-width:180px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Excel
+    </button>
   </div>
 </div>
 
@@ -451,10 +542,7 @@ function renderTimesheetReport(){
     return`<div class="ts-proj-block">
       <div class="ts-proj-header" onclick="toggleProjBlock('${projName.replace(/'/g,"\\'")}')" id="hdr-${projName.replace(/[^a-z0-9]/gi,'_')}">
         <div style="display:flex;align-items:center;gap:12px">
-          <div>
-            ${proj.po_number?`<div style="font-family:var(--font-d);font-size:11px;font-weight:700;color:var(--accent);letter-spacing:0.06em">🧾 ${proj.po_number}</div>`:''}
-            <div class="proj-name">${projName}</div>
-          </div>
+          <div class="proj-name">${projName}</div>
           <span class="badge badge-gray">${pd.entries} entries</span>
           ${pct195>=100?'<span class="badge badge-red">195h OT triggered</span>':pct195>=75?'<span class="badge badge-amber">'+pct195+'% to 195h</span>':''}
         </div>
@@ -535,7 +623,7 @@ function renderProjectCosts(){
     const budget=p.budget||0;
     const remaining=budget-totalSpend;
     const pct=budget>0?Math.round(totalSpend/budget*100):0;
-    return{name:p.name,phase:p.phase,po_number:p.po_number||'',location:p.location||'',fc,lc,contractSpend,totalSpend,budget,remaining,pct};
+    return{name:p.name,phase:p.phase,fc,lc,contractSpend,totalSpend,budget,remaining,pct};
   });
 
   const totField=rows.reduce((a,r)=>a+r.fc,0);
@@ -547,9 +635,8 @@ function renderProjectCosts(){
     ?`<div style="padding:2rem;text-align:center;color:var(--text3)">No projects.</div>`
     :rows.map(r=>`<div class="proj-cost-row">
       <div>
-        ${r.po_number?`<div style="font-family:var(--font-d);font-size:12px;font-weight:700;color:var(--accent);margin-bottom:2px">🧾 ${r.po_number}</div>`:''}
         <div style="font-weight:500">${r.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${r.phase||''}${r.location?' · 📍'+r.location:''}</div>
+        <div style="font-size:11px;color:var(--text3)">${r.phase||''}</div>
         <div class="cost-bar"><div class="cost-bar-fill${r.pct>100?' over-budget':''}" style="width:${Math.min(r.pct,100)}%;background:${budgetColor(r.pct)}"></div></div>
       </div>
       <div><div style="font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--teal)">${fmt(r.fc)}</div><div style="font-size:10px;color:var(--text3)">Field reported</div></div>
@@ -743,6 +830,396 @@ function exportCSV(){
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download=`SiteCommand_Labour_${month||'All'}.csv`;a.click();
   showToast('CSV exported');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXCEL EXPORT MODAL
+// ══════════════════════════════════════════════════════════════════════════════
+let currentExportType = 'payroll';
+
+function openExportModal(){
+  // Populate project dropdown
+  const projSel = document.getElementById('exp-filter-project');
+  projSel.innerHTML = '<option value="">All Projects</option>' +
+    allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  // Default to current month
+  const thisMonth = new Date().toISOString().substring(0,7);
+  document.getElementById('exp-filter-month').value = thisMonth;
+  selectExportType('payroll');
+  document.getElementById('export-modal-backdrop').style.display = 'block';
+  document.getElementById('export-modal').style.display = 'block';
+  updateExpPreview();
+  // live preview on filter change
+  document.getElementById('exp-filter-month').onchange = updateExpPreview;
+  document.getElementById('exp-filter-project').onchange = updateExpPreview;
+  document.getElementById('exp-filter-status').onchange = updateExpPreview;
+}
+
+function closeExportModal(){
+  document.getElementById('export-modal-backdrop').style.display = 'none';
+  document.getElementById('export-modal').style.display = 'none';
+}
+
+function selectExportType(type){
+  currentExportType = type;
+  document.querySelectorAll('.export-type-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById('etype-'+type).classList.add('active');
+  // Show status filter only for payroll / full
+  document.getElementById('exp-status-wrap').style.display =
+    (type==='payroll'||type==='full') ? 'block' : 'none';
+  updateExpPreview();
+}
+
+function updateExpPreview(){
+  const month  = document.getElementById('exp-filter-month').value;
+  const proj   = document.getElementById('exp-filter-project').value;
+  const status = document.getElementById('exp-filter-status').value;
+  const el     = document.getElementById('exp-preview');
+
+  let entries = [...allEntries];
+  if(month)  entries = entries.filter(e=>(e.entry_date||'').startsWith(month));
+  if(proj)   entries = entries.filter(e=>getWorkerProject(e.worker_id,e.worker_name)===proj);
+  if(status) entries = entries.filter(e=>(e.status||'pending')===status);
+
+  let reports = [...allReports];
+  if(proj) reports = reports.filter(r=>r.project===proj);
+  if(month) reports = reports.filter(r=>(r.report_date||'').startsWith(month));
+
+  const workers = new Set(entries.map(e=>e.worker_name||e.worker_id)).size;
+  const totalPay = entries.reduce((a,e)=>a+(e.total_pay||0),0);
+  const fieldCost = reports.reduce((a,r)=>a+(r.costs?Object.entries(r.costs).filter(([k])=>k!=='notes').reduce((s,[,v])=>s+(parseFloat(v)||0),0):0),0);
+
+  const typeLabels = {payroll:'Payroll Summary',field:'Field Cost Breakdown',project:'Project Cost Summary',full:'Full Finance Package'};
+  el.innerHTML = `
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+      <div><span style="color:var(--text3)">Report: </span><strong style="color:var(--accent)">${typeLabels[currentExportType]}</strong></div>
+      <div><span style="color:var(--text3)">Period: </span><strong>${month||'All time'}</strong></div>
+      ${proj?`<div><span style="color:var(--text3)">Project: </span><strong>${proj}</strong></div>`:''}
+      ${currentExportType!=='field'?`<div><span style="color:var(--text3)">Entries: </span><strong style="color:var(--teal)">${entries.length}</strong> &nbsp;|&nbsp; <span style="color:var(--text3)">Workers: </span><strong style="color:var(--purple)">${workers}</strong> &nbsp;|&nbsp; <span style="color:var(--text3)">Total Pay: </span><strong style="color:var(--green)">${fmt(totalPay)}</strong></div>`:''}
+      ${currentExportType!=='payroll'?`<div><span style="color:var(--text3)">Field Reports: </span><strong style="color:var(--teal)">${reports.length}</strong> &nbsp;|&nbsp; <span style="color:var(--text3)">Field Costs: </span><strong style="color:var(--green)">${fmt(fieldCost)}</strong></div>`:''}
+    </div>`;
+}
+
+// ── XLSX styling helpers ──────────────────────────────────────────────────────
+function xlCell(v, opts={}){
+  // Returns a cell object for XLSX with optional styling metadata stored in comment
+  return v;
+}
+
+// Build styled worksheet using XLSX
+function applySheetStyle(ws, styleMap){
+  // styleMap: { "A1": { fill, font, alignment, numFmt } }
+  if(!ws['!cols']) ws['!cols']=[];
+  Object.entries(styleMap).forEach(([addr, s])=>{
+    if(!ws[addr]) ws[addr]={t:'s',v:''};
+    if(s.numFmt) ws[addr].z = s.numFmt;
+  });
+}
+
+// ── PAYROLL SHEET builder ────────────────────────────────────────────────────
+function buildPayrollSheet(entries, month, projFilter){
+  const today = new Date().toLocaleDateString('en-ZA');
+
+  // Group by project > worker
+  const byProject={};
+  entries.forEach(e=>{
+    const proj = getWorkerProject(e.worker_id, e.worker_name);
+    if(projFilter && proj!==projFilter) return;
+    if(!byProject[proj]) byProject[proj]={};
+    const wk = e.worker_name||('w'+e.worker_id);
+    if(!byProject[proj][wk]) byProject[proj][wk]={
+      name:e.worker_name||'—', project:proj,
+      days:new Set(), totalHrs:0, regularHrs:0, otHrs:0,
+      regularPay:0, otPay:0, totalPay:0, rate:0, statuses:new Set()
+    };
+    const w = byProject[proj][wk];
+    w.days.add(e.entry_date);
+    w.totalHrs   += (parseFloat(e.total_hours)||0);
+    w.regularHrs += (parseFloat(e.regular_hours)||0);
+    w.otHrs      += (parseFloat(e.ot_hours)||0);
+    w.regularPay += (parseFloat(e.regular_pay)||0);
+    w.otPay      += (parseFloat(e.ot_pay)||0);
+    w.totalPay   += (parseFloat(e.total_pay)||0);
+    if(e.hourly_rate) w.rate = parseFloat(e.hourly_rate);
+    w.statuses.add(e.status||'pending');
+  });
+
+  const aoa = [];
+  // Title rows
+  aoa.push(['SITECOMMAND — PAYROLL SUMMARY FOR FINANCE']);
+  aoa.push([`Period: ${month||'All'}   |   Prepared: ${today}   |   Approved entries only   |   Confidential`]);
+  aoa.push([]);
+  // Column headers
+  aoa.push(['EMPLOYEE','PROJECT','ROLE','DAYS WORKED','TOTAL HRS','REG HRS','OT HRS','HOURLY RATE (R)','OT RATE (R)','REGULAR PAY (R)','OT PAY (R)','TOTAL PAY (R)','STATUS']);
+
+  let grandDays=0,grandHrs=0,grandReg=0,grandOT=0,grandRegPay=0,grandOTPay=0,grandTotal=0;
+  const projectBlocks=[];
+
+  Object.entries(byProject).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([projName, workers])=>{
+    const wList = Object.values(workers).sort((a,b)=>a.name.localeCompare(b.name));
+    let pDays=0,pHrs=0,pReg=0,pOT=0,pRegPay=0,pOTPay=0,pTotal=0;
+
+    wList.forEach(w=>{
+      const workerInfo = allWorkers.find(x=>x.name===w.name);
+      const otRate = workerInfo?.ot_rate || (w.rate * 1.5);
+      const statusStr = [...w.statuses].join('/');
+      aoa.push([
+        w.name, projName,
+        workerInfo?.role||workerInfo?.type||'—',
+        w.days.size,
+        +w.totalHrs.toFixed(2),
+        +w.regularHrs.toFixed(2),
+        +w.otHrs.toFixed(2),
+        +w.rate.toFixed(2),
+        +otRate.toFixed(2),
+        +w.regularPay.toFixed(2),
+        +w.otPay.toFixed(2),
+        +w.totalPay.toFixed(2),
+        statusStr
+      ]);
+      pDays+=w.days.size; pHrs+=w.totalHrs; pReg+=w.regularHrs; pOT+=w.otHrs;
+      pRegPay+=w.regularPay; pOTPay+=w.otPay; pTotal+=w.totalPay;
+    });
+
+    // Project subtotal
+    aoa.push([`  PROJECT TOTAL — ${projName}`, '', '', pDays, +pHrs.toFixed(2), +pReg.toFixed(2), +pOT.toFixed(2), '', '', +pRegPay.toFixed(2), +pOTPay.toFixed(2), +pTotal.toFixed(2), '']);
+    aoa.push([]);
+    grandDays+=pDays; grandHrs+=pHrs; grandReg+=pReg; grandOT+=pOT;
+    grandRegPay+=pRegPay; grandOTPay+=pOTPay; grandTotal+=pTotal;
+    projectBlocks.push({name:projName, employees:wList.length, hrs:pHrs, otHrs:pOT, regPay:pRegPay, otPay:pOTPay, total:pTotal});
+  });
+
+  // Grand total
+  aoa.push(['GRAND TOTAL — ALL EMPLOYEES','','',grandDays,+grandHrs.toFixed(2),+grandReg.toFixed(2),+grandOT.toFixed(2),'','',+grandRegPay.toFixed(2),+grandOTPay.toFixed(2),+grandTotal.toFixed(2),'All Approved']);
+  aoa.push([]);
+  aoa.push(['NOTE: Only APPROVED timesheet entries are included. OT threshold: 8hrs/day, 195hrs/month. Weekend & public holiday entries billed at OT rate.']);
+
+  // Per-project payroll summary block
+  aoa.push([]);
+  aoa.push(['PAYROLL BY PROJECT — SUMMARY']);
+  aoa.push(['PROJECT','EMPLOYEES','TOTAL HRS','OT HRS','REGULAR PAY (R)','OT PAY (R)','TOTAL PAYROLL (R)']);
+  projectBlocks.forEach(p=>{
+    aoa.push([p.name, p.employees, +p.hrs.toFixed(2), +p.otHrs.toFixed(2), +p.regPay.toFixed(2), +p.otPay.toFixed(2), +p.total.toFixed(2)]);
+  });
+  aoa.push(['TOTAL', projectBlocks.reduce((a,p)=>a+p.employees,0), +grandHrs.toFixed(2), +grandOT.toFixed(2), +grandRegPay.toFixed(2), +grandOTPay.toFixed(2), +grandTotal.toFixed(2)]);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Column widths
+  ws['!cols'] = [28,28,18,13,11,11,10,15,13,16,14,16,16].map(w=>({wch:w}));
+
+  // Number formats for currency columns (cols J=9, K=10, L=11 = 0-indexed)
+  // XLSX column letters for data rows (row 5 = index 4 in aoa, so sheet row 5)
+  const hdrRow = 4; // 0-indexed, row 5 in sheet
+  const dataStart = 5;
+  for(let r = dataStart; r < aoa.length; r++){
+    const row = aoa[r];
+    if(!row || row.length < 10) continue;
+    ['H','I','J','K','L'].forEach((col,i)=>{
+      const addr = col+(r+1);
+      if(ws[addr] && typeof ws[addr].v === 'number'){
+        ws[addr].z = '"R "#,##0.00';
+      }
+    });
+    ['D','E','F','G'].forEach(col=>{
+      const addr = col+(r+1);
+      if(ws[addr] && typeof ws[addr].v === 'number'){
+        ws[addr].z = '#,##0.00';
+      }
+    });
+  }
+  return ws;
+}
+
+// ── FIELD COST SHEET builder ─────────────────────────────────────────────────
+function buildFieldCostSheet(reports, projFilter, month){
+  const today = new Date().toLocaleDateString('en-ZA');
+  const labourByProj = getLabourByProject(month,'approved');
+
+  let rpts = [...reports];
+  if(projFilter) rpts = rpts.filter(r=>r.project===projFilter);
+  if(month) rpts = rpts.filter(r=>(r.report_date||'').startsWith(month));
+  rpts.sort((a,b)=>(a.report_date||'').localeCompare(b.report_date||'')||(a.project||'').localeCompare(b.project||''));
+
+  // Collect all cost category names
+  const catNames = allCostCats.length
+    ? allCostCats.map(c=>c.name)
+    : [...new Set(rpts.flatMap(r=>r.costs?Object.keys(r.costs).filter(k=>k!=='notes'):[]))];
+
+  const aoa = [];
+  aoa.push(['SITECOMMAND — FIELD COST BREAKDOWN BY PROJECT']);
+  aoa.push([`Period: ${month||'All'}   |   Prepared: ${today}   |   Source: Daily Field Reports`]);
+  aoa.push([]);
+
+  const hdr = ['DATE','PROJECT','PO NUMBER','REPORTER','LOCATION', ...catNames, 'FIELD TOTAL (R)', 'LABOUR TS (R)', 'TOTAL SPEND (R)'];
+  aoa.push(hdr);
+
+  let grandTotals = {};
+  catNames.forEach(c=>grandTotals[c]=0);
+  let grandField=0, grandLabour=0, grandTotal=0;
+
+  rpts.forEach(r=>{
+    const proj = allProjects.find(p=>p.name===r.project)||{};
+    const catVals = catNames.map(c=>{
+      const v = parseFloat((r.costs||{})[c]||0);
+      grandTotals[c]=(grandTotals[c]||0)+v;
+      return +v.toFixed(2);
+    });
+    const fieldTotal = catVals.reduce((a,v)=>a+v,0);
+    const labourTS = (labourByProj[r.project]||{}).totalPay||0;
+    const totalSpend = fieldTotal + labourTS;
+    grandField+=fieldTotal; grandLabour+=labourTS; grandTotal+=totalSpend;
+    aoa.push([
+      r.report_date||'', r.project||'', proj.po_number||r.po_number||'',
+      r.reporter||'', r.location||'',
+      ...catVals,
+      +fieldTotal.toFixed(2), +labourTS.toFixed(2), +totalSpend.toFixed(2)
+    ]);
+  });
+
+  // Totals row
+  aoa.push([
+    'GRAND TOTAL', '', '', '', '',
+    ...catNames.map(c=>+(grandTotals[c]||0).toFixed(2)),
+    +grandField.toFixed(2), +grandLabour.toFixed(2), +grandTotal.toFixed(2)
+  ]);
+  aoa.push([]);
+
+  // Per-project summary
+  aoa.push(['FIELD COST SUMMARY BY PROJECT']);
+  const summaryHdr = ['PROJECT','PO NUMBER','FIELD TOTAL (R)','LABOUR TS (R)','TOTAL SPEND (R)','BUDGET (R)','REMAINING (R)','% BUDGET USED'];
+  aoa.push(summaryHdr);
+
+  const projSet = [...new Set(rpts.map(r=>r.project))];
+  projSet.forEach(pName=>{
+    const projRpts = rpts.filter(r=>r.project===pName);
+    const fieldT = projRpts.reduce((a,r)=>a+(r.costs?Object.entries(r.costs).filter(([k])=>k!=='notes').reduce((s,[,v])=>s+(parseFloat(v)||0),0):0),0);
+    const labT = (labourByProj[pName]||{}).totalPay||0;
+    const tot = fieldT+labT;
+    const projInfo = allProjects.find(p=>p.name===pName)||{};
+    const budget = projInfo.budget||0;
+    const remaining = budget - tot;
+    const pct = budget>0?(tot/budget*100).toFixed(1)+'%':'—';
+    aoa.push([pName, projInfo.po_number||'', +fieldT.toFixed(2), +labT.toFixed(2), +tot.toFixed(2), budget||'—', +remaining.toFixed(2), pct]);
+  });
+
+  aoa.push([]);
+  aoa.push(['NOTE: Field costs from approved Daily Field Reports. Labour TS = Approved timesheet labour posted to project. Total Spend = Field Total + Labour.']);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Dynamic column widths based on number of cost categories
+  const baseCols = [12, 30, 14, 18, 16];
+  const catCols  = catNames.map(()=>({wch:14}));
+  const tailCols = [16,16,16].map(w=>({wch:w}));
+  ws['!cols'] = [...baseCols.map(w=>({wch:w})), ...catCols, ...tailCols];
+
+  // Currency formatting for numeric money cells
+  const moneyColStart = 5 + catNames.length; // after date,proj,po,reporter,location,cats
+  for(let r=4;r<aoa.length;r++){
+    const row=aoa[r]; if(!row||row.length<3) continue;
+    for(let c=5;c<row.length;c++){
+      const addr=XLSX.utils.encode_cell({r,c});
+      if(ws[addr]&&typeof ws[addr].v==='number') ws[addr].z='"R "#,##0.00';
+    }
+  }
+  return ws;
+}
+
+// ── PROJECT COST SUMMARY SHEET ────────────────────────────────────────────────
+function buildProjectSummarySheet(month, projFilter){
+  const today = new Date().toLocaleDateString('en-ZA');
+  const fieldCosts = getFieldCostsByProject();
+  const labourByProj = getLabourByProject(month,'approved');
+
+  let projects = allProjects;
+  if(projFilter) projects = projects.filter(p=>p.name===projFilter);
+
+  const aoa = [];
+  aoa.push(['SITECOMMAND — PROJECT COST SUMMARY']);
+  aoa.push([`Period: ${month||'All'}   |   Prepared: ${today}   |   Budget vs Actual Spend`]);
+  aoa.push([]);
+  aoa.push(['PROJECT','PO NUMBER','PHASE','CONTRACT SPEND (R)','FIELD COSTS (R)','LABOUR (TS) (R)','TOTAL SPEND (R)','BUDGET (R)','REMAINING (R)','% USED','STATUS']);
+
+  let totContract=0,totField=0,totLabour=0,totSpend=0,totBudget=0;
+
+  projects.forEach(p=>{
+    const fc  = (fieldCosts[p.name]||{}).totalCost||0;
+    const lc  = (labourByProj[p.name]||{}).totalPay||0;
+    const cs  = p.contract_spend||0;
+    const tot = fc+lc+cs;
+    const bud = p.budget||0;
+    const rem = bud-tot;
+    const pct = bud>0?(tot/bud*100).toFixed(1)+'%':'—';
+    const status = bud>0?(tot/bud>1?'Over Budget':tot/bud>=0.9?'Danger':tot/bud>=0.75?'Warning':'On Track'):'No Budget';
+    aoa.push([p.name, p.po_number||'', p.phase||'', +cs.toFixed(2), +fc.toFixed(2), +lc.toFixed(2), +tot.toFixed(2), bud||0, +rem.toFixed(2), pct, status]);
+    totContract+=cs; totField+=fc; totLabour+=lc; totSpend+=tot; totBudget+=bud;
+  });
+
+  aoa.push(['PORTFOLIO TOTAL','','', +totContract.toFixed(2), +totField.toFixed(2), +totLabour.toFixed(2), +totSpend.toFixed(2), +totBudget.toFixed(2), +(totBudget-totSpend).toFixed(2), totBudget>0?(totSpend/totBudget*100).toFixed(1)+'%':'—', '']);
+
+  aoa.push([]);
+  aoa.push(['NOTE: Labour from approved timesheets only. Field costs from Daily Field Reports. Contract Spend from project setup.']);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [32,14,16,18,16,16,16,16,16,10,12].map(w=>({wch:w}));
+
+  for(let r=4;r<aoa.length;r++){
+    for(let c=3;c<=8;c++){
+      const addr=XLSX.utils.encode_cell({r,c});
+      if(ws[addr]&&typeof ws[addr].v==='number') ws[addr].z='"R "#,##0.00';
+    }
+  }
+  return ws;
+}
+
+// ── MAIN EXPORT RUNNER ────────────────────────────────────────────────────────
+function runExcelExport(){
+  const month  = document.getElementById('exp-filter-month').value;
+  const proj   = document.getElementById('exp-filter-project').value;
+  const status = document.getElementById('exp-filter-status').value;
+  const type   = currentExportType;
+
+  const btn = document.getElementById('exp-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Building…';
+
+  setTimeout(()=>{
+    try{
+      // Filter entries
+      let entries = [...allEntries];
+      if(month)  entries = entries.filter(e=>(e.entry_date||'').startsWith(month));
+      if(status) entries = entries.filter(e=>(e.status||'pending')===status);
+
+      const wb = XLSX.utils.book_new();
+
+      if(type==='payroll'||type==='full'){
+        const ws = buildPayrollSheet(entries, month, proj);
+        XLSX.utils.book_append_sheet(wb, ws, 'Payroll Summary');
+      }
+      if(type==='field'||type==='full'){
+        const ws = buildFieldCostSheet(allReports, proj, month);
+        XLSX.utils.book_append_sheet(wb, ws, 'Field Cost Breakdown');
+      }
+      if(type==='project'||type==='full'){
+        const ws = buildProjectSummarySheet(month, proj);
+        XLSX.utils.book_append_sheet(wb, ws, 'Project Cost Summary');
+      }
+
+      const typeLabel = {payroll:'Payroll',field:'FieldCosts',project:'ProjectSummary',full:'FinancePackage'}[type];
+      const suffix = month ? '_'+month : '_All';
+      const filename = `SiteCommand_${typeLabel}${suffix}.xlsx`;
+
+      XLSX.writeFile(wb, filename);
+      closeExportModal();
+      showToast(`✓ ${filename} downloaded`);
+    } catch(err){
+      console.error(err);
+      showToast('Export failed — check console','err');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Excel';
+  }, 50);
 }
 
 init();
