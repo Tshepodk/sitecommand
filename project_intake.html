@@ -618,7 +618,7 @@ function getTasks(){
       type:(document.getElementById('t-type-'+id)||{}).value||'Civil',
       unit:(document.getElementById('t-unit-'+id)||{}).value||'Each',
       qty_total:parseFloat((document.getElementById('t-qty-'+id)||{}).value)||0,
-      qty_done:0,progress:0,status:'not-started',priority:'medium',active:true
+      qty_done:0,status:'not-started',priority:'medium',active:true
     };
   }).filter(Boolean);
 }
