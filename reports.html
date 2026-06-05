@@ -122,6 +122,7 @@ tr:hover td{background:var(--bg3)}
 .pdf-header{display:none}
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="shell">
@@ -161,6 +162,7 @@ tr:hover td{background:var(--bg3)}
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="init()">↺ Refresh</button>
           <button class="btn btn-teal btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal()">📊 Export Excel</button>
           <button class="btn btn-primary btn-sm" onclick="exportPDF()">🖨 Export PDF</button>
         </div>
       </div>
@@ -290,6 +292,58 @@ tr:hover td{background:var(--bg3)}
         <div id="bi-report-content"></div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: EXPORT EXCEL ═══════════ -->
+<div class="modal-bg" id="modal-excel-export">
+  <div class="modal modal-wide">
+    <div class="modal-title">
+      <span>📊 Export Excel Report</span>
+      <button class="modal-close" onclick="closeExportModal()">✕</button>
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em;font-weight:700">Select Report Type</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="export-type-grid">
+        <div class="export-type-card" data-type="payroll" onclick="selectExportType('payroll')" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all 0.15s">
+          <div style="font-size:18px;margin-bottom:6px">💰</div>
+          <div style="font-weight:700;font-size:13px">Payroll Summary</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Worker hours, rates & pay per period — for Finance/Salaries</div>
+        </div>
+        <div class="export-type-card" data-type="fieldcost" onclick="selectExportType('fieldcost')" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all 0.15s">
+          <div style="font-size:18px;margin-bottom:6px">🏗</div>
+          <div style="font-weight:700;font-size:13px">Field Cost Breakdown</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Materials, transport, equipment, subcontractors per project</div>
+        </div>
+        <div class="export-type-card" data-type="projectcost" onclick="selectExportType('projectcost')" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all 0.15s">
+          <div style="font-size:18px;margin-bottom:6px">📋</div>
+          <div style="font-weight:700;font-size:13px">Project Cost Summary</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Budget vs actual spend per project with variance</div>
+        </div>
+        <div class="export-type-card" data-type="full" onclick="selectExportType('full')" style="border:2px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all 0.15s">
+          <div style="font-size:18px;margin-bottom:6px">📦</div>
+          <div style="font-weight:700;font-size:13px">Full Finance Package</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">All 3 reports in one workbook — 3 sheets</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem">
+      <div class="form-group" style="margin:0">
+        <label class="form-label" style="margin-bottom:4px">Month</label>
+        <input type="month" class="form-input" id="excel-filter-month" style="width:150px;font-size:12px;padding:5px 8px"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label" style="margin-bottom:4px">Project</label>
+        <select class="form-select" id="excel-filter-project" style="width:180px;font-size:12px;padding:5px 8px"><option value="">All Projects</option></select>
+      </div>
+    </div>
+    <div id="excel-preview" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px;font-size:12px;color:var(--text3);min-height:48px;margin-bottom:1rem">
+      Select a report type above to preview what will be exported.
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeExportModal()">Cancel</button>
+      <button class="btn btn-primary" id="excel-download-btn" onclick="downloadExcel()" disabled>⬇ Download Excel</button>
     </div>
   </div>
 </div>
@@ -895,6 +949,98 @@ function exportPDF(){
     if(activeContent)activeContent.classList.remove('print-active');
     hdr.innerHTML='';
   },1000);
+}
+
+// ── EXCEL EXPORT ──────────────────────────────────────────────────
+let _exportType=null;
+
+function openExportModal(){
+  _exportType=null;
+  document.getElementById('excel-download-btn').disabled=true;
+  document.getElementById('excel-preview').textContent='Select a report type above to preview what will be exported.';
+  document.querySelectorAll('.export-type-card').forEach(c=>{c.style.borderColor='var(--border)';c.style.background='';});
+  // Populate project filter
+  const sel=document.getElementById('excel-filter-project');
+  sel.innerHTML='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  document.getElementById('excel-filter-month').value=new Date().toISOString().substring(0,7);
+  document.getElementById('modal-excel-export').classList.add('open');
+}
+
+function closeExportModal(){
+  document.getElementById('modal-excel-export').classList.remove('open');
+}
+
+function selectExportType(type){
+  _exportType=type;
+  document.querySelectorAll('.export-type-card').forEach(c=>{
+    const active=c.dataset.type===type;
+    c.style.borderColor=active?'var(--accent)':'var(--border)';
+    c.style.background=active?'rgba(245,166,35,0.06)':'';
+  });
+  document.getElementById('excel-download-btn').disabled=false;
+  updateExcelPreview();
+}
+
+function updateExcelPreview(){
+  const month=document.getElementById('excel-filter-month').value;
+  const proj=document.getElementById('excel-filter-project').value;
+  const filteredEntries=allEntries.filter(e=>(!month||(e.entry_date||'').startsWith(month))&&(!proj||getWorkerProject(e.worker_id,e.worker_name)===proj));
+  const filteredReports=allReports.filter(r=>(!month||(r.report_date||'').startsWith(month))&&(!proj||r.project===proj));
+  const labels={payroll:`Payroll: ${filteredEntries.length} timesheet entries`,fieldcost:`Field Costs: ${filteredReports.length} daily reports`,projectcost:`Project Costs: ${allProjects.filter(p=>!proj||p.name===proj).length} projects`,full:`Full Package: payroll + field costs + project costs`};
+  document.getElementById('excel-preview').innerHTML=`<strong style="color:var(--text)">${labels[_exportType]||''}</strong><br><span style="color:var(--text3)">Period: ${month||'All time'} &nbsp;|&nbsp; ${proj||'All projects'}</span>`;
+}
+
+function downloadExcel(){
+  if(!_exportType)return;
+  const month=document.getElementById('excel-filter-month').value;
+  const proj=document.getElementById('excel-filter-project').value;
+  const wb=XLSX.utils.book_new();
+  const fmtR=v=>`R ${(v||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+
+  if(_exportType==='payroll'||_exportType==='full'){
+    const rows=allEntries.filter(e=>(!month||(e.entry_date||'').startsWith(month))&&(!proj||getWorkerProject(e.worker_id,e.worker_name)===proj));
+    const data=[['Worker','Project','Date','Clock In','Clock Out','Break(min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate','OT Rate','Regular Pay','OT Pay','Total Pay','Status']];
+    rows.forEach(e=>{
+      const p=getWorkerProject(e.worker_id,e.worker_name);
+      data.push([e.worker_name||'',p,e.entry_date||'',e.clock_in||'',e.clock_out||'',e.break_minutes||0,e.total_hours||0,e.regular_hours||0,e.ot_hours||0,e.hourly_rate||0,e.ot_rate||0,fmtR(e.regular_pay),fmtR(e.ot_pay),fmtR(e.total_pay),e.status||'pending']);
+    });
+    // Totals row
+    const totPay=rows.reduce((a,e)=>a+(e.total_pay||0),0);
+    const totHrs=rows.reduce((a,e)=>a+(e.total_hours||0),0);
+    data.push(['','','','','','',totHrs.toFixed(2),'','','','','','',fmtR(totPay),'']);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Payroll Summary');
+  }
+
+  if(_exportType==='fieldcost'||_exportType==='full'){
+    const reports=allReports.filter(r=>(!month||(r.report_date||'').startsWith(month))&&(!proj||r.project===proj));
+    const data=[['Date','Project','Reporter','Workers on Site','Total Cost','HSE','Status']];
+    reports.forEach(r=>{
+      const costs=r.costs||{};
+      data.push([r.report_date||'',r.project||'',r.reporter||'',r.workers||0,fmtR(r.total_cost),r.hse||'none',r.approval_status||'pending']);
+    });
+    const totCost=reports.reduce((a,r)=>a+(r.total_cost||0),0);
+    data.push(['','','','',fmtR(totCost),'','']);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Field Costs');
+  }
+
+  if(_exportType==='projectcost'||_exportType==='full'){
+    const projects=allProjects.filter(p=>!proj||p.name===proj);
+    const data=[['Project','Client','PO Number','Budget','Field Costs','Labour (Approved)','Total Spend','Remaining','Used %','Status']];
+    projects.forEach(p=>{
+      const fieldCost=allReports.filter(r=>r.project===p.name).reduce((a,r)=>a+(r.total_cost||0),0);
+      const labour=allEntries.filter(e=>e.status==='approved'&&getWorkerProject(e.worker_id,e.worker_name)===p.name).reduce((a,e)=>a+(e.total_pay||0),0);
+      const totalSpend=fieldCost+labour;
+      const remaining=(p.budget||0)-totalSpend;
+      const usedPct=p.budget>0?Math.round(totalSpend/p.budget*100):0;
+      data.push([p.name||'',p.client||'',p.po_number||'',fmtR(p.budget),fmtR(fieldCost),fmtR(labour),fmtR(totalSpend),fmtR(remaining),`${usedPct}%`,p.status||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Project Cost Summary');
+  }
+
+  const filename=`SiteCommand_${_exportType}_${month||'All'}.xlsx`;
+  XLSX.writeFile(wb,filename);
+  closeExportModal();
+  showToast('Excel downloaded successfully','ok');
 }
 
 init();
