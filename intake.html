@@ -191,6 +191,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 </head>
 <body>
 
+<!-- OFFLINE BANNER -->
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#b45309;color:#fff;padding:10px 16px;font-size:13px;font-family:var(--font-d);font-weight:700;letter-spacing:0.04em;text-align:center">
+  📵 You're offline — your report will be saved and submitted automatically when you reconnect.
+  <span id="queue-count" style="margin-left:8px;background:rgba(255,255,255,0.2);border-radius:10px;padding:2px 8px"></span>
+</div>
+<div id="sync-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#0d9488;color:#fff;padding:10px 16px;font-size:13px;font-family:var(--font-d);font-weight:700;letter-spacing:0.04em;text-align:center">
+  ✅ Back online — syncing queued reports...
+</div>
+
 <div class="header">
   <div class="logo">Site<span>Command</span></div>
   <div style="background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:3px 12px;font-size:11px;font-family:var(--font-d);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--teal)">Daily Intake</div>
@@ -232,12 +241,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
           <div class="form-group">
             <label class="form-label">Project <span class="req">*</span></label>
             <select class="form-select" id="f-project" onchange="onProjectChange()"><option value="">— Select project —</option></select>
-            <div id="po-info-strip" style="display:none;margin-top:8px;background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.25);border-radius:var(--r);padding:7px 10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-              <span style="font-family:var(--font-d);font-weight:800;font-size:14px;color:var(--accent)" id="po-strip-number"></span>
-              <span style="font-size:11px;color:var(--text3)" id="po-strip-client"></span>
-              <span style="font-size:11px;color:var(--text3)" id="po-strip-loc"></span>
-              <span style="font-size:11px;color:var(--text3)" id="po-strip-foreman"></span>
-            </div>
           </div>
           <div class="form-group"><label class="form-label">Report Date <span class="req">*</span></label><input class="form-input" type="date" id="f-date"/></div>
           <div class="form-group"><label class="form-label">Site Location / Zone</label><input class="form-input" type="text" id="f-location" placeholder="e.g. Sector 4, km 47–52"/></div>
@@ -518,7 +521,7 @@ async function init(){
     ]);
     // Populate project dropdown
     const ps=document.getElementById('f-project');
-    ps.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.id}" data-name="${p.name}" data-po="${p.po_number||''}" data-loc="${p.location||''}" data-client="${p.client||''}" data-foreman="${p.foreman||''}">${p.po_number?'['+p.po_number+'] ':''} ${p.name}</option>`).join('');
+    ps.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.id}" data-name="${p.name}">${p.name}</option>`).join('');
     // Populate reporter dropdown from workers
     const rs=document.getElementById('f-reporter-sel');
     rs.innerHTML='<option value="">— Select worker —</option>'+allWorkers.map(w=>`<option value="${w.name}" data-role="${w.role||''}">${w.name}${w.role?' — '+w.role:''}</option>`).join('');
@@ -573,20 +576,7 @@ async function onProjectChange(){
   updateSummary();
   const el=document.getElementById('f-project');
   const projId=el.value;
-  const opt=el.options[el.selectedIndex];
-  const strip=document.getElementById('po-info-strip');
-  if(!projId){projectTasks=[];renderTaskQtyRows();strip.style.display='none';return;}
-  // Show PO strip
-  const po=opt?opt.dataset.po:'';const loc=opt?opt.dataset.loc:'';const client=opt?opt.dataset.client:'';const foreman=opt?opt.dataset.foreman:'';
-  if(po){
-    document.getElementById('po-strip-number').textContent='🧾 '+po;
-    document.getElementById('po-strip-client').textContent=client?'Client: '+client:'';
-    document.getElementById('po-strip-loc').textContent=loc?'📍 '+loc:'';
-    document.getElementById('po-strip-foreman').textContent=foreman?'Foreman: '+foreman:'';
-    strip.style.display='flex';
-  }else{strip.style.display='none';}
-  // Pre-fill location from project if empty
-  const locField=document.getElementById('f-location');if(locField&&!locField.value&&loc)locField.value=loc;
+  if(!projId){projectTasks=[];renderTaskQtyRows();return;}
   try{
     projectTasks=await sbGet('project_tasks',`project_id=eq.${projId}&active=eq.true&order=created_at.asc`);
     renderTaskQtyRows();
@@ -834,6 +824,134 @@ function resetForm(){
   document.querySelectorAll('.weather-opt').forEach(w=>w.classList.remove('selected'));
   projectTasks=[];selectedPhotos=[];renderPhotoGrid();renderTaskQtyRows();updateSummary();goStep(0);
 }
+
+// ── OFFLINE / SERVICE WORKER SUPPORT ─────────────────────────────
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW reg failed:',e));
+}
+
+// IndexedDB queue helpers
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('sc_offline',1);
+    req.onupgradeneeded=e=>e.target.result.createObjectStore('queue',{keyPath:'id',autoIncrement:true});
+    req.onsuccess=e=>res(e.target.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function queueReport(payload){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('queue','readwrite');
+    tx.objectStore('queue').add({payload,queued_at:new Date().toISOString()});
+    tx.oncomplete=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+async function getQueued(){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('queue','readonly');
+    const req=tx.objectStore('queue').getAll();
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+async function removeQueued(id){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('queue','readwrite');
+    tx.objectStore('queue').delete(id);
+    tx.oncomplete=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+// Update offline banner
+async function updateOfflineBanner(){
+  const queued=await getQueued();
+  const count=queued.length;
+  const countEl=document.getElementById('queue-count');
+  if(countEl)countEl.textContent=count>0?`${count} report${count>1?'s':''} queued`:'';
+}
+
+// Sync queued reports when back online
+async function syncQueued(){
+  const queued=await getQueued();
+  if(!queued.length)return;
+  document.getElementById('sync-banner').style.display='block';
+  let synced=0;
+  for(const item of queued){
+    try{
+      await sbPost('daily_reports',item.payload);
+      await removeQueued(item.id);
+      synced++;
+    }catch(e){console.warn('Sync failed for item',item.id,e);}
+  }
+  document.getElementById('sync-banner').style.display='none';
+  if(synced>0)showToast(`✅ ${synced} offline report${synced>1?'s':''} synced successfully!`,'ok');
+  updateOfflineBanner();
+}
+
+// Online/offline event listeners
+window.addEventListener('offline',()=>{
+  document.getElementById('offline-banner').style.display='block';
+  document.getElementById('sync-banner').style.display='none';
+  updateOfflineBanner();
+});
+window.addEventListener('online',()=>{
+  document.getElementById('offline-banner').style.display='none';
+  syncQueued();
+});
+
+// Check on load
+if(!navigator.onLine){
+  document.getElementById('offline-banner').style.display='block';
+  updateOfflineBanner();
+}else{
+  // Sync any reports queued from previous offline session
+  syncQueued();
+}
+
+// Override submitForm to handle offline
+const _origSubmit=submitForm;
+submitForm=async function(){
+  if(!navigator.onLine){
+    // Build payload same way as original but save to queue instead
+    const projId=document.getElementById('f-project').value;
+    const reporter=document.getElementById('f-reporter').value.trim();
+    if(!projId){showToast('Please select a project','err');goStep(0);return;}
+    if(!reporter){showToast('Please enter your name','err');goStep(0);return;}
+    const{costs,total}=getCosts();
+    const workers=['civil','telecoms','elec','plant','sup','sub'].reduce((a,k)=>a+(parseInt((document.getElementById('w-'+k)||{}).value)||0),0);
+    const weather=document.querySelector('input[name="weather"]:checked');
+    const taskUpdates=getTaskUpdates();
+    const projName=getProjectName();
+    const payload={
+      project:projName,report_date:document.getElementById('f-date').value,
+      reporter,role:document.getElementById('f-role').value.trim(),
+      location:document.getElementById('f-location').value.trim(),
+      period:document.getElementById('f-period').value,workers,
+      worker_breakdown:{civil:parseInt(document.getElementById('w-civil').value)||0,telecoms:parseInt(document.getElementById('w-telecoms').value)||0,elec:parseInt(document.getElementById('w-elec').value)||0,plant:parseInt(document.getElementById('w-plant').value)||0,sup:parseInt(document.getElementById('w-sup').value)||0,sub:parseInt(document.getElementById('w-sub').value)||0},
+      tasks:taskUpdates.map(t=>({task_id:t.task_id,title:t.title,type:t.type,unit:t.unit,qty_done:t.qty_done,status:t.status,notes:t.notes})),
+      progress_note:document.getElementById('f-progress-note').value.trim(),
+      costs,total_cost:total,
+      weather:weather?weather.value:'',temp:document.getElementById('f-temp').value,
+      wind:document.getElementById('f-wind').value,stoppages:document.getElementById('f-stoppage').value,
+      hse:document.getElementById('f-hse').value,hse_detail:document.getElementById('f-hse-detail').value.trim(),
+      blockers:document.getElementById('f-blockers').value.trim()
+    };
+    await queueReport(payload);
+    await updateOfflineBanner();
+    showToast('📵 Saved offline — will sync when you reconnect','ok');
+    setTimeout(()=>resetForm(),2500);
+    return;
+  }
+  // Online — use original submit
+  return _origSubmit();
+};
 
 init();
 </script>
