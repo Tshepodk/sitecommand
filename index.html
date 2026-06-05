@@ -510,7 +510,7 @@ tr:hover td{background:var(--bg3)}
         <button class="btn btn-primary" onclick="openModal('project')">+ New Project</button>
       </div>
       <div class="card"><div class="card-body" style="padding:0"><div class="table-wrap">
-        <table><thead><tr><th>PO Number</th><th>Project</th><th>Type</th><th>Client</th><th>Location</th><th>Start</th><th>End</th><th>Budget</th><th>Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
+        <table><thead><tr><th>Project</th><th>Type</th><th>Client</th><th>Start</th><th>End</th><th>Budget</th><th>Progress</th><th>Status</th><th>PM</th><th>Actions</th></tr></thead><tbody id="projects-table"></tbody></table>
       </div></div></div>
     </div>
 
@@ -662,25 +662,13 @@ tr:hover td{background:var(--bg3)}
     <div class="modal-title"><span id="project-modal-title">New Project</span><button class="modal-close" onclick="closeModal('project')">&#10005;</button></div>
     <input type="hidden" id="project-id"/>
     <div class="fg2">
-      <!-- PO Section -->
-      <div class="form-group" style="grid-column:1/-1;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:10px 12px;margin-bottom:4px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">🧾 Purchase Order</div>
-        <div class="fg2" style="gap:8px">
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">PO Number *</label><input class="form-input" id="project-po-number" placeholder="e.g. PO-2026-001"/></div>
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">Contract Value (R)</label><input class="form-input" type="number" id="project-contract-value" placeholder="0" min="0"/></div>
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">PO Date</label><input class="form-input" type="date" id="project-po-date"/></div>
-          <div class="form-group" style="margin-bottom:0"><label class="form-label">PO Expiry</label><input class="form-input" type="date" id="project-po-expiry"/></div>
-        </div>
-      </div>
+      <div class="form-group"><label class="form-label">PO Number *<span style="font-size:10px;color:var(--text3);margin-left:6px">— Primary Tracking ID</span></label><input class="form-input" id="project-po-number" placeholder="e.g. PO-2026-BMCT-001"/></div>
+      <div class="form-group"><label class="form-label">PO Value (R)</label><input class="form-input" type="number" id="project-po-value" placeholder="0.00" min="0" step="0.01"/></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Project Name *</label><input class="form-input" id="project-name" placeholder="e.g. Cape Town Fibre Rollout"/></div>
       <div class="form-group"><label class="form-label">Phase</label><input class="form-input" id="project-phase" placeholder="e.g. Phase 1"/></div>
       <div class="form-group"><label class="form-label">Type *</label><select class="form-select" id="project-type"><option>Construction</option><option>Telecoms</option><option>Electrical</option><option>Civil</option><option>Structural</option><option>Roads</option><option>Other</option></select></div>
       <div class="form-group"><label class="form-label">Client</label><input class="form-input" id="project-client" placeholder="e.g. SANRAL"/></div>
-      <div class="form-group"><label class="form-label">Client Contact</label><input class="form-input" id="project-client-contact" placeholder="Contact person name"/></div>
-      <div class="form-group"><label class="form-label">Client Phone</label><input class="form-input" id="project-client-phone" placeholder="+27 ..."/></div>
       <div class="form-group"><label class="form-label">Project Manager</label><input class="form-input" id="project-pm" placeholder="Full name"/></div>
-      <div class="form-group"><label class="form-label">Site Foreman</label><input class="form-input" id="project-foreman" placeholder="Full name"/></div>
-      <div class="form-group"><label class="form-label">Location / Site</label><input class="form-input" id="project-location" placeholder="e.g. Cape Town CBD"/></div>
       <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" id="project-start"/></div>
       <div class="form-group"><label class="form-label">End Date</label><input class="form-input" type="date" id="project-end"/></div>
       <div class="form-group"><label class="form-label">Budget (R)</label><input class="form-input" type="number" id="project-budget" placeholder="0" min="0"/></div>
@@ -1487,17 +1475,7 @@ function renderDashboard(){
     const bc2=budgetColor(pBudget.pct);
     const ac2={};allCostCats.forEach(cat=>{const ppc2=pc2[p.name]||{cb:{}};ac2[cat.name]=ppc2.cb[cat.name]||0;});
     const ct2=Object.values(ac2).reduce((a,v)=>a+v,0);
-    const poStrip=p.po_number?`<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(245,166,35,0.06);border:1px solid rgba(245,166,35,0.2);border-radius:var(--r);padding:8px 12px;margin-bottom:1rem">
-      <div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent)">🧾 PO</span><span style="font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--accent)">${p.po_number}</span></div>
-      ${p.contract_value>0?`<div><span style="font-size:10px;color:var(--text3)">Contract Value</span><div style="font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--text)">${fmt(p.contract_value)}</div></div>`:''}
-      ${p.po_date?`<div><span style="font-size:10px;color:var(--text3)">PO Date</span><div style="font-size:12px;color:var(--text2)">${p.po_date}</div></div>`:''}
-      ${p.po_expiry?`<div><span style="font-size:10px;color:var(--text3)">Expiry</span><div style="font-size:12px;color:${new Date(p.po_expiry)<new Date()?'var(--red)':'var(--text2)'}">${p.po_expiry}</div></div>`:''}
-      ${p.location?`<div><span style="font-size:10px;color:var(--text3)">Location</span><div style="font-size:12px;color:var(--text2)">${p.location}</div></div>`:''}
-      ${p.foreman?`<div><span style="font-size:10px;color:var(--text3)">Foreman</span><div style="font-size:12px;color:var(--text2)">${p.foreman}</div></div>`:''}
-      ${p.client_contact?`<div><span style="font-size:10px;color:var(--text3)">Client Contact</span><div style="font-size:12px;color:var(--text2)">${p.client_contact}${p.client_phone?' · '+p.client_phone:''}</div></div>`:''}
-    </div>`:'';
     document.getElementById('dpd-budget').innerHTML=`
-      ${poStrip}
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem">
         <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Budget</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--accent)">${fmt(pBudget.budget)}</div></div>
         <div style="background:var(--bg3);border-radius:var(--r);padding:10px"><div style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">Contracted</div><div style="font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--blue)">${fmt(pBudget.contract_spend)}</div></div>
@@ -1561,7 +1539,7 @@ function renderDashboard(){
 // ── Projects ──────────────────────────────────────────────────────────────────
 function renderProjects(){
   document.getElementById('proj-sub').textContent=allProjects.length+' project'+(allProjects.length!==1?'s':'')+' — Supabase';
-  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="12" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><span style="font-family:var(--font-d);font-weight:700;color:var(--accent);font-size:13px">${p.po_number||'—'}</span></td><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.location||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
+  document.getElementById('projects-table').innerHTML=allProjects.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:2rem">No projects yet. Click <strong style="color:var(--accent)">+ New Project</strong>.</td></tr>`:allProjects.map(p=>{const s=projTaskStats(p.name);return`<tr><td><div style="font-weight:500">${p.name}</div><div style="font-size:11px;color:var(--text3)">${p.phase||''}</div></td><td><span class="badge ${TB[p.type]||'badge-gray'}">${p.type}</span></td><td style="color:var(--text2)">${p.client||'—'}</td><td style="color:var(--text2);font-size:12px">${p.start_date||'—'}</td><td style="color:var(--text2);font-size:12px">${p.end_date||'—'}</td><td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${p.budget>0?fmt(p.budget):'—'}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress-lg"><div class="progress-fill" style="width:${s.avg}%;background:${p.status==='delayed'?'var(--red)':p.status==='at-risk'?'var(--accent)':'var(--green)'}"></div></div><span style="font-size:11px;color:var(--text2)">${s.avg}%</span></div></td><td><span class="badge ${SB2[p.status]||'badge-gray'}">${p.status}</span></td><td style="color:var(--text2);font-size:12px">${p.pm||'—'}</td><td><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick='openModal("project",${JSON.stringify(p)})'>Edit</button><button class="btn btn-danger btn-sm" onclick="deleteRecord('projects',${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;}).join('');
 }
 
 // ── Project Tasks ─────────────────────────────────────────────────────────────
@@ -1936,7 +1914,7 @@ function openModal(type, rec=null){
   if(rec){
     document.getElementById(type+'-modal-title').textContent='Edit '+({project:'Project',task:'Task',worker:'Worker',equipment:'Equipment','cost-cat':'Category'}[type]||'');
     const mapping={
-      project:{id:'id',name:'name',phase:'phase',type:'type',client:'client','client-contact':'client_contact','client-phone':'client_phone',pm:'pm',foreman:'foreman',location:'location',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend','contract-value':'contract_value','po-number':'po_number','po-date':'po_date','po-expiry':'po_expiry',status:'status',desc:'description'},
+      project:{id:'id','po-number':'po_number','po-value':'po_value',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend',status:'status',desc:'description'},
       task:{id:'id',title:'title',type:'type','qty-total':'qty_total',unit:'unit',priority:'priority',assigned:'assigned_to',status:'status','qty-done':'qty_done',notes:'notes'},
       worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status'},
       equipment:{id:'id',name:'name',type:'type',make:'make_model',serial:'serial_number',service:'next_service',status:'status',notes:'notes'},
@@ -1963,7 +1941,7 @@ async function saveRecord(type){
     let payload={};let table='';let id=document.getElementById(type+'-id')?.value;
     if(type==='project'){
       const name=document.getElementById('project-name').value.trim();if(!name){showToast('Project name required','err');btn.disabled=false;btn.textContent='Save Project';return;}
-      payload={name,phase:document.getElementById('project-phase').value.trim(),type:document.getElementById('project-type').value,client:document.getElementById('project-client').value.trim(),client_contact:document.getElementById('project-client-contact').value.trim(),client_phone:document.getElementById('project-client-phone').value.trim(),pm:document.getElementById('project-pm').value.trim(),foreman:document.getElementById('project-foreman').value.trim(),location:document.getElementById('project-location').value.trim(),start_date:document.getElementById('project-start').value,end_date:document.getElementById('project-end').value,budget:parseFloat(document.getElementById('project-budget').value)||0,contract_spend:parseFloat(document.getElementById('project-contract').value)||0,contract_value:parseFloat(document.getElementById('project-contract-value').value)||0,po_number:document.getElementById('project-po-number').value.trim(),po_date:document.getElementById('project-po-date').value||null,po_expiry:document.getElementById('project-po-expiry').value||null,status:document.getElementById('project-status').value,description:document.getElementById('project-desc').value.trim(),active:true};table='projects';
+      payload={name,po_number:document.getElementById('project-po-number').value.trim()||null,po_value:parseFloat(document.getElementById('project-po-value').value)||0,phase:document.getElementById('project-phase').value.trim(),type:document.getElementById('project-type').value,client:document.getElementById('project-client').value.trim(),pm:document.getElementById('project-pm').value.trim(),start_date:document.getElementById('project-start').value,end_date:document.getElementById('project-end').value,budget:parseFloat(document.getElementById('project-budget').value)||0,contract_spend:parseFloat(document.getElementById('project-contract').value)||0,status:document.getElementById('project-status').value,description:document.getElementById('project-desc').value.trim(),active:true};table='projects';
     } else if(type==='task'){
       const title=document.getElementById('task-title').value.trim();const proj=document.getElementById('task-project').value;const qt=parseFloat(document.getElementById('task-qty-total').value)||0;const unit=document.getElementById('task-unit').value.trim();
       if(!title||!proj||!qt||!unit){showToast('Title, project, quantity and unit are required','err');btn.disabled=false;btn.textContent='Save Task';return;}
@@ -2323,7 +2301,7 @@ function renderPMOPortfolio(){
       const score=pmoKPIScore(kpi);
       const pc2=pmoBc(bp);const pg2=prog>=80?'var(--green)':prog>=50?'var(--blue)':'var(--accent)';
       return`<tr>
-        <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--accent);font-family:var(--font-d);font-weight:700">${p.po_number||''}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
+        <td><div style="font-weight:500">${p.name}</div><div style="font-size:10px;color:var(--text3)">${p.phase||''}</div></td>
         <td><div style="display:flex;align-items:center;gap:6px"><div class="rag-dot rag-${rag}"></div><span style="font-size:11px;color:var(--text2)">${ragText[rag]}</span></div></td>
         <td style="color:var(--text2);font-size:11px">${p.client||'—'}</td>
         <td style="min-width:100px"><div style="display:flex;align-items:center;gap:5px"><div class="progress-lg"><div class="progress-fill" style="width:${prog}%;background:${pg2}"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${pg2};min-width:32px">${prog}%</span></div></td>
