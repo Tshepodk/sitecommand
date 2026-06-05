@@ -172,6 +172,7 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="openWorkerRateModal()">⚙ Manage Rates</button>
+          <button class="btn btn-ghost btn-sm" onclick="openBatchModal()">⚡ Batch Entry</button>
           <button class="btn btn-primary" onclick="openEntryModal()">+ Log Time Entry</button>
         </div>
       </div>
@@ -227,7 +228,7 @@ tr:hover td{background:var(--bg3)}
           <div class="table-wrap">
             <table>
               <thead>
-                <tr>
+                <tr id="weekly-thead">
                   <th>Employee</th><th>Role</th><th>Rate</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th><th>Total Hrs</th><th>OT Hrs</th><th>Week Pay</th>
                 </tr>
               </thead>
@@ -257,7 +258,7 @@ tr:hover td{background:var(--bg3)}
           <div class="table-wrap">
             <table>
               <thead>
-                <tr>
+                <tr class="monthly-thead">
                   <th>Employee</th><th>Role</th><th>Hourly Rate</th><th>OT Rate</th><th>Days Worked</th><th>Total Hours</th><th>OT Hours</th><th>Regular Pay</th><th>OT Pay</th><th>Monthly Total</th>
                 </tr>
               </thead>
@@ -420,6 +421,37 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+<!-- ════════════════════ MODAL: BATCH ENTRY ════════════════════ -->
+<div class="modal-bg" id="modal-batch">
+  <div class="modal modal-wide">
+    <div class="modal-title">
+      <span>⚡ Batch Time Entry</span>
+      <button class="modal-close" onclick="closeModal('batch')">✕</button>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">Date *</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input class="form-input" type="date" id="batch-date" style="width:180px"/>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('batch-date').value=new Date().toISOString().split('T')[0];renderBatchRows()">Today</button>
+      </div>
+    </div>
+    <!-- Quick fill -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em">⚡ Quick Fill All</span>
+      <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">In</label><input type="time" id="qf-in" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="07:00"/></div>
+      <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Out</label><input type="time" id="qf-out" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="17:00"/></div>
+      <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(min)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="30" min="0"/></div>
+      <button class="btn btn-ghost btn-sm" onclick="applyBatchQuickFill()">Apply to All</button>
+    </div>
+    <!-- Worker rows -->
+    <div id="batch-worker-rows" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
+      <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">💾 Save All Entries</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -464,45 +496,138 @@ let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// ── BATCH ENTRY ───────────────────────────────────────────────────
+function openBatchModal(){
+  document.getElementById('batch-date').value=new Date().toISOString().split('T')[0];
+  renderBatchRows();
+  document.getElementById('modal-batch').classList.add('open');
+}
+
+function renderBatchRows(){
+  const container=document.getElementById('batch-worker-rows');
+  if(!allWorkers.length){container.innerHTML='<div style="padding:1rem;color:var(--text3);text-align:center">No workers found</div>';return;}
+  container.innerHTML=allWorkers.map((w,i)=>`
+    <div style="display:grid;grid-template-columns:160px 110px 110px 80px 1fr;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);background:${i%2===0?'var(--bg3)':'var(--bg2)'}">
+      <div>
+        <div style="font-weight:500;font-size:13px">${w.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${w.role||''}</div>
+      </div>
+      <input type="time" class="form-input ts-time-input batch-in" data-wid="${w.id}" data-wname="${w.name}" style="padding:5px 8px;font-size:13px" placeholder="Clock In"/>
+      <input type="time" class="form-input ts-time-input batch-out" data-wid="${w.id}" style="padding:5px 8px;font-size:13px" placeholder="Clock Out"/>
+      <input type="number" class="form-input batch-break" data-wid="${w.id}" value="30" min="0" style="padding:5px 8px;font-size:13px" title="Break (min)"/>
+      <input type="text" class="form-input batch-notes" data-wid="${w.id}" placeholder="Notes (optional)" style="padding:5px 8px;font-size:12px"/>
+    </div>`).join('');
+}
+
+function applyBatchQuickFill(){
+  const inT=document.getElementById('qf-in').value;
+  const outT=document.getElementById('qf-out').value;
+  const brk=document.getElementById('qf-break').value;
+  document.querySelectorAll('.batch-in').forEach(el=>{if(inT)el.value=inT;});
+  document.querySelectorAll('.batch-out').forEach(el=>{if(outT)el.value=outT;});
+  document.querySelectorAll('.batch-break').forEach(el=>{if(brk)el.value=brk;});
+}
+
+async function saveBatchEntries(){
+  const date=document.getElementById('batch-date').value;
+  if(!date){showToast('Please select a date','err');return;}
+  const btn=document.getElementById('batch-save-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+
+  const entries=[];
+  document.querySelectorAll('.batch-in').forEach(inEl=>{
+    const wid=inEl.dataset.wid;
+    const wname=inEl.dataset.wname;
+    const clockIn=inEl.value;
+    const clockOut=document.querySelector(`.batch-out[data-wid="${wid}"]`)?.value;
+    if(!clockIn||!clockOut)return; // skip workers with no times
+    const brk=parseInt(document.querySelector(`.batch-break[data-wid="${wid}"]`)?.value)||30;
+    const notes=document.querySelector(`.batch-notes[data-wid="${wid}"]`)?.value||'';
+    const worker=allWorkers.find(w=>w.id==wid);
+    // Calculate hours
+    const [ih,im]=clockIn.split(':').map(Number);
+    const [oh,om]=clockOut.split(':').map(Number);
+    const totalMins=Math.max(0,(oh*60+om)-(ih*60+im)-brk);
+    const totalHours=Math.round(totalMins/60*100)/100;
+    const otThreshold=worker?.ot_threshold||8;
+    const regularHours=Math.min(totalHours,otThreshold);
+    const otHours=Math.max(0,totalHours-otThreshold);
+    const hourlyRate=worker?.hourly_rate||0;
+    const otRate=worker?.ot_rate||0;
+    const regularPay=Math.round(regularHours*hourlyRate*100)/100;
+    const otPay=Math.round(otHours*otRate*100)/100;
+    entries.push({
+      worker_id:parseInt(wid),worker_name:wname,
+      entry_date:date,clock_in:clockIn,clock_out:clockOut,
+      break_minutes:brk,total_hours:totalHours,
+      regular_hours:regularHours,ot_hours:otHours,
+      hourly_rate:hourlyRate,ot_rate:otRate,
+      regular_pay:regularPay,ot_pay:otPay,
+      total_pay:Math.round((regularPay+otPay)*100)/100,
+      notes,status:'pending'
+    });
+  });
+
+  if(!entries.length){showToast('No entries to save — enter clock-in and clock-out times','err');btn.disabled=false;btn.textContent='💾 Save All Entries';return;}
+
+  let saved=0,failed=0;
+  for(const entry of entries){
+    try{
+      await sbPost('timesheet_entries',entry);
+      saved++;
+    }catch(e){failed++;console.warn('Batch save failed for',entry.worker_name,e);}
+  }
+
+  allEntries=await sbGet('timesheet_entries','order=entry_date.desc');
+  renderStats();renderDailyTab();applyForemanView();
+  closeModal('batch');
+  showToast(`✅ ${saved} entr${saved===1?'y':'ies'} saved${failed?` (${failed} failed)`:''}`,saved?'ok':'err');
+  btn.disabled=false;btn.textContent='💾 Save All Entries';
+}
+
 // ── FOREMAN VIEW — hide all financial data ────────────────────────
 function applyForemanView(){
   const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
   const role=sess?.profile?.role||sess?.user?.user_metadata?.role||'viewer';
   if(role!=='foreman')return;
 
-  // Hide payroll totals on daily/weekly/monthly tabs
-  ['day-pay-card','wk-pay-card','mo-pay-card','entry-rate-preview','ep-pay'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display='none';
+  // Inject CSS to permanently hide all financial elements
+  const style=document.createElement('style');
+  style.textContent=`
+    #day-pay-card,#wk-pay-card,#mo-pay-card,#ep-pay,
+    #entry-rate-preview,#tab-workers,
+    .ts-earnings,.rate-tag,
+    [onclick*="openWorkerRateModal"]{display:none!important}
+    /* Hide Month Payroll stat card — last in stats grid */
+    #ts-stats .stat-card:last-child{display:none!important}
+    /* Hide Rate column in weekly table */
+    #weekly-table td:nth-child(3),
+    #weekly-thead th:nth-child(3){display:none!important}
+    /* Hide pay columns in monthly table (Hourly Rate, OT Rate, Regular Pay, OT Pay, Monthly Total) */
+    #monthly-table td:nth-child(3),#monthly-table td:nth-child(4),
+    #monthly-table td:nth-child(8),#monthly-table td:nth-child(9),#monthly-table td:nth-child(10),
+    .monthly-thead th:nth-child(3),.monthly-thead th:nth-child(4),
+    .monthly-thead th:nth-child(8),.monthly-thead th:nth-child(9),.monthly-thead th:nth-child(10){display:none!important}
+    /* Hide weekly pay total */
+    #wk-total-pay{display:none!important}
+    #mo-total-pay{display:none!important}
+  `;
+  document.head.appendChild(style);
+
+  // Hide Worker Rates tab button
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    if(btn.textContent.includes('Worker Rates'))btn.style.display='none';
   });
 
-  // Hide the Worker Rates tab entirely
-  const ratesTab=document.querySelector('[onclick*="workers"]');
-  if(ratesTab)ratesTab.style.display='none';
-  const ratesPane=document.getElementById('tab-workers');
-  if(ratesPane)ratesPane.style.display='none';
-
-  // Hide Manage Rates button in header
-  document.querySelectorAll('button').forEach(btn=>{
-    if(btn.textContent.includes('Manage Rates'))btn.style.display='none';
-  });
-
-  // Add a notice so foreman knows rates are restricted
-  const notice=document.createElement('div');
-  notice.style.cssText='margin-bottom:1rem;padding:10px 14px;background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)';
-  notice.innerHTML='🔒 <strong>Foreman view</strong> — You can capture clock-in/out times and view hours. Pay rates are managed by admin.';
-  const main=document.querySelector('.main');
-  if(main)main.insertBefore(notice,main.firstChild);
-
-  // Override renderDailyTab to strip pay column from worker rows
-  const _orig=window.renderDailyTab;
-  window.renderDailyTab=function(){
-    _orig&&_orig();
-    document.querySelectorAll('.ts-earnings').forEach(el=>el.style.display='none');
-    document.querySelectorAll('.rate-tag').forEach(el=>el.style.display='none');
-  };
-  // Apply immediately to already-rendered rows
-  document.querySelectorAll('.ts-earnings,.rate-tag').forEach(el=>el.style.display='none');
+  // Add foreman notice
+  if(!document.getElementById('foreman-notice')){
+    const notice=document.createElement('div');
+    notice.id='foreman-notice';
+    notice.style.cssText='margin-bottom:1rem;padding:10px 14px;background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.2);border-radius:var(--r);font-size:12px;color:var(--text2)';
+    notice.innerHTML='🔒 <strong>Foreman view</strong> — You can capture clock-in/out times and view hours. Pay rates are managed by admin.';
+    const main=document.querySelector('.main');
+    if(main)main.insertBefore(notice,main.firstChild);
+  }
 }
 
 async function init(){
