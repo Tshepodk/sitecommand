@@ -784,6 +784,20 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+<!-- Modal: Audit History -->
+<div class="modal-bg" id="modal-audit-history">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">
+      <span id="audit-history-title">Approval History</span>
+      <button class="modal-close" onclick="closeModal('audit-history')">&#10005;</button>
+    </div>
+    <div id="audit-history-body" style="max-height:400px;overflow-y:auto;padding:4px 0"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('audit-history')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1063,6 +1077,7 @@ function renderApprovalsPage(){
       </td>
       <td>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openAuditHistory(${r.id})" title="View approval history">📋 History</button>
           <button class="btn btn-ghost btn-sm" onclick="openReportEdit(${r.id})" title="View full report">&#128065; View</button>
           ${canAct?`
             <button class="btn btn-sm" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#4ade80" onclick="openApprovalAction(${r.id},'approve')">&#10003; Approve</button>
@@ -1129,6 +1144,7 @@ async function submitApprovalAction(){
   const statusMap={approve:'approved',reject:'rejected',reset:'pending'};
   const newStatus=statusMap[action]||'pending';
   const reviewerName=getUserName();
+  const r=allReports.find(x=>x.id==reportId);
 
   try{
     await sbPatch('daily_reports',reportId,{
@@ -1138,8 +1154,21 @@ async function submitApprovalAction(){
       reviewed_at:new Date().toISOString()
     });
 
+    // Write to audit_log
+    try{
+      await sbPost('audit_log',{
+        report_id:parseInt(reportId),
+        action,
+        new_status:newStatus,
+        actor:reviewerName,
+        comment:comment||null,
+        project_name:r?.project||null,
+        report_date:r?.report_date||null,
+        created_at:new Date().toISOString()
+      });
+    }catch(e){console.warn('Audit log insert failed:',e);}
+
     // Post notification for the submitter
-    const r=allReports.find(x=>x.id==reportId);
     if(r&&action!=='reset'){
       try{
         await sbPost('notifications',{
@@ -1164,6 +1193,40 @@ async function submitApprovalAction(){
   }catch(e){showToast('Action failed: '+e.message,'err');console.error(e);}
   btn.disabled=false;
 }
+
+// ── AUDIT HISTORY MODAL ───────────────────────────────────────────
+async function openAuditHistory(reportId){
+  const r=allReports.find(x=>x.id===reportId);
+  const modal=document.getElementById('modal-audit-history');
+  const body=document.getElementById('audit-history-body');
+  document.getElementById('audit-history-title').textContent=`Approval History — ${r?r.project+' ('+r.report_date+')':'Report #'+reportId}`;
+  body.innerHTML='<div style="color:var(--text3);padding:1rem;text-align:center">Loading...</div>';
+  modal.classList.add('open');
+  try{
+    const logs=await sbGet('audit_log',`report_id=eq.${reportId}&order=created_at.asc`);
+    if(!logs.length){
+      body.innerHTML='<div style="color:var(--text3);padding:1rem;text-align:center">No audit history yet for this report.</div>';
+      return;
+    }
+    const iconMap={approve:'✅',reject:'❌',reset:'🔄'};
+    const colorMap={approve:'var(--green)',reject:'var(--red)',reset:'var(--text3)'};
+    body.innerHTML=`<div style="position:relative;padding-left:24px">
+      <div style="position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)"></div>
+      ${logs.map(l=>`
+        <div style="position:relative;margin-bottom:1.25rem">
+          <div style="position:absolute;left:-20px;top:2px;font-size:14px">${iconMap[l.action]||'•'}</div>
+          <div style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${colorMap[l.action]||'var(--text)'};text-transform:uppercase;letter-spacing:0.06em">${l.action}</div>
+          <div style="font-size:13px;color:var(--text);margin-top:2px">by <strong>${l.actor||'—'}</strong></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${new Date(l.created_at).toLocaleString('en-ZA')}</div>
+          ${l.comment?`<div style="margin-top:6px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text2)">💬 ${l.comment}</div>`:''}
+        </div>
+      `).join('')}
+    </div>`;
+  }catch(e){
+    body.innerHTML='<div style="color:var(--red);padding:1rem">Failed to load audit history. Make sure the audit_log table exists in Supabase.</div>';
+  }
+}
+
 
 
 function signOut(e){
