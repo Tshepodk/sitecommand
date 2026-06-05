@@ -144,6 +144,7 @@ tr:hover td{background:var(--bg3)}
     <div class="nav-section">
       <div class="nav-label">Quick Links</div>
       <div class="nav-item" onclick="switchTab('timesheet',document.querySelector('[data-tab=timesheet]'))"><span class="nav-icon">💰</span>Labour Costs</div>
+      <div class="nav-item" onclick="switchTab('employee',document.querySelector('[data-tab=employee]'))"><span class="nav-icon">👷</span>Employee Summary</div>
       <div class="nav-item" onclick="switchTab('project',document.querySelector('[data-tab=project]'))"><span class="nav-icon">📋</span>Project Costs</div>
       <div class="nav-item" onclick="switchTab('daily',document.querySelector('[data-tab=daily]'))"><span class="nav-icon">📅</span>Daily Labour</div>
       <div class="nav-item" onclick="switchTab('budget',document.querySelector('[data-tab=budget]'))"><span class="nav-icon">📈</span>Budget Impact</div>
@@ -173,6 +174,7 @@ tr:hover td{background:var(--bg3)}
       <!-- Tabs -->
       <div class="tab-bar">
         <button class="tab-btn active" data-tab="timesheet" onclick="switchTab('timesheet',this)">💰 Timesheet Report</button>
+        <button class="tab-btn" data-tab="employee" onclick="switchTab('employee',this)">👷 Employee Summary</button>
         <button class="tab-btn" data-tab="project" onclick="switchTab('project',this)">📋 Project Cost Summary</button>
         <button class="tab-btn" data-tab="daily" onclick="switchTab('daily',this)">📅 Daily Labour Log</button>
         <button class="tab-btn" data-tab="budget" onclick="switchTab('budget',this)">📈 Budget Impact</button>
@@ -193,6 +195,30 @@ tr:hover td{background:var(--bg3)}
         </div>
 
         <div id="ts-report-content"></div>
+      </div>
+
+      <!-- ── EMPLOYEE SUMMARY TAB ──────────────────────────────────────────── -->
+      <div class="tab-content" id="tab-employee">
+        <div class="filter-bar">
+          <input type="month" class="form-input" id="emp-filter-month" style="width:150px;font-size:12px;padding:5px 8px" onchange="renderEmployeeSummary()"/>
+          <select class="form-select" id="emp-filter-project" style="width:180px;font-size:12px;padding:5px 8px" onchange="renderEmployeeSummary()"><option value="">All Projects</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilter('emp')">Clear</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Employee</th><th>Project</th><th>Days Worked</th><th>Total Hours</th><th>OT Hours</th><th>Regular Pay (R)</th><th>OT Pay (R)</th><th>Total Pay (R)</th><th>Status</th></tr>
+            </thead>
+            <tbody id="emp-report-content"></tbody>
+          </table>
+        </div>
+        <div id="emp-totals" style="display:none;padding:1rem 1.25rem;background:rgba(20,184,166,0.05);border:1px solid rgba(20,184,166,0.2);border-radius:0 0 var(--r) var(--r)">
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+            <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--teal)" id="emp-tot-hrs">0h</div></div>
+            <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">OT Hours</div><div style="font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--purple)" id="emp-tot-ot">0h</div></div>
+            <div style="margin-left:auto"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">Total Payroll</div><div style="font-family:var(--font-d);font-size:26px;font-weight:800;color:var(--accent)" id="emp-tot-pay">R 0</div></div>
+          </div>
+        </div>
       </div>
 
       <!-- ── PROJECT COST SUMMARY TAB ─────────────────────────────────────── -->
@@ -306,6 +332,7 @@ function switchTab(name,el){
   if(el)el.classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
   if(name==='timesheet')renderTimesheetReport();
+  if(name==='employee')renderEmployeeSummary();
   if(name==='project')renderProjectCosts();
   if(name==='daily')renderDailyLabour();
   if(name==='budget')renderBudgetImpact();
@@ -317,6 +344,7 @@ function clearFilter(prefix){
     else el.value='';
   });
   if(prefix==='ts')renderTimesheetReport();
+  if(prefix==='emp')renderEmployeeSummary();
   if(prefix==='pc')renderProjectCosts();
   if(prefix==='dl')renderDailyLabour();
   if(prefix==='bi')renderBudgetImpact();
@@ -359,7 +387,7 @@ async function init(){
 
   // Populate project filters
   const projOpts='<option value="">All Projects</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-  ['ts-filter-project','pc-filter-project','dl-filter-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
+  ['ts-filter-project','pc-filter-project','dl-filter-project','emp-filter-project'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=projOpts;});
 
   renderStats();
   renderTimesheetReport();
@@ -545,6 +573,66 @@ function toggleProjBlock(name){
 // ══════════════════════════════════════════════════════════════════════════════
 // TAB 2: PROJECT COST SUMMARY — field costs + labour vs budget
 // ══════════════════════════════════════════════════════════════════════════════
+function renderEmployeeSummary(){
+  const month=document.getElementById('emp-filter-month').value;
+  const proj=document.getElementById('emp-filter-project').value;
+  let entries=allEntries;
+  if(month)entries=entries.filter(e=>(e.entry_date||'').startsWith(month));
+
+  // Group by worker
+  const byWorker={};
+  entries.forEach(e=>{
+    const wid=e.worker_id||e.worker_name;
+    const wProj=e.project_name||getWorkerProject(e.worker_id,e.worker_name)||'—';
+    if(proj&&wProj!==proj)return;
+    if(!byWorker[wid])byWorker[wid]={name:e.worker_name||'—',project:wProj,days:new Set(),totalHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0,statuses:[]};
+    byWorker[wid].days.add(e.entry_date);
+    byWorker[wid].totalHrs+=(e.total_hours||0);
+    byWorker[wid].otHrs+=(e.ot_hours||0);
+    byWorker[wid].regularPay+=(e.regular_pay||0);
+    byWorker[wid].otPay+=(e.ot_pay||0);
+    byWorker[wid].totalPay+=(e.total_pay||0);
+    byWorker[wid].statuses.push(e.status||'pending');
+  });
+
+  const workers=Object.values(byWorker);
+  const tbody=document.getElementById('emp-report-content');
+  const totalsBar=document.getElementById('emp-totals');
+
+  if(!workers.length){
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:2rem">No entries found for the selected filters.</td></tr>`;
+    totalsBar.style.display='none';
+    return;
+  }
+
+  const allApproved=s=>s.every(x=>x==='approved');
+  const anyPending=s=>s.some(x=>x==='pending'||x==='submitted');
+
+  tbody.innerHTML=workers.sort((a,b)=>a.name.localeCompare(b.name)).map(w=>{
+    const statusLabel=allApproved(w.statuses)?'<span style="color:var(--green);font-size:11px;font-weight:700">✓ Approved</span>':anyPending(w.statuses)?'<span style="color:var(--accent);font-size:11px;font-weight:700">⏳ Pending</span>':'<span style="color:var(--text3);font-size:11px">Mixed</span>';
+    return`<tr>
+      <td><div style="font-weight:500">${w.name}</div></td>
+      <td style="font-size:12px;color:var(--text2)">${w.project}</td>
+      <td style="font-family:var(--font-d);font-weight:700;text-align:center">${w.days.size}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--teal)">${w.totalHrs.toFixed(1)}h</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--purple)">${w.otHrs.toFixed(1)}h</td>
+      <td style="font-family:var(--font-d);font-weight:700">R ${w.regularPay.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-family:var(--font-d);font-weight:700">R ${w.otPay.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-family:var(--font-d);font-size:15px;font-weight:800;color:var(--accent)">R ${w.totalPay.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td>${statusLabel}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals bar
+  const totHrs=workers.reduce((a,w)=>a+w.totalHrs,0);
+  const totOT=workers.reduce((a,w)=>a+w.otHrs,0);
+  const totPay=workers.reduce((a,w)=>a+w.totalPay,0);
+  document.getElementById('emp-tot-hrs').textContent=totHrs.toFixed(1)+'h';
+  document.getElementById('emp-tot-ot').textContent=totOT.toFixed(1)+'h';
+  document.getElementById('emp-tot-pay').textContent='R '+totPay.toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+  totalsBar.style.display='block';
+}
+
 function renderProjectCosts(){
   const projFilter=document.getElementById('pc-filter-project').value;
   const monthFilter=document.getElementById('pc-filter-month').value;
