@@ -929,26 +929,55 @@ function applyRBAC(){
     return;
   }
 
-  // ── FOREMAN — can only do field reports ──────────────────────────
+  // ── FOREMAN — daily intake and timesheets only ────────────────────
   if(role==='foreman'){
-    // Hide entire pages from sidebar nav
-    ['projects','equipment','budget','cost categor','variations','pmo','user'].forEach(keyword=>{
-      document.querySelectorAll('.nav-item, .mob-nav-item, .bn-item').forEach(el=>{
-        if((el.textContent||'').toLowerCase().includes(keyword))el.style.display='none';
-      });
+    // Redirect away from all restricted pages
+    const page=window.location.pathname.split('/').pop();
+    const restricted=['variations.html','pmo.html','users.html','reports.html','gantt.html','project_intake.html','sc_search.html','approvals.html'];
+    if(restricted.includes(page)){window.location.href='intake.html';return;}
+
+    // Hide ALL sidebar nav sections except Daily Reports link and Sign In/Out
+    document.querySelectorAll('.nav-section').forEach(s=>s.style.display='none');
+    document.querySelectorAll('.sidebar-footer').forEach(s=>s.style.display='none');
+
+    // Build a clean foreman-only sidebar
+    const sidebar=document.querySelector('.sidebar');
+    if(sidebar){
+      const foremanNav=document.createElement('div');
+      foremanNav.className='nav-section';
+      foremanNav.innerHTML=`
+        <div class="nav-label">Field Work</div>
+        <a href="intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">📋</span>Daily Intake</a>
+        <a href="timesheets.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">⏱</span>Timesheets</a>
+        <a href="login.html" class="nav-item" style="text-decoration:none;margin-top:8px"><span class="nav-icon">🔒</span>Sign Out</a>`;
+      sidebar.appendChild(foremanNav);
+    }
+
+    // Hide financial dashboard stat cards
+    ['stat-budget','stat-spend','stat-cost','stat-labour','stat-payroll'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.style.display='none';
     });
-    // Hide write buttons except intake form
+
+    // Hide all action buttons (create/delete/edit)
     document.querySelectorAll(
+      'button.btn-primary:not([data-keep]), button.btn-danger, '+
       '[onclick*="openModal(\'project\')"], [onclick*="openModal(\'equipment\')"], '+
       '[onclick*="openModal(\'worker\')"], [onclick*="openModal(\'cost-cat\')"], '+
-      '[onclick*="deleteRecord"], button.btn-danger:not([data-keep])'
+      '[onclick*="deleteRecord"]'
     ).forEach(el=>el.style.display='none');
-    // Redirect away from restricted pages
-    const page=window.location.pathname.split('/').pop();
+
+    // Hide budget/cost/reports stat cards on dashboard by hiding their parent containers
+    document.querySelectorAll('.stats-grid .stat-card').forEach(card=>{
+      const txt=(card.textContent||'').toLowerCase();
+      if(txt.includes('budget')||txt.includes('spend')||txt.includes('cost')||txt.includes('labour')||txt.includes('payroll'))
+        card.style.display='none';
+    });
+
+    // Hide More section links (Reports, New Project, Gantt etc)
+    document.querySelectorAll('a[href="reports.html"], a[href="project_intake.html"], a[href="gantt.html"], a[href="variations.html"], a[href="sc_search.html"]')
+      .forEach(el=>el.style.display='none');
+
     document.querySelectorAll('[data-pm-link]').forEach(el=>el.style.display='none');
-    if(['variations.html','pmo.html','users.html'].includes(page)){
-      window.location.href='index.html';
-    }
     return;
   }
 

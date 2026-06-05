@@ -352,6 +352,11 @@ function clearFilter(prefix){
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init(){
+  // Block foreman access — redirect to intake
+  const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+  const role=sess?.profile?.role||sess?.user?.user_metadata?.role||'viewer';
+  if(role==='foreman'){window.location.href='intake.html';return;}
+
   const thisMonth=new Date().toISOString().substring(0,7);
   document.getElementById('ts-filter-month').value=thisMonth;
   document.getElementById('pc-filter-month').value=thisMonth;
