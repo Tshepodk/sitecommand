@@ -2505,10 +2505,18 @@ async function saveGateAction(){
   const gateId=document.getElementById('gm-gate-id').value;
   const action=document.getElementById('gm-action').value;
   const notes=document.getElementById('gm-notes').value.trim();
+  const notesEl=document.getElementById('gm-notes');
   const btn=document.getElementById('gm-save-btn');
+  if(!notes){
+    notesEl.style.borderColor='var(--red)';
+    notesEl.placeholder='⚠ Notes are required before actioning a gate.';
+    notesEl.focus();
+    return;
+  }
+  notesEl.style.borderColor='';
   const statusMap={submit:'in_review',approve:'approved',reject:'pending'};
   const newStatus=statusMap[action];
-  const payload={status:newStatus,notes:notes||null};
+  const payload={status:newStatus,notes:notes};
   if(action==='approve'){payload.approved_by=getUserName();payload.approved_date=new Date().toISOString().split('T')[0];}
   btn.disabled=true;btn.textContent='Saving...';
   try{
@@ -2518,7 +2526,7 @@ async function saveGateAction(){
     await loadAllData();
     renderPMOGates();
   }catch(e){showToast('Error saving gate: '+e.message,'error');}
-  finally{btn.disabled=false;}
+  finally{btn.disabled=false;btn.textContent=document.getElementById('gm-title-text').textContent;}
 }
 
 // ── KPI ────────────────────────────────────────────────────────────
@@ -2787,8 +2795,8 @@ loadAllData().then(()=>renderDashboard());
       <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:2px">Stage</div><div style="font-weight:600;font-family:var(--font-d)" id="gm-stage"></div></div>
     </div>
     <div class="form-group">
-      <label class="form-label">Notes (optional)</label>
-      <textarea class="form-textarea" id="gm-notes" placeholder="Add comments or notes for this gate action..." style="min-height:90px"></textarea>
+      <label class="form-label">Notes <span style="color:var(--red)">*</span> <span style="color:var(--text3);font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(required — summarise evidence that gate criteria are met)</span></label>
+      <textarea class="form-textarea" id="gm-notes" placeholder="e.g. All tasks 100% complete. Final cost R278,450 vs budget R285,000. Client sign-off received 2026-06-10." style="min-height:90px"></textarea>
     </div>
     <div class="modal-footer" style="display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem">
       <button class="btn btn-ghost" onclick="document.getElementById('modal-gate-action').classList.remove('open')">Cancel</button>
