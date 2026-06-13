@@ -371,6 +371,30 @@ function dayTag(ds){const t=getDayType(ds);if(t==='sunday')return'<span class="d
 
 // ── Status badges ─────────────────────────────────────────────────────────────
 const ST={pending:'<span class="st-pending">Draft</span>',submitted:'<span class="st-submitted">⏳ Pending</span>',approved:'<span class="st-approved">✓ Approved</span>',rejected:'<span class="st-rejected">✕ Rejected</span>'};
+
+// ── AUDIT LOG HELPER ──────────────────────────────────────────────────────────
+async function logAudit(action, entryId, notes=''){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'{}');
+    const actor=sess.full_name||sess.email||'Unknown';
+    const entry=allEntries.find(e=>e.id===entryId)||{};
+    const worker=allWorkers.find(w=>w.id==entry.worker_id)||{};
+    await sbPost('audit_log',{
+      action,
+      entity_type:'timesheet_entry',
+      entity_id:String(entryId),
+      actor,
+      notes: notes||`${action} by ${actor}`,
+      metadata: JSON.stringify({
+        worker_name: worker.name||'',
+        entry_date: entry.entry_date||'',
+        project: worker.project_name||'',
+        total_pay: entry.total_pay||0
+      }),
+      created_at: new Date().toISOString()
+    });
+  }catch(e){console.warn('Audit log failed (non-fatal):',e);}
+}
 const stLabel=s=>ST[s]||ST.pending;
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -566,6 +590,7 @@ async function approveOne(id){
     await sbPatch('timesheet_entries',id,{status:'approved',approved_at:approvedAt});
     const idx=allEntries.findIndex(e=>e.id===id);
     if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};
+    await logAudit('approved',id);
     showToast('Entry approved ✓');
     renderStats();renderPending();
   }catch(e){showToast('Failed: '+e.message,'err');}
@@ -585,6 +610,7 @@ async function approveFiltered(){
   try{
     await Promise.all(filtered.map(e=>sbPatch('timesheet_entries',e.id,{status:'approved',approved_at:approvedAt})));
     filtered.forEach(e=>{const idx=allEntries.findIndex(x=>x.id===e.id);if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};});
+    await Promise.all(filtered.map(e=>logAudit('approved',e.id,'Bulk approve (filtered)')));
     showToast(`✓ ${filtered.length} entries approved`);
     renderStats();renderPending();
   }catch(e){showToast('Bulk approve failed: '+e.message,'err');}
@@ -598,6 +624,7 @@ async function bulkApproveAll(){
   try{
     await Promise.all(submitted.map(e=>sbPatch('timesheet_entries',e.id,{status:'approved',approved_at:approvedAt})));
     submitted.forEach(e=>{const idx=allEntries.findIndex(x=>x.id===e.id);if(idx>=0)allEntries[idx]={...allEntries[idx],status:'approved',approved_at:approvedAt};});
+    await Promise.all(submitted.map(e=>logAudit('approved',e.id,'Bulk approve all')));
     showToast(`✓ All ${submitted.length} entries approved`);
     renderStats();renderPending();
   }catch(e){showToast('Failed: '+e.message,'err');}
@@ -617,6 +644,7 @@ async function confirmReject(){
     await sbPatch('timesheet_entries',id,{status:'rejected',rejection_reason:reason,approved_at:null});
     const idx=allEntries.findIndex(e=>e.id===id);
     if(idx>=0)allEntries[idx]={...allEntries[idx],status:'rejected',rejection_reason:reason};
+    await logAudit('rejected',id,reason);
     showToast('Entry rejected');closeModal('reject');
     renderStats();renderPending();
   }catch(e){showToast('Failed: '+e.message,'err');}
