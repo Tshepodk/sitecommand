@@ -415,10 +415,8 @@ function switchTab(name,el){
 }
 
 function quickFilter(status){
-  document.querySelector('[onclick="switchTab(\'pending\',this)"]').click();
-  // small delay to let tab render
+  document.querySelector('[onclick="switchTab(\'draft\',this)"]').click();
   setTimeout(()=>{
-    const sel=document.getElementById('pf-project');
     renderPending(status);
   },50);
 }
