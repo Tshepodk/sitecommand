@@ -471,6 +471,9 @@ async function init(){
   }
 
   populateFilters();
+  // Clear date filters on load to prevent stale values hiding entries
+  document.getElementById('pf-date-from').value='';
+  document.getElementById('pf-date-to').value='';
   renderStats();
   renderPending();
 }
@@ -547,9 +550,11 @@ function renderPending(forceStatus=null){
   if(worker)entries=entries.filter(e=>e.worker_id==worker);
   if(dateFrom)entries=entries.filter(e=>e.entry_date>=dateFrom);
   if(dateTo)entries=entries.filter(e=>e.entry_date<=dateTo);
-  entries.sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
+  entries=entries.filter(e=>e&&e.id);
+  entries.sort((a,b)=>(a.entry_date||'').localeCompare(b.entry_date||''));
 
   const tbody=document.getElementById('pending-table');
+  console.log('renderPending: allEntries=',allEntries.length,'filtered=',entries.length,'forceStatus=',forceStatus);
   if(!entries.length){
     tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;color:var(--green);padding:2rem;font-family:var(--font-d);font-size:16px;font-weight:700;letter-spacing:0.04em">✓ No pending entries — all clear</td></tr>`;
     document.getElementById('pending-totals').style.display='none';
