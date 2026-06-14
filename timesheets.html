@@ -441,7 +441,7 @@ tr:hover td{background:var(--bg3)}
       <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">In</label><input type="time" id="qf-in" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="07:00"/></div>
       <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Out</label><input type="time" id="qf-out" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="17:00"/></div>
       <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(min)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="60" min="0"/></div>
-      <button class="btn btn-ghost btn-sm" onclick="applyBatchQuickFill()">Apply to All</button>
+      <button class="btn btn-ghost btn-sm" onclick="applyBatchQuickFill()">Apply to Selected</button>
     </div>
     <!-- Project selector -->
     <div class="form-group" style="margin-bottom:1rem">
@@ -540,9 +540,12 @@ function applyBatchQuickFill(){
   const inT=document.getElementById('qf-in').value;
   const outT=document.getElementById('qf-out').value;
   const brk=document.getElementById('qf-break').value;
-  document.querySelectorAll('.batch-in').forEach(el=>{if(inT)el.value=inT;});
-  document.querySelectorAll('.batch-out').forEach(el=>{if(outT)el.value=outT;});
-  document.querySelectorAll('.batch-break').forEach(el=>{if(brk)el.value=brk;});
+  document.querySelectorAll('.batch-select:checked').forEach(chk=>{
+    const wid=chk.dataset.wid;
+    if(inT)document.querySelector(`.batch-in[data-wid="${wid}"]`).value=inT;
+    if(outT)document.querySelector(`.batch-out[data-wid="${wid}"]`).value=outT;
+    if(brk)document.querySelector(`.batch-break[data-wid="${wid}"]`).value=brk;
+  });
 }
 
 async function saveBatchEntries(){
