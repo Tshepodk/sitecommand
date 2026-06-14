@@ -323,6 +323,13 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">Project *</label>
+      <select class="form-select" id="entry-project">
+        <option value="">— Select Project —</option>
+      </select>
+    </div>
+
     <!-- Rates preview -->
     <div id="entry-rate-preview" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--text2)">
       <span id="entry-rate-text"></span>
@@ -1109,6 +1116,11 @@ function openEntryModal(entryId=null){
   document.getElementById('entry-save-btn').textContent='Save Entry';
   document.getElementById('entry-id').value=entryId||'';
 
+  // Populate project dropdown
+  const pSel=document.getElementById('entry-project');
+  pSel.innerHTML='<option value="">— Select Project —</option>'+
+    allProjects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+
   if(entryId){
     const e=allEntries.find(x=>x.id===entryId);
     if(e){
@@ -1118,6 +1130,7 @@ function openEntryModal(entryId=null){
       document.getElementById('entry-clock-out').value=e.clock_out||'';
       document.getElementById('entry-break').value=e.break_minutes??30;
       document.getElementById('entry-notes').value=e.notes||'';
+      if(e.project_id)pSel.value=e.project_id;
       onWorkerSelect();
       recalcEntryHours();
     }
@@ -1199,9 +1212,13 @@ async function saveEntry(){
     const priorHours=getWorkerMonthHours(wid,month,entryId||null);
     const pay=calcPaySA(total,w.hourly_rate||0,date,priorHours);
 
+    const projectId=document.getElementById('entry-project').value;
+    const projectName=allProjects.find(p=>p.id==projectId)?.name||'';
     const payload={
       worker_id:parseInt(wid),
       worker_name:w.name,
+      project_id:projectId?parseInt(projectId):null,
+      project_name:projectName,
       entry_date:date,
       clock_in:clockIn,
       clock_out:clockOut,
