@@ -166,10 +166,10 @@ tr:hover td{background:var(--bg3)}
 
       <!-- Tabs -->
       <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('draft',this)">⏳ Pending <span id="pending-count-tab" style="background:var(--accent);color:#000;border-radius:10px;padding:0px 7px;font-size:11px;font-weight:800;font-family:var(--font-d);margin-left:4px">0</span></button>
+        <button id="tab-btn-draft" class="tab-btn active" onclick="switchTab('draft',this)">⏳ Pending <span id="pending-count-tab" style="background:var(--accent);color:#000;border-radius:10px;padding:0px 7px;font-size:11px;font-weight:800;font-family:var(--font-d);margin-left:4px">0</span></button>
         <button class="tab-btn" onclick="switchTab('byworker',this)">👷 By Worker</button>
         <button class="tab-btn" onclick="switchTab('monthly',this)">📈 Monthly Payroll</button>
-        <button class="tab-btn" onclick="switchTab('history',this)">📋 All History</button>
+        <button id="tab-btn-history" class="tab-btn" onclick="switchTab('history',this)">📋 All History</button>
       </div>
 
       <!-- ── PENDING TAB ──────────────────────────────────────── -->
@@ -416,12 +416,10 @@ function switchTab(name,el){
 
 function quickFilter(status){
   if(status==='submitted'||status==='pending'||status===null){
-    // Pending tab
-    document.querySelector('[onclick="switchTab(\'draft\',this)"]').click();
+    document.getElementById('tab-btn-draft').click();
     setTimeout(()=>renderPending(),50);
   }else{
-    // Approved, Rejected, All — go to History tab and set its status filter
-    document.querySelector('[onclick="switchTab(\'history\',this)"]').click();
+    document.getElementById('tab-btn-history').click();
     setTimeout(()=>{
       const sel=document.getElementById('hf-status');
       if(sel)sel.value=status;
