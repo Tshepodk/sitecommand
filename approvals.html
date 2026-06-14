@@ -415,10 +415,19 @@ function switchTab(name,el){
 }
 
 function quickFilter(status){
-  document.querySelector('[onclick="switchTab(\'draft\',this)"]').click();
-  setTimeout(()=>{
-    renderPending(status);
-  },50);
+  if(status==='submitted'||status==='pending'||status===null){
+    // Pending tab
+    document.querySelector('[onclick="switchTab(\'draft\',this)"]').click();
+    setTimeout(()=>renderPending(),50);
+  }else{
+    // Approved, Rejected, All — go to History tab and set its status filter
+    document.querySelector('[onclick="switchTab(\'history\',this)"]').click();
+    setTimeout(()=>{
+      const sel=document.getElementById('hf-status');
+      if(sel)sel.value=status;
+      renderHistory();
+    },50);
+  }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
