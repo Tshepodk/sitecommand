@@ -440,11 +440,22 @@ tr:hover td{background:var(--bg3)}
       <span style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em">⚡ Quick Fill All</span>
       <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">In</label><input type="time" id="qf-in" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="07:00"/></div>
       <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Out</label><input type="time" id="qf-out" class="form-input" style="width:110px;padding:4px 8px;font-size:13px" value="17:00"/></div>
-      <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(min)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="30" min="0"/></div>
+      <div style="display:flex;align-items:center;gap:6px"><label style="font-size:11px;color:var(--text3)">Break(min)</label><input type="number" id="qf-break" class="form-input" style="width:70px;padding:4px 8px;font-size:13px" value="60" min="0"/></div>
       <button class="btn btn-ghost btn-sm" onclick="applyBatchQuickFill()">Apply to All</button>
     </div>
+    <!-- Project selector -->
+    <div class="form-group" style="margin-bottom:1rem">
+      <label class="form-label">Project *</label>
+      <select class="form-select" id="batch-project" style="width:100%">
+        <option value="">— Select Project —</option>
+      </select>
+    </div>
+    <!-- Worker rows header -->
+    <div style="display:grid;grid-template-columns:32px 160px 110px 110px 80px 1fr;gap:8px;padding:6px 12px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3)">
+      <span></span><span>Worker</span><span>Clock In</span><span>Clock Out</span><span>Break</span><span>Notes</span>
+    </div>
     <!-- Worker rows -->
-    <div id="batch-worker-rows" style="max-height:380px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r)"></div>
+    <div id="batch-worker-rows" style="max-height:340px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('batch')">Cancel</button>
       <button class="btn btn-primary" id="batch-save-btn" onclick="saveBatchEntries()">💾 Save All Entries</button>
@@ -494,11 +505,16 @@ const closeModal=k=>{document.getElementById('modal-'+k).classList.remove('open'
 // ── State ─────────────────────────────────────────────────────────────────────
 let allWorkers=[];
 let allEntries=[];   // timesheet_entries table
+let allProjects=[];
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 // ── BATCH ENTRY ───────────────────────────────────────────────────
 function openBatchModal(){
   document.getElementById('batch-date').value=new Date().toISOString().split('T')[0];
+  // Populate project dropdown
+  const pSel=document.getElementById('batch-project');
+  pSel.innerHTML='<option value="">— Select Project —</option>'+
+    allProjects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   renderBatchRows();
   document.getElementById('modal-batch').classList.add('open');
 }
@@ -507,14 +523,15 @@ function renderBatchRows(){
   const container=document.getElementById('batch-worker-rows');
   if(!allWorkers.length){container.innerHTML='<div style="padding:1rem;color:var(--text3);text-align:center">No workers found</div>';return;}
   container.innerHTML=allWorkers.map((w,i)=>`
-    <div style="display:grid;grid-template-columns:160px 110px 110px 80px 1fr;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);background:${i%2===0?'var(--bg3)':'var(--bg2)'}">
+    <div style="display:grid;grid-template-columns:32px 160px 110px 110px 80px 1fr;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);background:${i%2===0?'var(--bg3)':'var(--bg2)'}">
+      <input type="checkbox" class="batch-select" data-wid="${w.id}" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer"/>
       <div>
         <div style="font-weight:500;font-size:13px">${w.name}</div>
         <div style="font-size:11px;color:var(--text3)">${w.role||''}</div>
       </div>
       <input type="time" class="form-input ts-time-input batch-in" data-wid="${w.id}" data-wname="${w.name}" style="padding:5px 8px;font-size:13px" placeholder="Clock In"/>
       <input type="time" class="form-input ts-time-input batch-out" data-wid="${w.id}" style="padding:5px 8px;font-size:13px" placeholder="Clock Out"/>
-      <input type="number" class="form-input batch-break" data-wid="${w.id}" value="30" min="0" style="padding:5px 8px;font-size:13px" title="Break (min)"/>
+      <input type="number" class="form-input batch-break" data-wid="${w.id}" value="60" min="0" style="padding:5px 8px;font-size:13px" title="Break (min)"/>
       <input type="text" class="form-input batch-notes" data-wid="${w.id}" placeholder="Notes (optional)" style="padding:5px 8px;font-size:12px"/>
     </div>`).join('');
 }
@@ -531,20 +548,23 @@ function applyBatchQuickFill(){
 async function saveBatchEntries(){
   const date=document.getElementById('batch-date').value;
   if(!date){showToast('Please select a date','err');return;}
+  const projectId=document.getElementById('batch-project').value;
+  if(!projectId){showToast('Please select a project','err');return;}
+  const projectName=allProjects.find(p=>p.id==projectId)?.name||'';
   const btn=document.getElementById('batch-save-btn');
   btn.disabled=true;btn.textContent='Saving...';
 
   const entries=[];
-  document.querySelectorAll('.batch-in').forEach(inEl=>{
-    const wid=inEl.dataset.wid;
+  document.querySelectorAll('.batch-select:checked').forEach(chk=>{
+    const wid=chk.dataset.wid;
+    const inEl=document.querySelector(`.batch-in[data-wid="${wid}"]`);
     const wname=inEl.dataset.wname;
     const clockIn=inEl.value;
     const clockOut=document.querySelector(`.batch-out[data-wid="${wid}"]`)?.value;
-    if(!clockIn||!clockOut)return; // skip workers with no times
-    const brk=parseInt(document.querySelector(`.batch-break[data-wid="${wid}"]`)?.value)||30;
+    if(!clockIn||!clockOut)return;
+    const brk=parseInt(document.querySelector(`.batch-break[data-wid="${wid}"]`)?.value)||60;
     const notes=document.querySelector(`.batch-notes[data-wid="${wid}"]`)?.value||'';
     const worker=allWorkers.find(w=>w.id==wid);
-    // Calculate hours
     const [ih,im]=clockIn.split(':').map(Number);
     const [oh,om]=clockOut.split(':').map(Number);
     const totalMins=Math.max(0,(oh*60+om)-(ih*60+im)-brk);
@@ -558,6 +578,7 @@ async function saveBatchEntries(){
     const otPay=Math.round(otHours*otRate*100)/100;
     entries.push({
       worker_id:parseInt(wid),worker_name:wname,
+      project_id:parseInt(projectId),project_name:projectName,
       entry_date:date,clock_in:clockIn,clock_out:clockOut,
       break_minutes:brk,total_hours:totalHours,
       regular_hours:regularHours,ot_hours:otHours,
@@ -568,7 +589,7 @@ async function saveBatchEntries(){
     });
   });
 
-  if(!entries.length){showToast('No entries to save — enter clock-in and clock-out times','err');btn.disabled=false;btn.textContent='💾 Save All Entries';return;}
+  if(!entries.length){showToast('No workers selected or missing clock times','err');btn.disabled=false;btn.textContent='💾 Save All Entries';return;}
 
   let saved=0,failed=0;
   for(const entry of entries){
@@ -636,9 +657,10 @@ async function init(){
   setThisWeek();
   setThisMonth();
   try{
-    [allWorkers,allEntries]=await Promise.all([
+    [allWorkers,allEntries,allProjects]=await Promise.all([
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('timesheet_entries','order=entry_date.desc')
+      sbGet('timesheet_entries','order=entry_date.desc'),
+      sbGet('projects','select=id,name&order=name.asc')
     ]);
     document.getElementById('conn-dot').className='conn-dot ok';
     document.getElementById('conn-label').textContent='Connected — Supabase';
