@@ -488,10 +488,10 @@ function clearFilters(prefix){
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 function renderStats(){
-  const submitted=allEntries.filter(e=>e.status==='submitted').length;
+  const submitted=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status).length;
   const approved=allEntries.filter(e=>e.status==='approved').length;
   const rejected=allEntries.filter(e=>e.status==='rejected').length;
-  const pending=allEntries.filter(e=>!e.status||e.status==='draft').length;
+  const pending=0;
   const thisMonth=new Date().toISOString().substring(0,7);
   const moApproved=allEntries.filter(e=>e.status==='approved'&&(e.entry_date||'').startsWith(thisMonth));
   const moPayroll=moApproved.reduce((a,e)=>a+(e.total_pay||0),0);
@@ -526,7 +526,7 @@ function renderPending(forceStatus=null){
   const dateFrom=document.getElementById('pf-date-from')?.value||'';
   const dateTo=document.getElementById('pf-date-to')?.value||'';
 
-  let entries=allEntries.filter(e=>e.status==='submitted');
+  let entries=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
   if(proj)entries=entries.filter(e=>{const w=allWorkers.find(x=>x.id==e.worker_id);return w&&w.project_name===proj;});
   if(worker)entries=entries.filter(e=>e.worker_id==worker);
   if(dateFrom)entries=entries.filter(e=>e.entry_date>=dateFrom);
@@ -597,8 +597,8 @@ async function approveOne(id){
 }
 
 async function approveFiltered(){
-  const toApprove=allEntries.filter(e=>e.status==='submitted');
-  if(!toApprove.length){showToast('No submitted entries to approve','err');return;}
+  const toApprove=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
+  if(!toApprove.length){showToast('No entries to approve','err');return;}
   const proj=document.getElementById('pf-project')?.value||'';
   const worker=document.getElementById('pf-worker')?.value||'';
   let filtered=toApprove;
@@ -617,8 +617,8 @@ async function approveFiltered(){
 }
 
 async function bulkApproveAll(){
-  const submitted=allEntries.filter(e=>e.status==='submitted');
-  if(!submitted.length){showToast('Nothing pending','err');return;}
+  const submitted=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
+  if(!submitted.length){showToast('Nothing to approve','err');return;}
   if(!confirm(`Approve ALL ${submitted.length} pending entries across all projects?`))return;
   const approvedAt=new Date().toISOString();
   try{
