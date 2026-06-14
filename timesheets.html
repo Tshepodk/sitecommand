@@ -567,24 +567,25 @@ async function saveBatchEntries(){
     const worker=allWorkers.find(w=>w.id==wid);
     const [ih,im]=clockIn.split(':').map(Number);
     const [oh,om]=clockOut.split(':').map(Number);
-    const totalMins=Math.max(0,(oh*60+om)-(ih*60+im)-brk);
-    const totalHours=Math.round(totalMins/60*100)/100;
-    const otThreshold=worker?.ot_threshold||8;
-    const regularHours=Math.min(totalHours,otThreshold);
-    const otHours=Math.max(0,totalHours-otThreshold);
-    const hourlyRate=worker?.hourly_rate||0;
-    const otRate=worker?.ot_rate||0;
-    const regularPay=Math.round(regularHours*hourlyRate*100)/100;
-    const otPay=Math.round(otHours*otRate*100)/100;
+    let rawMins=(oh*60+om)-(ih*60+im);
+    if(rawMins<0)rawMins+=24*60;
+    const rawHours=rawMins/60;
+    const effectiveBreak=(rawHours>=8)?brk:0;
+    const totalHours=Math.round(Math.max(0,rawMins-effectiveBreak)/60*100)/100;
+    const month=(date||'').slice(0,7);
+    const priorHours=getWorkerMonthHours(wid,month,null);
+    const pay=calcPaySA(totalHours,worker?.hourly_rate||0,date,priorHours);
     entries.push({
       worker_id:parseInt(wid),worker_name:wname,
       project_id:parseInt(projectId),project_name:projectName,
       entry_date:date,clock_in:clockIn,clock_out:clockOut,
-      break_minutes:brk,total_hours:totalHours,
-      regular_hours:regularHours,ot_hours:otHours,
-      hourly_rate:hourlyRate,ot_rate:otRate,
-      regular_pay:regularPay,ot_pay:otPay,
-      total_pay:Math.round((regularPay+otPay)*100)/100,
+      break_minutes:effectiveBreak,total_hours:totalHours,
+      regular_hours:pay.regularHours,ot_hours:pay.otHours,
+      hourly_rate:worker?.hourly_rate||0,
+      ot_rate:(worker?.hourly_rate||0)*1.5,
+      is_weekend:pay.isSunday||pay.isPublicHoliday,
+      regular_pay:pay.regularPay,ot_pay:pay.otPay,
+      total_pay:pay.totalPay,
       notes,status:'pending'
     });
   });
@@ -754,8 +755,29 @@ function setThisMonth(){
 function addDays(dateStr,n){
   const d=new Date(dateStr);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];
 }
-function isWeekend(dateStr){
-  const d=new Date(dateStr);const day=d.getDay();return day===0||day===6;
+// ── SA Payroll Engine ─────────────────────────────────────────────────────────
+// Rules (PERMANENT - do not change):
+// Mon–Sat: standard rate up to 195h/month cumulative; above cap = 1.5× standard
+// Sunday: always 2× standard rate; does NOT count toward 195h cap
+// Public holidays: always 2× standard rate; does NOT count toward 195h cap
+// Lunch: 60min deducted only if raw hours >= 8
+
+const SA_PUBLIC_HOLIDAYS=[
+  '01-01','03-21','04-18','04-21','04-27','05-01',
+  '06-16','08-09','09-24','12-16','12-25','12-26'
+];
+
+function isSunday(dateStr){
+  return new Date(dateStr).getDay()===0;
+}
+
+function isSAPublicHoliday(dateStr){
+  const mmdd=dateStr.slice(5); // "MM-DD"
+  return SA_PUBLIC_HOLIDAYS.includes(mmdd);
+}
+
+function isDoubleTime(dateStr){
+  return isSunday(dateStr)||isSAPublicHoliday(dateStr);
 }
 
 // ── Hour calculation ──────────────────────────────────────────────────────────
@@ -765,27 +787,67 @@ function calcHours(clockIn,clockOut,breakMins){
   const [oh,om]=clockOut.split(':').map(Number);
   let rawMins=(oh*60+om)-(ih*60+im);
   if(rawMins<0)rawMins+=24*60; // overnight
-  const netMins=Math.max(0,rawMins-(breakMins||0));
-  return{total:Math.round(netMins/60*100)/100,raw:rawMins/60};
+  const rawHours=rawMins/60;
+  // Lunch deduction: only if raw hours >= 8
+  const effectiveBreak=(rawHours>=8)?(breakMins||0):0;
+  const netMins=Math.max(0,rawMins-effectiveBreak);
+  return{total:Math.round(netMins/60*100)/100,raw:rawHours};
 }
 
-function calcPay(totalHours,otThreshold,hourlyRate,otRate,dateStr,weekendRateType){
-  const weekend=isWeekend(dateStr);
-  let regularHours,otHours,regularPay,otPay;
-  if(weekend){
-    // Full day at weekend rate
+// priorHours = cumulative approved hours for this worker this month BEFORE this entry
+function calcPaySA(totalHours,hourlyRate,dateStr,priorHours){
+  const rate=hourlyRate||0;
+  const CAP=195;
+  let regularHours=0,otHours=0,regularPay=0,otPay=0,countsTowardCap=false;
+
+  if(isDoubleTime(dateStr)){
+    // Sunday or public holiday: full day at 2× standard rate, not counted toward cap
     regularHours=0;
     otHours=totalHours;
-    const wRate=weekendRateType==='double'?hourlyRate*2:weekendRateType==='standard'?hourlyRate:otRate;
-    regularPay=0;
-    otPay=Math.round(otHours*wRate*100)/100;
+    otPay=Math.round(otHours*rate*2*100)/100;
+    countsTowardCap=false;
   }else{
-    regularHours=Math.min(totalHours,otThreshold||8);
-    otHours=Math.max(0,totalHours-(otThreshold||8));
-    regularPay=Math.round(regularHours*(hourlyRate||0)*100)/100;
-    otPay=Math.round(otHours*(otRate||0)*100)/100;
+    // Mon–Sat: accumulate toward 195h cap
+    countsTowardCap=true;
+    const hoursBeforeCap=Math.max(0,CAP-priorHours);
+    if(hoursBeforeCap<=0){
+      // Worker already over cap — entire entry at 1.5×
+      regularHours=0;
+      otHours=totalHours;
+    }else if(totalHours<=hoursBeforeCap){
+      // Entire entry within cap
+      regularHours=totalHours;
+      otHours=0;
+    }else{
+      // Entry straddles the cap
+      regularHours=Math.round(hoursBeforeCap*100)/100;
+      otHours=Math.round((totalHours-hoursBeforeCap)*100)/100;
+    }
+    regularPay=Math.round(regularHours*rate*100)/100;
+    otPay=Math.round(otHours*rate*1.5*100)/100;
   }
-  return{regularHours,otHours,regularPay,otPay,totalPay:regularPay+otPay,isWeekend:weekend};
+
+  return{
+    regularHours,otHours,regularPay,otPay,
+    totalPay:Math.round((regularPay+otPay)*100)/100,
+    isSunday:isSunday(dateStr),
+    isPublicHoliday:isSAPublicHoliday(dateStr),
+    isDoubleTime:isDoubleTime(dateStr),
+    countsTowardCap
+  };
+}
+
+// Get cumulative hours for a worker in a calendar month from allEntries
+// excludeEntryId: pass when editing an existing entry so it's not double-counted
+function getWorkerMonthHours(workerId,monthStr,excludeEntryId){
+  return allEntries
+    .filter(e=>
+      e.worker_id==workerId &&
+      (e.entry_date||'').startsWith(monthStr) &&
+      (!excludeEntryId||e.id!=excludeEntryId) &&
+      !isDoubleTime(e.entry_date) // Sundays/holidays don't count toward cap
+    )
+    .reduce((sum,e)=>sum+(e.total_hours||0),0);
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -1103,9 +1165,12 @@ function recalcEntryHours(){
   const clockOut=document.getElementById('entry-clock-out').value;
   const breakMins=parseInt(document.getElementById('entry-break').value)||0;
   const date=document.getElementById('entry-date').value;
+  const entryId=document.getElementById('entry-id').value;
 
   const {total}=calcHours(clockIn,clockOut,breakMins);
-  const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+  const month=(date||'').slice(0,7);
+  const priorHours=getWorkerMonthHours(wid,month,entryId||null);
+  const pay=calcPaySA(total,w.hourly_rate||0,date,priorHours);
 
   document.getElementById('ep-total').textContent=fmtH(total);
   document.getElementById('ep-regular').textContent=fmtH(pay.regularHours);
@@ -1126,7 +1191,10 @@ async function saveEntry(){
     if(!date||!clockIn||!clockOut){showToast('Date, clock-in and clock-out are required','err');btn.disabled=false;btn.textContent='Save Entry';return;}
     const breakMins=parseInt(document.getElementById('entry-break').value)||0;
     const {total}=calcHours(clockIn,clockOut,breakMins);
-    const pay=calcPay(total,w.ot_threshold||8,w.hourly_rate||0,w.ot_rate||0,date,w.weekend_rate||'ot');
+    const entryId=document.getElementById('entry-id').value;
+    const month=(date||'').slice(0,7);
+    const priorHours=getWorkerMonthHours(wid,month,entryId||null);
+    const pay=calcPaySA(total,w.hourly_rate||0,date,priorHours);
 
     const payload={
       worker_id:parseInt(wid),
@@ -1139,9 +1207,8 @@ async function saveEntry(){
       regular_hours:pay.regularHours,
       ot_hours:pay.otHours,
       hourly_rate:parseFloat(w.hourly_rate||0),
-      ot_rate:parseFloat(w.ot_rate||0),
-      ot_threshold:parseFloat(w.ot_threshold||8),
-      is_weekend:pay.isWeekend,
+      ot_rate:parseFloat(w.hourly_rate||0)*1.5,
+      is_weekend:pay.isSunday||pay.isPublicHoliday,
       regular_pay:pay.regularPay,
       ot_pay:pay.otPay,
       total_pay:pay.totalPay,
