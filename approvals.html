@@ -526,7 +526,16 @@ function renderPending(forceStatus=null){
   const dateFrom=document.getElementById('pf-date-from')?.value||'';
   const dateTo=document.getElementById('pf-date-to')?.value||'';
 
-  let entries=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
+  let entries;
+  if(forceStatus==='approved'){
+    entries=allEntries.filter(e=>e.status==='approved');
+  }else if(forceStatus==='rejected'){
+    entries=allEntries.filter(e=>e.status==='rejected');
+  }else if(forceStatus===''){
+    entries=[...allEntries]; // All entries
+  }else{
+    entries=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
+  }
   if(proj)entries=entries.filter(e=>e.project_name===proj||(allProjects.find(p=>p.id==e.project_id)?.name===proj));
   if(worker)entries=entries.filter(e=>e.worker_id==worker);
   if(dateFrom)entries=entries.filter(e=>e.entry_date>=dateFrom);

@@ -481,7 +481,7 @@ function getLabourByProject(monthFilter='',statusFilter=''){
   allEntries.forEach(e=>{
     if(monthFilter&&!(e.entry_date||'').startsWith(monthFilter))return;
     if(statusFilter&&(e.status||'pending')!==statusFilter)return;
-    const proj=getWorkerProject(e.worker_id,e.worker_name);
+    const proj=e.project_name||(allProjects.find(p=>p.id==e.project_id)?.name)||getWorkerProject(e.worker_id,e.worker_name);
     if(!byProj[proj])byProj[proj]={workers:new Set(),totalHrs:0,regularHrs:0,otHrs:0,regularPay:0,otPay:0,totalPay:0,entries:[]};
     byProj[proj].workers.add(e.worker_id||e.worker_name);
     byProj[proj].totalHrs+=(e.total_hours||0);
