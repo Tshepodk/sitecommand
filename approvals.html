@@ -527,7 +527,7 @@ function renderPending(forceStatus=null){
   const dateTo=document.getElementById('pf-date-to')?.value||'';
 
   let entries=allEntries.filter(e=>e.status==='submitted'||e.status==='pending'||!e.status);
-  if(proj)entries=entries.filter(e=>{const w=allWorkers.find(x=>x.id==e.worker_id);return w&&w.project_name===proj;});
+  if(proj)entries=entries.filter(e=>e.project_name===proj||(allProjects.find(p=>p.id==e.project_id)?.name===proj));
   if(worker)entries=entries.filter(e=>e.worker_id==worker);
   if(dateFrom)entries=entries.filter(e=>e.entry_date>=dateFrom);
   if(dateTo)entries=entries.filter(e=>e.entry_date<=dateTo);
@@ -546,7 +546,7 @@ function renderPending(forceStatus=null){
     return`<tr>
       <td><input type="checkbox" style="accent-color:var(--accent)" ${checked?'checked':''} onchange="togglePending(${e.id},this.checked)"/></td>
       <td><div style="font-weight:500">${e.worker_name||'—'}</div><div style="font-size:11px;color:var(--text3)">${w.role||''}</div></td>
-      <td style="font-size:12px;color:var(--text2)">${w.project_name||'—'}</td>
+      <td style="font-size:12px;color:var(--text2)">${e.project_name||allProjects.find(p=>p.id==e.project_id)?.name||'—'}</td>
       <td><div style="font-family:var(--font-d);font-size:13px;font-weight:600">${e.entry_date||'—'}</div></td>
       <td>${dayTag(e.entry_date||'')}</td>
       <td style="font-family:var(--font-d);font-size:13px"><span style="color:var(--teal)">${e.clock_in||'—'}</span> → <span style="color:var(--blue)">${e.clock_out||'—'}</span></td>
@@ -602,7 +602,7 @@ async function approveFiltered(){
   const proj=document.getElementById('pf-project')?.value||'';
   const worker=document.getElementById('pf-worker')?.value||'';
   let filtered=toApprove;
-  if(proj)filtered=filtered.filter(e=>{const w=allWorkers.find(x=>x.id==e.worker_id);return w&&w.project_name===proj;});
+  if(proj)filtered=filtered.filter(e=>e.project_name===proj||(allProjects.find(p=>p.id==e.project_id)?.name===proj));
   if(worker)filtered=filtered.filter(e=>e.worker_id==worker);
   if(!filtered.length){showToast('No entries match current filter','err');return;}
   if(!confirm(`Approve ${filtered.length} entr${filtered.length===1?'y':'ies'}?`))return;
