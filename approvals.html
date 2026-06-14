@@ -407,7 +407,10 @@ function switchTab(name,el){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   if(el)el.classList.add('active');
-  document.getElementById('tab-'+name).classList.add('active');
+  // 'draft' is the tab name but content div is id="tab-pending"
+  const contentId=name==='draft'?'tab-pending':'tab-'+name;
+  const contentEl=document.getElementById(contentId);
+  if(contentEl)contentEl.classList.add('active');
   if(name==='draft')renderPending();
   if(name==='byworker')renderByWorker();
   if(name==='monthly')renderMonthlyPayroll();
