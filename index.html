@@ -716,6 +716,7 @@ tr:hover td{background:var(--bg3)}
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Certifications</label><input class="form-input" id="worker-certs" placeholder="e.g. SACPCMP, OHSA, Work-at-Heights (comma separated)"/></div>
       <div class="form-group"><label class="form-label">Cert Expiry Date</label><input class="form-input" type="date" id="worker-cert-expiry"/></div>
       <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="worker-status"><option value="active">Active</option><option value="leave">On Leave</option><option value="cert-expiring">Cert Expiring</option><option value="inactive">Inactive</option></select></div>
+      <div class="form-group"><label class="form-label">Hourly Rate (R)</label><input class="form-input" type="number" id="worker-hourly-rate" placeholder="e.g. 85.00" min="0" step="0.01"/></div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('worker')">Cancel</button><button class="btn btn-primary" id="worker-save-btn" onclick="saveRecord('worker')">Save Worker</button></div>
   </div>
@@ -2008,7 +2009,7 @@ function openModal(type, rec=null){
     const mapping={
       project:{id:'id','po-number':'po_number','po-value':'po_value',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend',status:'status',desc:'description'},
       task:{id:'id',title:'title',type:'type','qty-total':'qty_total',unit:'unit',priority:'priority',assigned:'assigned_to',status:'status','qty-done':'qty_done',notes:'notes'},
-      worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status'},
+      worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status','hourly-rate':'hourly_rate'},
       equipment:{id:'id',name:'name',type:'type',make:'make_model',serial:'serial_number',service:'next_service',status:'status',notes:'notes'},
       'cost-cat':{id:'id',name:'name',icon:'icon',color:'color',order:'sort_order'}
     };
@@ -2041,7 +2042,7 @@ async function saveRecord(type){
       payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
     } else if(type==='worker'){
       const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
-      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,active:true};table='workers';
+      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,hourly_rate:parseFloat(document.getElementById('worker-hourly-rate').value)||null,active:true};table='workers';
     } else if(type==='equipment'){
       const name=document.getElementById('equipment-name').value.trim();if(!name){showToast('Item name required','err');btn.disabled=false;btn.textContent='Save Item';return;}
       payload={name,type:document.getElementById('equipment-type').value,make_model:document.getElementById('equipment-make').value.trim(),serial_number:document.getElementById('equipment-serial').value.trim(),assigned_project:document.getElementById('equipment-project').value||null,next_service:document.getElementById('equipment-service').value||null,status:document.getElementById('equipment-status').value,notes:document.getElementById('equipment-notes').value.trim(),active:true};table='equipment';
