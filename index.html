@@ -716,7 +716,30 @@ tr:hover td{background:var(--bg3)}
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Certifications</label><input class="form-input" id="worker-certs" placeholder="e.g. SACPCMP, OHSA, Work-at-Heights (comma separated)"/></div>
       <div class="form-group"><label class="form-label">Cert Expiry Date</label><input class="form-input" type="date" id="worker-cert-expiry"/></div>
       <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="worker-status"><option value="active">Active</option><option value="leave">On Leave</option><option value="cert-expiring">Cert Expiring</option><option value="inactive">Inactive</option></select></div>
-      <div class="form-group"><label class="form-label">Hourly Rate (R)</label><input class="form-input" type="number" id="worker-hourly-rate" placeholder="e.g. 85.00" min="0" step="0.01"/></div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Pay Type</label>
+        <select class="form-select" id="worker-pay-type" onchange="toggleWorkerPayFields()">
+          <option value="hourly">Hourly — standard employee</option>
+          <option value="daily">Daily Rate — local / casual</option>
+        </select>
+      </div>
+      <!-- HOURLY fields -->
+      <div class="form-group" id="worker-hourly-wrap">
+        <label class="form-label">Hourly Rate (R/hr)</label>
+        <input class="form-input" type="number" id="worker-hourly-rate" placeholder="e.g. 85.00" min="0" step="0.01"/>
+      </div>
+      <!-- DAILY RATE fields -->
+      <div class="form-group" id="worker-daily-wrap" style="display:none">
+        <label class="form-label">Daily Rate (R/day)</label>
+        <input class="form-input" type="number" id="worker-daily-rate" placeholder="e.g. 350.00" min="0" step="0.01"/>
+      </div>
+      <div class="form-group" id="worker-cycle-wrap" style="display:none">
+        <label class="form-label">Pay Cycle</label>
+        <select class="form-select" id="worker-pay-cycle">
+          <option value="biweekly">Bi-weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('worker')">Cancel</button><button class="btn btn-primary" id="worker-save-btn" onclick="saveRecord('worker')">Save Worker</button></div>
   </div>
@@ -1983,6 +2006,13 @@ async function deleteReport(id,project,date){
 }
 
 // ── Generic Modal open/close ──────────────────────────────────────────────────
+function toggleWorkerPayFields(){
+  const t=document.getElementById('worker-pay-type').value;
+  document.getElementById('worker-hourly-wrap').style.display=t==='daily'?'none':'';
+  document.getElementById('worker-daily-wrap').style.display=t==='daily'?'':'none';
+  document.getElementById('worker-cycle-wrap').style.display=t==='daily'?'':'none';
+}
+
 function openModal(type, rec=null){
   const mid='modal-'+type;
   document.getElementById(mid).classList.add('open');
@@ -2009,7 +2039,7 @@ function openModal(type, rec=null){
     const mapping={
       project:{id:'id','po-number':'po_number','po-value':'po_value',name:'name',phase:'phase',type:'type',client:'client',pm:'pm',start:'start_date',end:'end_date',budget:'budget',contract:'contract_spend',status:'status',desc:'description'},
       task:{id:'id',title:'title',type:'type','qty-total':'qty_total',unit:'unit',priority:'priority',assigned:'assigned_to',status:'status','qty-done':'qty_done',notes:'notes'},
-      worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status','hourly-rate':'hourly_rate'},
+      worker:{id:'id',name:'name',role:'role',type:'type',phone:'phone','id-number':'id_number',certs:'certifications','cert-expiry':'cert_expiry',status:'status','hourly-rate':'hourly_rate','daily-rate':'daily_rate','pay-cycle':'pay_cycle'},
       equipment:{id:'id',name:'name',type:'type',make:'make_model',serial:'serial_number',service:'next_service',status:'status',notes:'notes'},
       'cost-cat':{id:'id',name:'name',icon:'icon',color:'color',order:'sort_order'}
     };
@@ -2021,9 +2051,11 @@ function openModal(type, rec=null){
     // handle project fields that set select values
     if(type==='task'){const tsel=document.getElementById('task-project');if(tsel&&rec.project_name)tsel.value=rec.project_name;}
     if(type==='worker'){const wsel=document.getElementById('worker-project');if(wsel&&rec.project_name)wsel.value=rec.project_name;}
+    if(type==='worker'&&rec){document.getElementById('worker-pay-type').value=rec.pay_type||'hourly';toggleWorkerPayFields();}
     if(type==='equipment'){const esel=document.getElementById('equipment-project');if(esel&&rec.assigned_project)esel.value=rec.assigned_project;}
   } else {
     document.getElementById(type+'-modal-title').textContent=({project:'New Project',task:'New Project Task',worker:'Add Worker',equipment:'Add Equipment','cost-cat':'Add Cost Category'}[type]||'New');
+    if(type==='worker')toggleWorkerPayFields();
   }
   setTimeout(()=>{const f=document.getElementById(mid).querySelector('input:not([type=hidden])');if(f)f.focus();},100);
 }
@@ -2042,7 +2074,8 @@ async function saveRecord(type){
       payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
     } else if(type==='worker'){
       const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
-      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,hourly_rate:parseFloat(document.getElementById('worker-hourly-rate').value)||null,active:true};table='workers';
+      const _payType=document.getElementById('worker-pay-type').value;
+      payload={name,role:document.getElementById('worker-role').value.trim(),type:document.getElementById('worker-type').value,project_name:document.getElementById('worker-project').value||null,phone:document.getElementById('worker-phone').value.trim(),id_number:document.getElementById('worker-id-number').value.trim(),certifications:document.getElementById('worker-certs').value.trim(),cert_expiry:document.getElementById('worker-cert-expiry').value||null,status:document.getElementById('worker-status').value,pay_type:_payType,hourly_rate:_payType==='hourly'?(parseFloat(document.getElementById('worker-hourly-rate').value)||null):null,daily_rate:_payType==='daily'?(parseFloat(document.getElementById('worker-daily-rate').value)||null):null,pay_cycle:_payType==='daily'?document.getElementById('worker-pay-cycle').value:'monthly',active:true};table='workers';
     } else if(type==='equipment'){
       const name=document.getElementById('equipment-name').value.trim();if(!name){showToast('Item name required','err');btn.disabled=false;btn.textContent='Save Item';return;}
       payload={name,type:document.getElementById('equipment-type').value,make_model:document.getElementById('equipment-make').value.trim(),serial_number:document.getElementById('equipment-serial').value.trim(),assigned_project:document.getElementById('equipment-project').value||null,next_service:document.getElementById('equipment-service').value||null,status:document.getElementById('equipment-status').value,notes:document.getElementById('equipment-notes').value.trim(),active:true};table='equipment';
