@@ -907,10 +907,10 @@ function renderBudgetImpact(){
 function exportCSV(){
   const month=document.getElementById('ts-filter-month').value;
   const entries=month?allEntries.filter(e=>(e.entry_date||'').startsWith(month)):allEntries;
-  const rows=[['Worker','Project','Date','Day Type','Clock In','Clock Out','Break (min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate','Regular Pay','OT Pay','Total Pay','Status']];
+  const rows=[['Worker','Project','Date','Day Type','Clock In','Clock Out','Break (min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate','Regular Pay','OT Pay','Total Pay','Status','Notes']];
   entries.forEach(e=>{
     const proj=getWorkerProject(e.worker_id,e.worker_name);
-    rows.push([e.worker_name||'',proj,e.entry_date||'',getDayType(e.entry_date||''),e.clock_in||'',e.clock_out||'',e.break_minutes||0,e.total_hours||0,e.regular_hours||0,e.ot_hours||0,e.hourly_rate||0,e.regular_pay||0,e.ot_pay||0,e.total_pay||0,e.status||'pending']);
+    rows.push([e.worker_name||'',proj,e.entry_date||'',getDayType(e.entry_date||''),e.clock_in||'',e.clock_out||'',e.break_minutes||0,e.total_hours||0,e.regular_hours||0,e.ot_hours||0,e.hourly_rate||0,e.regular_pay||0,e.ot_pay||0,e.total_pay||0,e.status||'pending',e.notes||'']);
   });
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
@@ -999,27 +999,27 @@ function downloadExcel(){
 
   if(_exportType==='payroll'||_exportType==='full'){
     const rows=allEntries.filter(e=>(!month||(e.entry_date||'').startsWith(month))&&(!proj||getWorkerProject(e.worker_id,e.worker_name)===proj));
-    const data=[['Worker','Project','Date','Clock In','Clock Out','Break(min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate','OT Rate','Regular Pay','OT Pay','Total Pay','Status']];
+    const data=[['Worker','Project','Date','Clock In','Clock Out','Break(min)','Total Hrs','Regular Hrs','OT Hrs','Hourly Rate','OT Rate','Regular Pay','OT Pay','Total Pay','Status','Notes']];
     rows.forEach(e=>{
       const p=getWorkerProject(e.worker_id,e.worker_name);
-      data.push([e.worker_name||'',p,e.entry_date||'',e.clock_in||'',e.clock_out||'',e.break_minutes||0,e.total_hours||0,e.regular_hours||0,e.ot_hours||0,e.hourly_rate||0,e.ot_rate||0,fmtR(e.regular_pay),fmtR(e.ot_pay),fmtR(e.total_pay),e.status||'pending']);
+      data.push([e.worker_name||'',p,e.entry_date||'',e.clock_in||'',e.clock_out||'',e.break_minutes||0,e.total_hours||0,e.regular_hours||0,e.ot_hours||0,e.hourly_rate||0,e.ot_rate||0,fmtR(e.regular_pay),fmtR(e.ot_pay),fmtR(e.total_pay),e.status||'pending',e.notes||'']);
     });
     // Totals row
     const totPay=rows.reduce((a,e)=>a+(e.total_pay||0),0);
     const totHrs=rows.reduce((a,e)=>a+(e.total_hours||0),0);
-    data.push(['','','','','','',totHrs.toFixed(2),'','','','','','',fmtR(totPay),'']);
+    data.push(['','','','','','',totHrs.toFixed(2),'','','','','','',fmtR(totPay),'','']);
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Payroll Summary');
   }
 
   if(_exportType==='fieldcost'||_exportType==='full'){
     const reports=allReports.filter(r=>(!month||(r.report_date||'').startsWith(month))&&(!proj||r.project===proj));
-    const data=[['Date','Project','Reporter','Workers on Site','Total Cost','HSE','Status']];
+    const data=[['Date','Project','Reporter','Workers on Site','Total Cost','HSE','Status','Notes']];
     reports.forEach(r=>{
       const costs=r.costs||{};
-      data.push([r.report_date||'',r.project||'',r.reporter||'',r.workers||0,fmtR(r.total_cost),r.hse||'none',r.approval_status||'pending']);
+      data.push([r.report_date||'',r.project||'',r.reporter||'',r.workers||0,fmtR(r.total_cost),r.hse||'none',r.approval_status||'pending',r.notes||'']);
     });
     const totCost=reports.reduce((a,r)=>a+(r.total_cost||0),0);
-    data.push(['','','','',fmtR(totCost),'','']);
+    data.push(['','','','',fmtR(totCost),'','','']);
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'Field Costs');
   }
 
