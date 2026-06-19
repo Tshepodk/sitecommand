@@ -719,22 +719,28 @@ async function sbGet(t,q=''){const r=await fetch(`${SB}/rest/v1/${t}?${q}`,{head
 async function sbPost(t,d){const r=await fetch(`${SB}/rest/v1/${t}`,{method:'POST',headers:{...getH(),'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
 async function sbPatch(t,id,d){const r=await fetch(`${SB}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...getH(),'Prefer':'return=minimal'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());}
 
+async function safeGet(table,query=''){try{return await sbGet(table,query);}catch(e){console.warn('PMO: table not found —',table);return[];}}
+
 async function loadAll(){
   try{
     document.getElementById('conn-dot').style.background='var(--accent)';
     document.getElementById('conn-label').textContent='Loading...';
-    [allProjects,allTasks,allReports,allWorkers,allRisks,allRevenue,allGates,allKPIs,allLessons,allAllocations,allDocuments]=await Promise.all([
+    // Core tables (must exist) — fail loudly
+    [allProjects,allTasks,allReports,allWorkers,allGates]=await Promise.all([
       sbGet('projects','order=name.asc&active=eq.true'),
       sbGet('project_tasks','order=project_name.asc&active=eq.true'),
       sbGet('daily_reports','order=report_date.desc'),
       sbGet('workers','order=name.asc&active=eq.true'),
-      sbGet('project_risks','order=risk_score.desc&active=eq.true'),
-      sbGet('revenue_entries','order=entry_date.asc'),
-      sbGet('stage_gates','order=project_name.asc&active=eq.true'),
-      sbGet('project_kpis','order=kpi_date.desc'),
-      sbGet('lessons_learned','order=created_at.desc&active=eq.true'),
-      sbGet('resource_allocations','order=worker_name.asc'),
-      sbGet('documents','order=created_at.desc&active=eq.true')
+      sbGet('stage_gates','order=project_name.asc&active=eq.true')
+    ]);
+    // Extended tables — gracefully return [] if not yet created
+    [allRisks,allRevenue,allKPIs,allLessons,allAllocations,allDocuments]=await Promise.all([
+      safeGet('project_risks','order=risk_score.desc&active=eq.true'),
+      safeGet('revenue_entries','order=entry_date.asc'),
+      safeGet('project_kpis','order=kpi_date.desc'),
+      safeGet('lessons_learned','order=created_at.desc&active=eq.true'),
+      safeGet('resource_allocations','order=worker_name.asc'),
+      safeGet('documents','order=created_at.desc&active=eq.true')
     ]);
     document.getElementById('conn-dot').style.background='var(--green)';
     document.getElementById('conn-label').textContent='Connected';
