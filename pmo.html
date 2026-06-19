@@ -164,6 +164,7 @@ tr:hover td{background:var(--bg3)}
       <div class="nav-item active" onclick="showPage('portfolio',this)">🗂 Portfolio Overview</div>
       <div class="nav-item" onclick="showPage('gates',this)">🚦 Stage Gates</div>
       <div class="nav-item" onclick="showPage('kpi',this)">📊 KPI Benchmarks</div>
+      <div class="nav-item" onclick="showPage('tracker',this)">📍 Project Tracker</div>
       <div class="nav-item" onclick="showPage('dependencies',this)">🔗 Dependencies</div>
       <div class="nav-item" onclick="showPage('stakeholder',this)">📄 Stakeholder Report</div>
     </div>
@@ -388,6 +389,53 @@ tr:hover td{background:var(--bg3)}
       </div>
     </div>
 
+    <!-- ══ PROJECT TRACKER ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-tracker">
+      <div class="page-header">
+        <div><div class="page-title">Project Tracker</div><div class="page-sub">Milestones, deadlines and progress updates — daily, weekly and monthly</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select class="form-select" id="tracker-proj-select" onchange="renderTracker()" style="font-size:12px;padding:5px 10px"><option value="">— Select project —</option></select>
+          <button class="btn btn-primary" onclick="openMilestoneModal()">+ Add Milestone</button>
+        </div>
+      </div>
+
+      <!-- Deadline banner -->
+      <div id="tracker-deadline-banner" style="display:none;margin-bottom:1.25rem"></div>
+
+      <!-- Stats row -->
+      <div class="stats-grid sg-4" id="tracker-stats" style="display:none"></div>
+
+      <!-- Milestones table -->
+      <div class="card" id="tracker-milestones-card" style="display:none">
+        <div class="card-header">
+          <div class="card-title">Milestones</div>
+          <div style="display:flex;gap:6px">
+            <a id="tracker-gantt-link" href="gantt.html" class="btn btn-ghost btn-sm" target="_blank">📉 View in Gantt ↗</a>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0"><div class="table-wrap">
+          <table><thead><tr><th>Milestone</th><th>Due Date</th><th>Owner</th><th>Progress</th><th>RAG</th><th>Status</th><th>Days Left</th><th>Actions</th></tr></thead>
+          <tbody id="tracker-milestones-table"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- Update log -->
+      <div class="card" id="tracker-updates-card" style="display:none">
+        <div class="card-header">
+          <div class="card-title">Progress Updates</div>
+          <button class="btn btn-ghost btn-sm" onclick="openUpdateModal()">+ Log Update</button>
+        </div>
+        <div id="tracker-updates-list" style="padding:0.75rem 1.25rem"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="tracker-empty" style="text-align:center;padding:4rem 2rem;color:var(--text3)">
+        <div style="font-size:48px;margin-bottom:1rem">📍</div>
+        <div style="font-family:var(--font-d);font-size:16px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">Select a project to view its tracker</div>
+        <div style="font-size:13px">Track milestones, deadlines and daily/weekly/monthly updates in one place</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -395,9 +443,62 @@ tr:hover td{background:var(--bg3)}
 <div class="bottom-nav">
   <div class="bn-item active" onclick="showPage('portfolio',this)"><span class="bn-icon">🗂</span>Portfolio</div>
   <div class="bn-item" onclick="showPage('gates',this)"><span class="bn-icon">🚦</span>Gates</div>
+  <div class="bn-item" onclick="showPage('tracker',this)"><span class="bn-icon">📍</span>Tracker</div>
   <div class="bn-item" onclick="showPage('kpi',this)"><span class="bn-icon">📊</span>KPIs</div>
-  <div class="bn-item" onclick="showPage('dependencies',this)"><span class="bn-icon">🔗</span>Depend.</div>
   <div class="bn-item" onclick="showPage('stakeholder',this)"><span class="bn-icon">📄</span>PDF</div>
+</div>
+
+<!-- Milestone Modal -->
+<div class="modal-bg" id="modal-milestone">
+  <div class="modal">
+    <div class="modal-title"><span id="ms-modal-title">Add Milestone</span><button class="modal-close" onclick="closeModal('milestone')">✕</button></div>
+    <input type="hidden" id="ms-id"/>
+    <div class="fg2">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Milestone Title *</label><input class="form-input" id="ms-title" placeholder="e.g. Civil Works Complete"/></div>
+      <div class="form-group"><label class="form-label">Project</label><select class="form-select" id="ms-project"></select></div>
+      <div class="form-group"><label class="form-label">Due Date *</label><input class="form-input" type="date" id="ms-due-date"/></div>
+      <div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="ms-owner" placeholder="Name or team"/></div>
+      <div class="form-group"><label class="form-label">Progress % (0–100)</label><input class="form-input" type="number" id="ms-progress" min="0" max="100" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="ms-status">
+          <option value="not-started">Not Started</option>
+          <option value="in-progress">In Progress</option>
+          <option value="complete">Complete</option>
+          <option value="delayed">Delayed</option>
+          <option value="at-risk">At Risk</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="ms-description" style="min-height:60px" placeholder="What does achieving this milestone mean?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('milestone')">Cancel</button>
+      <button class="btn btn-primary" id="ms-save-btn" onclick="saveMilestone()">Save Milestone</button>
+    </div>
+  </div>
+</div>
+
+<!-- Milestone Update Modal -->
+<div class="modal-bg" id="modal-ms-update">
+  <div class="modal">
+    <div class="modal-title"><span>Log Progress Update</span><button class="modal-close" onclick="closeModal('ms-update')">✕</button></div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Milestone</label><select class="form-select" id="msu-milestone"></select></div>
+      <div class="form-group"><label class="form-label">Update Type</label>
+        <select class="form-select" id="msu-type">
+          <option value="daily">Daily Update</option>
+          <option value="weekly">Weekly Update</option>
+          <option value="monthly">Monthly Update</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="msu-date"/></div>
+      <div class="form-group"><label class="form-label">Author</label><input class="form-input" id="msu-author" placeholder="Your name"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Update Note *</label><textarea class="form-textarea" id="msu-note" style="min-height:90px" placeholder="What progress was made? Any blockers or risks?"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('ms-update')">Cancel</button>
+      <button class="btn btn-primary" id="msu-save-btn" onclick="saveMilestoneUpdate()">Save Update</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── MODALS ──────────────────────────────────────────────────────────── -->
@@ -710,6 +811,7 @@ function getH(){
 Object.defineProperty(window,'H',{get:getH,configurable:true});
 
 let allProjects=[],allTasks=[],allReports=[],allWorkers=[],allRisks=[],allRevenue=[],allGates=[],allKPIs=[],allLessons=[],allAllocations=[],allDocuments=[];
+let allMilestones=[],allMilestoneUpdates=[];
 
 const fmt=n=>'R '+Math.round(n||0).toLocaleString('en-ZA');
 const fmtN=n=>parseFloat((n||0).toFixed(1)).toLocaleString('en-ZA');
@@ -734,20 +836,22 @@ async function loadAll(){
       sbGet('stage_gates','order=project_name.asc&active=eq.true')
     ]);
     // Extended tables — gracefully return [] if not yet created
-    [allRisks,allRevenue,allKPIs,allLessons,allAllocations,allDocuments]=await Promise.all([
+    [allRisks,allRevenue,allKPIs,allLessons,allAllocations,allDocuments,allMilestones,allMilestoneUpdates]=await Promise.all([
       safeGet('project_risks','order=risk_score.desc&active=eq.true'),
       safeGet('revenue_entries','order=entry_date.asc'),
       safeGet('project_kpis','order=kpi_date.desc'),
       safeGet('lessons_learned','order=created_at.desc&active=eq.true'),
       safeGet('resource_allocations','order=worker_name.asc'),
-      safeGet('documents','order=created_at.desc&active=eq.true')
+      safeGet('documents','order=created_at.desc&active=eq.true'),
+      safeGet('milestones','order=due_date.asc&active=eq.true'),
+      safeGet('milestone_updates','order=update_date.desc')
     ]);
     document.getElementById('conn-dot').style.background='var(--green)';
     document.getElementById('conn-label').textContent='Connected';
     document.getElementById('conn-label').style.color='var(--green)';
     // Populate project dropdowns
     const projOpts=allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-    ['gate-project','kpi-project','ll-project','alloc-project','doc-project','doc-proj-filter'].forEach(id=>{
+    ['gate-project','kpi-project','ll-project','alloc-project','doc-project','doc-proj-filter','ms-project','tracker-proj-select'].forEach(id=>{
       const el=document.getElementById(id);
       if(!el)return;
       const blank=el.id.includes('filter')?'<option value="">All Projects</option>':'';
@@ -777,7 +881,7 @@ function showPage(id,el){
   renderPage(id);
 }
 function renderPage(id){
-  ({portfolio:renderPortfolio,gates:renderGates,kpi:renderKPI,capacity:renderCapacity,lessons:renderLessons,documents:renderDocuments,dependencies:renderDependencies,stakeholder:()=>{const sh=document.getElementById('sh-project');if(sh&&!sh.querySelector('option[value=""]~option'))sh.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}}[id]||Function())();
+  ({portfolio:renderPortfolio,gates:renderGates,kpi:renderKPI,capacity:renderCapacity,lessons:renderLessons,documents:renderDocuments,dependencies:renderDependencies,tracker:renderTracker,stakeholder:()=>{const sh=document.getElementById('sh-project');if(sh&&!sh.querySelector('option[value=""]~option'))sh.innerHTML='<option value="">— Select project —</option>'+allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}}[id]||Function())();
 }
 function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
 function openModal(id,rec=null){document.getElementById('modal-'+id).classList.add('open');}
@@ -1186,6 +1290,193 @@ function dlDocsCSV(){
 }
 
 function printPDF(){window.print();} // also triggers portfolio print
+
+// ══ PROJECT TRACKER ══════════════════════════════════════════════════════════
+function renderTracker(){
+  const sel=document.getElementById('tracker-proj-select');
+  // Populate dropdown if needed
+  if(sel&&sel.options.length<=1){
+    allProjects.forEach(p=>{const o=new Option(p.name,p.name);sel.appendChild(o);});
+  }
+  const projName=sel?sel.value:'';
+  const empty=document.getElementById('tracker-empty');
+  const banner=document.getElementById('tracker-deadline-banner');
+  const statsEl=document.getElementById('tracker-stats');
+  const msCard=document.getElementById('tracker-milestones-card');
+  const upCard=document.getElementById('tracker-updates-card');
+
+  if(!projName){
+    empty.style.display='block';banner.style.display='none';
+    statsEl.style.display='none';msCard.style.display='none';upCard.style.display='none';
+    return;
+  }
+  empty.style.display='none';
+
+  const proj=allProjects.find(p=>p.name===projName);
+  const ms=allMilestones.filter(m=>m.project_name===projName);
+  const updates=allMilestoneUpdates.filter(u=>u.project_name===projName);
+
+  // ── Deadline banner ────────────────────────────────────────────────────────
+  banner.style.display='block';
+  const endDate=proj&&proj.end_date?new Date(proj.end_date):null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const daysLeft=endDate?Math.round((endDate-today)/(1000*60*60*24)):null;
+  const ganttLink=document.getElementById('tracker-gantt-link');
+  if(ganttLink)ganttLink.href=`gantt.html?project=${encodeURIComponent(projName)}`;
+  const dlColor=daysLeft===null?'var(--text3)':daysLeft<0?'var(--red)':daysLeft<=14?'var(--accent)':'var(--green)';
+  const dlLabel=daysLeft===null?'No end date set':daysLeft<0?`${Math.abs(daysLeft)} days overdue`:daysLeft===0?'Due today':`${daysLeft} days remaining`;
+  banner.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-left:4px solid ${dlColor};border-radius:var(--rl);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div><div style="font-family:var(--font-d);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text2)">Target Deadline</div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:3px">
+      <span style="font-family:var(--font-d);font-size:22px;font-weight:800;color:${dlColor}">${dlLabel}</span>
+      ${endDate?`<span style="font-size:12px;color:var(--text3)">${endDate.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+    </div></div>
+    <div style="display:flex;gap:8px">
+      <a href="gantt.html?project=${encodeURIComponent(projName)}" class="btn btn-ghost btn-sm" target="_blank">📉 Full Gantt ↗</a>
+    </div>
+  </div>`;
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+  statsEl.style.display='grid';
+  const total=ms.length;
+  const complete=ms.filter(m=>m.status==='complete').length;
+  const delayed=ms.filter(m=>m.status==='delayed'||m.status==='at-risk').length;
+  const upcoming=ms.filter(m=>{if(m.status==='complete')return false;const d=new Date(m.due_date);return(d-today)/(1000*60*60*24)<=14;}).length;
+  statsEl.innerHTML=`
+    <div class="stat sa"><div class="stat-n" style="color:var(--accent)">${total}</div><div class="stat-l">Milestones</div></div>
+    <div class="stat sg"><div class="stat-n" style="color:var(--green)">${complete}</div><div class="stat-l">Complete</div></div>
+    <div class="stat sr"><div class="stat-n" style="color:var(--red)">${delayed}</div><div class="stat-l">At Risk / Delayed</div></div>
+    <div class="stat sb"><div class="stat-n" style="color:var(--blue)">${upcoming}</div><div class="stat-l">Due in 14 Days</div></div>`;
+
+  // ── Milestones table ───────────────────────────────────────────────────────
+  msCard.style.display='block';
+  const statusBadge={complete:'bg',delayed:'br','at-risk':'ba','in-progress':'bb','not-started':'bgr'};
+  const ragDot=m=>{
+    const d=new Date(m.due_date);const dl=Math.round((d-today)/(1000*60*60*24));
+    if(m.status==='complete')return'rag-g';
+    if(m.status==='delayed'||dl<0)return'rag-r';
+    if(m.status==='at-risk'||dl<=7)return'rag-a';
+    return'rag-g';
+  };
+  document.getElementById('tracker-milestones-table').innerHTML=ms.length===0
+    ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem">No milestones yet — click <strong style="color:var(--accent)">+ Add Milestone</strong>.</td></tr>`
+    :ms.map(m=>{
+      const d=new Date(m.due_date);const dl=Math.round((d-today)/(1000*60*60*24));
+      const dlTxt=m.status==='complete'?'Done':dl<0?`${Math.abs(dl)}d overdue`:dl===0?'Today':`${dl}d`;
+      const dlC=m.status==='complete'?'var(--green)':dl<0?'var(--red)':dl<=7?'var(--accent)':'var(--text2)';
+      const pct=parseInt(m.progress||0);
+      const progC=pct>=100?'var(--green)':pct>=50?'var(--blue)':'var(--accent)';
+      return`<tr>
+        <td><div style="font-weight:500">${m.title}</div>${m.description?`<div style="font-size:10px;color:var(--text3);margin-top:2px">${m.description}</div>`:''}</td>
+        <td style="color:var(--text2);font-size:12px;white-space:nowrap">${d.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'})}</td>
+        <td style="color:var(--text2);font-size:12px">${m.owner||'—'}</td>
+        <td style="min-width:100px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${progC};border-radius:3px"></div></div><span style="font-family:var(--font-d);font-size:12px;font-weight:700;color:${progC};min-width:28px">${pct}%</span></div></td>
+        <td><div class="rag ${ragDot(m)}"></div></td>
+        <td><span class="badge ${statusBadge[m.status]||'bgr'}">${m.status}</span></td>
+        <td style="font-family:var(--font-d);font-weight:700;font-size:13px;color:${dlC}">${dlTxt}</td>
+        <td><div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditMilestone(${m.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delMilestone(${m.id})">Del</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+
+  // ── Updates log ────────────────────────────────────────────────────────────
+  upCard.style.display='block';
+  const typeColor={daily:'var(--blue)',weekly:'var(--accent)',monthly:'var(--purple)'};
+  const typeBadge={daily:'bb',weekly:'ba',monthly:'bp'};
+  const msMap={};ms.forEach(m=>msMap[m.id]=m.title);
+  document.getElementById('tracker-updates-list').innerHTML=updates.length===0
+    ?`<p style="color:var(--text3);font-size:13px;padding:0.5rem 0">No updates logged yet — click <strong style="color:var(--accent)">+ Log Update</strong>.</p>`
+    :updates.slice(0,30).map(u=>`
+      <div style="border-left:3px solid ${typeColor[u.update_type]||'var(--border2)'};padding:10px 14px;margin-bottom:10px;background:var(--bg3);border-radius:0 var(--r) var(--r) 0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+          <span class="badge ${typeBadge[u.update_type]||'bgr'}">${u.update_type||'update'}</span>
+          <span style="font-size:11px;color:var(--text3)">${u.update_date}</span>
+          ${msMap[u.milestone_id]?`<span style="font-size:11px;color:var(--text2)">· ${msMap[u.milestone_id]}</span>`:''}
+          ${u.author?`<span style="font-size:11px;color:var(--text3);margin-left:auto">${u.author}</span>`:''}
+        </div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">${u.note}</div>
+      </div>`).join('');
+}
+
+function openMilestoneModal(proj=''){
+  document.getElementById('ms-id').value='';
+  document.getElementById('ms-modal-title').textContent='Add Milestone';
+  document.getElementById('ms-title').value='';
+  document.getElementById('ms-due-date').value='';
+  document.getElementById('ms-owner').value='';
+  document.getElementById('ms-progress').value='0';
+  document.getElementById('ms-status').value='not-started';
+  document.getElementById('ms-description').value='';
+  const sel=document.getElementById('tracker-proj-select');
+  const msSel=document.getElementById('ms-project');
+  if(msSel&&sel&&sel.value)msSel.value=sel.value;
+  document.getElementById('modal-milestone').classList.add('open');
+}
+
+function openEditMilestone(id){
+  const m=allMilestones.find(x=>x.id===id);if(!m)return;
+  document.getElementById('ms-id').value=m.id;
+  document.getElementById('ms-modal-title').textContent='Edit Milestone';
+  document.getElementById('ms-title').value=m.title;
+  document.getElementById('ms-project').value=m.project_name;
+  document.getElementById('ms-due-date').value=m.due_date;
+  document.getElementById('ms-owner').value=m.owner||'';
+  document.getElementById('ms-progress').value=m.progress||0;
+  document.getElementById('ms-status').value=m.status||'not-started';
+  document.getElementById('ms-description').value=m.description||'';
+  document.getElementById('modal-milestone').classList.add('open');
+}
+
+async function saveMilestone(){
+  const title=document.getElementById('ms-title').value.trim();
+  const dueDate=document.getElementById('ms-due-date').value;
+  if(!title||!dueDate){showToast('Title and due date required','err');return;}
+  const btn=document.getElementById('ms-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const id=document.getElementById('ms-id').value;
+  const payload={project_name:document.getElementById('ms-project').value,title,due_date:dueDate,owner:document.getElementById('ms-owner').value.trim(),progress:parseInt(document.getElementById('ms-progress').value)||0,status:document.getElementById('ms-status').value,description:document.getElementById('ms-description').value.trim(),active:true};
+  try{
+    if(id){await sbPatch('milestones',id,payload);showToast('Milestone updated');}
+    else{await sbPost('milestones',payload);showToast('Milestone added');}
+    closeModal('milestone');await loadAll();renderTracker();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Milestone';
+}
+
+async function delMilestone(id){
+  if(!confirm('Delete this milestone?'))return;
+  try{await sbPatch('milestones',id,{active:false});showToast('Deleted');await loadAll();renderTracker();}
+  catch(e){showToast('Delete failed','err');}
+}
+
+function openUpdateModal(){
+  const sel=document.getElementById('tracker-proj-select');
+  const projName=sel?sel.value:'';
+  const ms=allMilestones.filter(m=>m.project_name===projName&&m.status!=='complete');
+  const msuSel=document.getElementById('msu-milestone');
+  msuSel.innerHTML=ms.length
+    ?ms.map(m=>`<option value="${m.id}">${m.title}</option>`).join('')
+    :'<option value="">No open milestones</option>';
+  document.getElementById('msu-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('msu-note').value='';
+  document.getElementById('msu-author').value=getUserName();
+  document.getElementById('modal-ms-update').classList.add('open');
+}
+
+async function saveMilestoneUpdate(){
+  const msId=document.getElementById('msu-milestone').value;
+  const note=document.getElementById('msu-note').value.trim();
+  if(!note){showToast('Update note required','err');return;}
+  const btn=document.getElementById('msu-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const sel=document.getElementById('tracker-proj-select');
+  const ms=allMilestones.find(m=>m.id===parseInt(msId));
+  try{
+    await sbPost('milestone_updates',{milestone_id:parseInt(msId)||null,project_name:sel?sel.value:'',update_type:document.getElementById('msu-type').value,update_date:document.getElementById('msu-date').value,author:document.getElementById('msu-author').value.trim(),note});
+    showToast('Update logged');closeModal('ms-update');await loadAll();renderTracker();
+  }catch(e){showToast('Save failed: '+e.message,'err');}
+  btn.disabled=false;btn.textContent='Save Update';
+}
 
 // ══ DEPENDENCIES ════════════════════════════════════════════════════════════
 let allDependencies=[];
