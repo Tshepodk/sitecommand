@@ -2405,7 +2405,7 @@ function renderPMOPortfolio(){
   const fc=pmoFC();
   const rC={g:0,a:0,r:0};
   allProjects.forEach(p=>{rC[pmoRAG(p,fc)]++;});
-  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const tCV=allProjects.reduce((a,p)=>a+(p.po_value||p.budget||0),0);
   const tBudget=allProjects.reduce((a,p)=>a+(p.budget||0),0);
   const tSpend=allProjects.reduce((a,p)=>a+(p.contract_spend||0)+(fc[p.name]||0),0);
   const tRev=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
@@ -2632,7 +2632,7 @@ function renderPMORevenue(){
   const tBilled=allRevenue.reduce((a,r)=>a+(r.amount||0),0);
   const tReceived=allRevenue.filter(r=>r.status==='received').reduce((a,r)=>a+(r.amount||0),0);
   const tOutstanding=allRevenue.filter(r=>r.status==='outstanding').reduce((a,r)=>a+(r.amount||0),0);
-  const tCV=allProjects.reduce((a,p)=>a+(p.contract_value||p.budget||0),0);
+  const tCV=allProjects.reduce((a,p)=>a+(p.po_value||p.budget||0),0);
   document.getElementById('pmo-rev-stats').innerHTML=`
     <div class="stat-card s-amber"><div class="stat-n" style="color:var(--accent);font-size:18px">${fmt(tCV)}</div><div class="stat-l">Contract Value</div></div>
     <div class="stat-card s-teal"><div class="stat-n" style="color:var(--teal);font-size:18px">${fmt(tBilled)}</div><div class="stat-l">Revenue Billed</div></div>
@@ -2651,7 +2651,7 @@ function renderPMORevenue(){
         <td><span class="badge ${revStatB[r.status]||'badge-gray'}">${r.status}</span></td>
       </tr>`).join('');
   document.getElementById('pmo-profit-table').innerHTML=allProjects.map(p=>{
-    const cv=p.contract_value||p.budget||0;
+    const cv=p.po_value||p.budget||0;
     const fieldCost=fc[p.name]||0;
     const totalCost=(p.contract_spend||0)+fieldCost;
     const gp=cv-p.budget;
