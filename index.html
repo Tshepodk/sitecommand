@@ -478,7 +478,7 @@ tr:hover td{background:var(--bg3)}
       <!-- Revenue tab -->
       <div class="pmo-tab-content" id="pmotab-revenue" style="display:none">
         <div class="stats-grid" id="pmo-rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
-        <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div></div>
+        <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div><button class="btn btn-primary btn-sm" onclick="openRevenueModal()">+ Add Entry</button></div>
           <div class="card-body" style="padding:0"><div class="table-wrap">
             <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody id="pmo-rev-table"></tbody></table>
@@ -779,6 +779,50 @@ tr:hover td{background:var(--bg3)}
   </div>
 </div>
 
+
+<!-- Modal: Revenue Entry -->
+<div class="modal-bg" id="modal-revenue">
+  <div class="modal" style="width:480px">
+    <div class="modal-title"><span>Add Revenue Entry</span><button class="modal-close" onclick="document.getElementById('modal-revenue').classList.remove('open')">&#10005;</button></div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Project *</label>
+        <select class="form-input" id="rev-project"></select>
+      </div>
+      <div class="form-group"><label class="form-label">Date *</label>
+        <input class="form-input" type="date" id="rev-date"/>
+      </div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Type *</label>
+        <select class="form-input" id="rev-type">
+          <option value="Invoice">Invoice</option>
+          <option value="Payment">Payment</option>
+          <option value="Claim">Claim</option>
+          <option value="Variation">Variation</option>
+          <option value="Retention">Retention</option>
+          <option value="Advance">Advance</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Status *</label>
+        <select class="form-input" id="rev-status">
+          <option value="billed">Billed</option>
+          <option value="received">Received</option>
+          <option value="outstanding">Outstanding</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Amount (R) *</label>
+      <input class="form-input" type="number" id="rev-amount" placeholder="e.g. 150000" min="0" step="0.01"/>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label>
+      <input class="form-input" id="rev-description" placeholder="e.g. Invoice #INV-001 — Progress Claim"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-revenue').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" id="rev-save-btn" onclick="saveRevenue()">Save Entry</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal: Approve / Reject Report -->
 <div class="modal-bg" id="modal-approval-action">
@@ -2094,6 +2138,38 @@ async function deleteRecord(table,id,name){
   if(!confirm('Delete "'+name+'"? This cannot be undone.'))return;
   try{await sbPatch(table,id,{active:false});showToast('Deleted');await loadAllData();renderPage(document.querySelector('.page.active').id.replace('page-',''));}
   catch(e){showToast('Delete failed','err');}
+}
+
+// ── Revenue Entry Modal ───────────────────────────────────────────────────────
+function openRevenueModal(){
+  const sel=document.getElementById('rev-project');
+  sel.innerHTML=allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  document.getElementById('rev-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('rev-amount').value='';
+  document.getElementById('rev-description').value='';
+  document.getElementById('rev-type').selectedIndex=0;
+  document.getElementById('rev-status').selectedIndex=0;
+  document.getElementById('modal-revenue').classList.add('open');
+}
+
+async function saveRevenue(){
+  const btn=document.getElementById('rev-save-btn');
+  const project_name=document.getElementById('rev-project').value;
+  const entry_date=document.getElementById('rev-date').value;
+  const amount=parseFloat(document.getElementById('rev-amount').value);
+  const type=document.getElementById('rev-type').value;
+  const status=document.getElementById('rev-status').value;
+  const description=document.getElementById('rev-description').value.trim();
+  if(!project_name||!entry_date||!amount){showToast('Project, date and amount are required','err');return;}
+  btn.disabled=true;btn.textContent='Saving...';
+  try{
+    await sbPost('revenue_entries',{project_name,entry_date,amount,type,status,description});
+    showToast('Revenue entry saved');
+    document.getElementById('modal-revenue').classList.remove('open');
+    await loadAllData();
+    renderPMORevenue();
+  }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
+  btn.disabled=false;btn.textContent='Save Entry';
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────────
