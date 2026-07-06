@@ -2029,8 +2029,7 @@ async function saveReportEdit(){
       const task=tasks&&tasks[0];
       if(!task)return;
       const corrected=Math.max(0,(parseFloat(task.qty_done)||0)+adj.diff);
-      const correctedProgress=task.qty_total>0?Math.min(100,parseFloat((corrected/task.qty_total*100).toFixed(1))):0;
-      await sbPatch('project_tasks',taskId,{qty_done:corrected,status:adj.status,progress:correctedProgress});
+      await sbPatch('project_tasks',taskId,{qty_done:corrected,status:adj.status});
     }));
     showToast('Report updated successfully');
     closeModal('report-edit');
@@ -2116,9 +2115,7 @@ async function saveRecord(type){
       const title=document.getElementById('task-title').value.trim();const proj=document.getElementById('task-project').value;const qt=parseFloat(document.getElementById('task-qty-total').value)||0;const unit=document.getElementById('task-unit').value.trim();
       if(!title||!proj||!qt||!unit){showToast('Title, project, quantity and unit are required','err');btn.disabled=false;btn.textContent='Save Task';return;}
       const projObj=allProjects.find(p=>p.name===proj);
-      const taskQtyDone=parseFloat(document.getElementById('task-qty-done').value)||0;
-      const taskProgress=qt>0?Math.min(100,parseFloat((taskQtyDone/qt*100).toFixed(1))):0;
-      payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:taskQtyDone,progress:taskProgress,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
+      payload={title,project_name:proj,project_id:projObj?projObj.id:null,type:document.getElementById('task-type').value,qty_total:qt,unit,priority:document.getElementById('task-priority').value,assigned_to:document.getElementById('task-assigned').value.trim(),status:document.getElementById('task-status').value,qty_done:parseFloat(document.getElementById('task-qty-done').value)||0,notes:document.getElementById('task-notes').value.trim(),active:true};table='project_tasks';
     } else if(type==='worker'){
       const name=document.getElementById('worker-name').value.trim();if(!name){showToast('Worker name required','err');btn.disabled=false;btn.textContent='Save Worker';return;}
       const _payType=document.getElementById('worker-pay-type').value;

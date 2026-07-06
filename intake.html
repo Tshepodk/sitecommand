@@ -792,9 +792,7 @@ async function submitForm(){
     // Update each task's qty_done (accumulate)
     await Promise.all(taskUpdates.filter(t=>t.qty_done>0).map(async t=>{
       const task=projectTasks.find(pt=>pt.id===t.task_id);if(!task)return;
-      const newDone=parseFloat(task.qty_done||0)+t.qty_done;
-      const newProgress=task.qty_total>0?Math.min(100,parseFloat((newDone/task.qty_total*100).toFixed(1))):0;
-      await sbPatch('project_tasks',t.task_id,{qty_done:newDone,status:t.status,progress:newProgress});
+      await sbPatch('project_tasks',t.task_id,{qty_done:parseFloat(task.qty_done||0)+t.qty_done,status:t.status});
     }));
     // Upload photos
     if(selectedPhotos.length&&savedReport&&savedReport.id){
