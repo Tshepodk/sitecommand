@@ -480,7 +480,7 @@ tr:hover td{background:var(--bg3)}
         <div class="stats-grid" id="pmo-rev-stats" style="grid-template-columns:repeat(4,1fr)"></div>
         <div class="card"><div class="card-header"><div class="card-title">Revenue Register</div><button class="btn btn-primary btn-sm" onclick="openRevenueModal()">+ Add Entry</button></div>
           <div class="card-body" style="padding:0"><div class="table-wrap">
-            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+            <table><thead><tr><th>Date</th><th>Project</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th><th></th></tr></thead>
             <tbody id="pmo-rev-table"></tbody></table>
           </div></div>
         </div>
@@ -783,7 +783,8 @@ tr:hover td{background:var(--bg3)}
 <!-- Modal: Revenue Entry -->
 <div class="modal-bg" id="modal-revenue">
   <div class="modal" style="width:480px">
-    <div class="modal-title"><span>Add Revenue Entry</span><button class="modal-close" onclick="document.getElementById('modal-revenue').classList.remove('open')">&#10005;</button></div>
+    <div class="modal-title"><span id="rev-modal-title">Add Revenue Entry</span><button class="modal-close" onclick="document.getElementById('modal-revenue').classList.remove('open')">&#10005;</button></div>
+    <input type="hidden" id="rev-id"/>
     <div class="fg2">
       <div class="form-group"><label class="form-label">Project *</label>
         <select class="form-input" id="rev-project"></select>
@@ -820,6 +821,7 @@ tr:hover td{background:var(--bg3)}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="document.getElementById('modal-revenue').classList.remove('open')">Cancel</button>
       <button class="btn btn-primary" id="rev-save-btn" onclick="saveRevenue()">Save Entry</button>
+      <button class="btn btn-danger" id="rev-delete-btn" style="display:none" onclick="deleteRevenueFromModal()">Delete Entry</button>
     </div>
   </div>
 </div>
@@ -2141,19 +2143,26 @@ async function deleteRecord(table,id,name){
 }
 
 // ── Revenue Entry Modal ───────────────────────────────────────────────────────
-function openRevenueModal(){
+function openRevenueModal(id=null){
   const sel=document.getElementById('rev-project');
   sel.innerHTML=allProjects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-  document.getElementById('rev-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('rev-amount').value='';
-  document.getElementById('rev-description').value='';
-  document.getElementById('rev-type').selectedIndex=0;
-  document.getElementById('rev-status').selectedIndex=0;
+  const r=id?allRevenue.find(x=>x.id===id):null;
+  document.getElementById('rev-id').value=r?r.id:'';
+  document.getElementById('rev-modal-title').textContent=r?'Edit Revenue Entry':'Add Revenue Entry';
+  document.getElementById('rev-save-btn').textContent=r?'Save Changes':'Save Entry';
+  document.getElementById('rev-delete-btn').style.display=r?'':'none';
+  document.getElementById('rev-project').value=r?r.project_name:(allProjects[0]?.name||'');
+  document.getElementById('rev-date').value=r?r.entry_date:new Date().toISOString().slice(0,10);
+  document.getElementById('rev-amount').value=r?r.amount:'';
+  document.getElementById('rev-description').value=r?(r.description||''):'';
+  document.getElementById('rev-type').value=r?r.type:document.getElementById('rev-type').options[0].value;
+  document.getElementById('rev-status').value=r?r.status:document.getElementById('rev-status').options[0].value;
   document.getElementById('modal-revenue').classList.add('open');
 }
 
 async function saveRevenue(){
   const btn=document.getElementById('rev-save-btn');
+  const id=document.getElementById('rev-id').value;
   const project_name=document.getElementById('rev-project').value;
   const entry_date=document.getElementById('rev-date').value;
   const amount=parseFloat(document.getElementById('rev-amount').value);
@@ -2161,15 +2170,38 @@ async function saveRevenue(){
   const status=document.getElementById('rev-status').value;
   const description=document.getElementById('rev-description').value.trim();
   if(!project_name||!entry_date||!amount){showToast('Project, date and amount are required','err');return;}
-  btn.disabled=true;btn.textContent='Saving...';
+  btn.disabled=true;btn.textContent=id?'Saving...':'Saving...';
   try{
-    await sbPost('revenue_entries',{project_name,entry_date,amount,type,status,description});
-    showToast('Revenue entry saved');
+    if(id){
+      await sbPatch('revenue_entries',id,{project_name,entry_date,amount,type,status,description});
+      showToast('Revenue entry updated');
+    }else{
+      await sbPost('revenue_entries',{project_name,entry_date,amount,type,status,description});
+      showToast('Revenue entry saved');
+    }
     document.getElementById('modal-revenue').classList.remove('open');
     await loadAllData();
     renderPMORevenue();
   }catch(e){showToast('Save failed: '+e.message,'err');console.error(e);}
-  btn.disabled=false;btn.textContent='Save Entry';
+  btn.disabled=false;btn.textContent=id?'Save Changes':'Save Entry';
+}
+
+async function deleteRevenueFromModal(){
+  const id=document.getElementById('rev-id').value;
+  if(!id)return;
+  const r=allRevenue.find(x=>x.id==id);
+  await deleteRevenue(id,r?r.description:'',r?r.amount:0);
+}
+
+async function deleteRevenue(id,description,amount){
+  if(!confirm(`Delete this revenue entry?\n\n${description||'(no description)'} — ${fmt(amount||0)}\n\nThis cannot be undone.`))return;
+  try{
+    await sb('DELETE','revenue_entries',null,'id=eq.'+id);
+    showToast('Revenue entry deleted');
+    document.getElementById('modal-revenue').classList.remove('open');
+    await loadAllData();
+    renderPMORevenue();
+  }catch(e){showToast('Delete failed: '+e.message,'err');console.error(e);}
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────────
@@ -2716,8 +2748,9 @@ function renderPMORevenue(){
     <div class="stat-card s-red"><div class="stat-n" style="color:var(--red);font-size:18px">${fmt(tOutstanding)}</div><div class="stat-l">Outstanding</div></div>`;
   const revStatB={billed:'badge-blue',received:'badge-green',outstanding:'badge-red'};
   const revTypeB={Invoice:'badge-blue',Payment:'badge-green',Claim:'badge-amber',Variation:'badge-purple',Retention:'badge-red',Advance:'badge-teal'};
+  const canEditRev=isAdmin()||isPM();
   document.getElementById('pmo-rev-table').innerHTML=allRevenue.length===0
-    ?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet.</td></tr>`
+    ?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:1.5rem">No revenue entries yet.</td></tr>`
     :allRevenue.sort((a,b)=>b.entry_date.localeCompare(a.entry_date)).map(r=>`<tr>
         <td style="font-family:var(--font-d);font-weight:600">${r.entry_date}</td>
         <td style="color:var(--text2);font-size:11px">${r.project_name}</td>
@@ -2725,6 +2758,10 @@ function renderPMORevenue(){
         <td><span class="badge ${revTypeB[r.type]||'badge-gray'}">${r.type}</span></td>
         <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${fmt(r.amount)}</td>
         <td><span class="badge ${revStatB[r.status]||'badge-gray'}">${r.status}</span></td>
+        <td style="white-space:nowrap">${canEditRev?`
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="openRevenueModal(${r.id})" title="Edit">&#9998;</button>
+          <button class="btn btn-danger btn-sm" style="padding:2px 6px" onclick="deleteRevenue(${r.id},'${(r.description||'').replace(/'/g,"\\'")}',${r.amount||0})" title="Delete">&#10005;</button>
+        `:''}</td>
       </tr>`).join('');
   document.getElementById('pmo-profit-table').innerHTML=allProjects.map(p=>{
     const cv=p.po_value||p.budget||0;
