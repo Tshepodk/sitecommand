@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiteCommand — Estimator</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f14;--bg2:#131620;--bg3:#1a1e2b;--bg4:#222738;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--accent:#f5a623;--accent2:#e8861a;--blue:#3b82f6;--teal:#14b8a6;--red:#ef4444;--green:#22c55e;--purple:#a855f7;--text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;--font-d:'Barlow Condensed',sans-serif;--font-b:'Barlow',sans-serif;--r:6px;--rl:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:14px;line-height:1.5;min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;min-height:100vh}
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:1rem}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.25rem 0;display:flex;flex-direction:column;overflow-y:auto}
+.main{background:var(--bg);overflow:auto;min-width:0}
+.logo{font-family:var(--font-d);font-size:20px;font-weight:700;letter-spacing:0.04em;color:var(--accent);text-transform:uppercase}
+.logo span{color:var(--text2);font-weight:400}
+.nav-section{padding:0 0.75rem;margin-bottom:1.25rem}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);padding:0 0.5rem;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.12s;margin-bottom:1px;text-decoration:none;white-space:nowrap}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center}
+.page{padding:1.5rem}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:var(--font-d);font-size:26px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1}
+.page-sub{color:var(--text2);font-size:13px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--font-d);font-weight:600;font-size:14px;letter-spacing:0.03em;text-transform:uppercase;transition:all 0.15s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-ghost{background:var(--bg3);border:1px solid var(--border2);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-teal{background:rgba(20,184,166,0.12);border:1px solid rgba(20,184,166,0.3);color:var(--teal)}
+.btn-teal:hover{background:rgba(20,184,166,0.2)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl)}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.card-title{font-family:var(--font-d);font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:1.25rem}
+.stats-grid{display:grid;gap:12px;margin-bottom:1.5rem}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-amber::before{background:var(--accent)}
+.stat-card.s-blue::before{background:var(--blue)}
+.stat-card.s-green::before{background:var(--green)}
+.stat-card.s-teal::before{background:var(--teal)}
+.stat-card.s-purple::before{background:var(--purple)}
+.stat-n{font-family:var(--font-d);font-size:28px;font-weight:700;line-height:1;margin-bottom:3px}
+.stat-l{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
+.badge-green{background:rgba(34,197,94,0.12);color:#4ade80}
+.badge-amber{background:rgba(245,166,35,0.12);color:var(--accent)}
+.badge-red{background:rgba(239,68,68,0.12);color:#f87171}
+.badge-blue{background:rgba(59,130,246,0.12);color:#60a5fa}
+.badge-teal{background:rgba(20,184,166,0.12);color:#2dd4bf}
+.badge-gray{background:rgba(139,144,160,0.12);color:var(--text2)}
+.badge-purple{background:rgba(168,85,247,0.12);color:#c084fc}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text2);margin-bottom:5px;display:block}
+.form-input,.form-select,textarea.form-input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 10px;color:var(--text);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color 0.15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-input::placeholder{color:var(--text3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:11px 18px;border-radius:var(--rl);font-family:var(--font-d);font-weight:700;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;z-index:200;display:none;animation:slideup 0.25s ease}
+.toast.ok{background:var(--green);color:#000}
+.toast.err{background:var(--red);color:#fff}
+@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.conn-dot.ok{background:var(--green);animation:pulse 2s infinite}
+.conn-dot.err{background:var(--red)}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-state h3{font-family:var(--font-d);font-size:18px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:0.04em;text-transform:uppercase}
+.tbl-actions{display:flex;gap:6px}
+.view{display:none}
+.view.active{display:block}
+.detail-grid{display:grid;grid-template-columns:1fr 320px;gap:1.25rem;align-items:start}
+.line-row{display:grid;grid-template-columns:130px 1fr 110px 90px 90px 110px 110px 32px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.line-row.head{padding:0 0 8px 0;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3)}
+.line-row input,.line-row select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;color:var(--text);font-family:var(--font-b);font-size:12px;outline:none;width:100%}
+.line-row input:focus,.line-row select:focus{border-color:var(--accent)}
+.line-total-cell{font-family:var(--font-d);font-weight:700;color:var(--teal);text-align:right;font-size:13px}
+.remove-line{background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:2px}
+.remove-line:hover{color:var(--red)}
+.summary-card{position:sticky;top:1.5rem}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.sum-row:last-child{border-bottom:none}
+.sum-row .l{color:var(--text2)}
+.sum-row .v{font-family:var(--font-d);font-weight:600}
+.sum-row.total .v{font-size:18px;font-weight:800}
+.sum-row.margin .v{font-size:26px;font-weight:800}
+@media(max-width:768px){.shell{grid-template-columns:1fr;grid-template-rows:52px 1fr}.sidebar{display:none}.stats-grid{grid-template-columns:repeat(2,1fr)!important}.detail-grid{grid-template-columns:1fr}.fg2,.fg3{grid-template-columns:1fr}.line-row{grid-template-columns:1fr;gap:4px;padding-bottom:12px}.line-row.head{display:none}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">Site<span>Command</span></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label" style="font-size:12px;color:var(--text3)">Connecting…</span>
+    </div>
+    <a href="index.html" class="btn btn-ghost btn-sm">← Back to App</a>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Navigation</div>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>Dashboard</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">🗂</span>PMO Hub</a>
+      <a href="estimator.html" class="nav-item active"><span class="nav-icon">🧮</span>Estimator</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Field Data</div>
+      <a href="intake.html" class="nav-item"><span class="nav-icon">📋</span>Daily Report</a>
+      <a href="timesheets.html" class="nav-item"><span class="nav-icon">⏱</span>Timesheets</a>
+      <a href="index.html" class="nav-item"><span class="nav-icon">📊</span>Reports</a>
+    </div>
+    <div style="margin-top:auto;padding:0.75rem;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);padding:0 0.5rem">Estimator v1.0 · Sprint 10a</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="page">
+
+      <!-- ══════════ VIEW: LIST ══════════ -->
+      <div class="view active" id="view-list">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🧮 Estimator</div>
+            <div class="page-sub">Pre-award cost projections — know your margin before you bid</div>
+          </div>
+          <button class="btn btn-primary" onclick="newEstimate()">+ New Estimate</button>
+        </div>
+
+        <div class="stats-grid" id="est-stats" style="grid-template-columns:repeat(4,1fr)"></div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Estimates</div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Opportunity</th><th>Client</th><th>Status</th><th>Total Cost</th><th>Proposed PO Value</th><th>Margin</th><th>Date</th><th></th></tr></thead>
+              <tbody id="est-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════ VIEW: DETAIL ══════════ -->
+      <div class="view" id="view-detail">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="detail-title">🧮 New Estimate</div>
+            <div class="page-sub">Build the cost picture, then set the price you plan to quote</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="showList()">← Back to List</button>
+            <button class="btn btn-danger" id="btn-delete-est" onclick="deleteEstimate()" style="display:none">Delete</button>
+            <button class="btn btn-primary" onclick="saveEstimate()">💾 Save Estimate</button>
+          </div>
+        </div>
+
+        <div class="detail-grid">
+          <!-- LEFT: form -->
+          <div>
+            <div class="card" style="margin-bottom:1.25rem">
+              <div class="card-header"><div class="card-title">Opportunity Details</div></div>
+              <div class="card-body">
+                <div class="fg2">
+                  <div class="form-group">
+                    <label class="form-label">Opportunity Name *</label>
+                    <input class="form-input" id="f-name" placeholder="e.g. Komatipoort Fibre Extension">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Client</label>
+                    <input class="form-input" id="f-client" placeholder="e.g. Openserve">
+                  </div>
+                </div>
+                <div class="fg2">
+                  <div class="form-group">
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-input" id="f-date">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="f-status">
+                      <option value="draft">Draft</option>
+                      <option value="submitted">Submitted</option>
+                      <option value="won">Won</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label class="form-label">Notes</label>
+                  <textarea class="form-input" id="f-notes" rows="2" placeholder="Scope assumptions, site conditions, exclusions..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:1.25rem">
+              <div class="card-header">
+                <div class="card-title">Cost Line Items</div>
+                <button class="btn btn-teal btn-sm" onclick="addLine()">+ Add Line Item</button>
+              </div>
+              <div class="card-body" id="lines-body">
+                <div class="line-row head">
+                  <div>Category</div><div>Description</div><div>Task Type</div><div>Unit</div><div>Qty</div><div>Rate (R)</div><div style="text-align:right">Total</div><div></div>
+                </div>
+                <div id="lines-container"></div>
+                <div id="lines-empty" style="text-align:center;color:var(--text3);padding:1.5rem 0;font-size:13px">No line items yet. Click <strong style="color:var(--teal)">+ Add Line Item</strong> to start costing.</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">Loadings</div></div>
+              <div class="card-body">
+                <div class="fg3">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Contingency %</label>
+                    <input type="number" step="0.5" class="form-input" id="f-contingency" value="10" oninput="renderSummary()">
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Overhead Recovery %</label>
+                    <input type="number" step="0.5" class="form-input" id="f-overhead" value="8" oninput="renderSummary()">
+                  </div>
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Proposed PO Value (R)</label>
+                    <input type="number" step="1000" class="form-input" id="f-po" placeholder="0" oninput="renderSummary()">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: summary -->
+          <div class="card summary-card">
+            <div class="card-header"><div class="card-title">Projected Profitability</div></div>
+            <div class="card-body">
+              <div class="sum-row"><span class="l">Direct Cost Subtotal</span><span class="v" id="sum-subtotal">R 0</span></div>
+              <div class="sum-row"><span class="l">+ Contingency</span><span class="v" style="color:var(--text2)" id="sum-contingency">R 0</span></div>
+              <div class="sum-row"><span class="l">+ Overhead Recovery</span><span class="v" style="color:var(--text2)" id="sum-overhead">R 0</span></div>
+              <div class="sum-row total"><span class="l">Total Projected Cost</span><span class="v" style="color:var(--accent)" id="sum-totalcost">R 0</span></div>
+              <div class="sum-row"><span class="l">Proposed PO Value</span><span class="v" id="sum-po">R 0</span></div>
+              <div class="sum-row"><span class="l">Projected Gross Profit</span><span class="v" id="sum-gp">R 0</span></div>
+              <div class="sum-row margin"><span class="l">Projected Margin</span><span class="v" id="sum-margin">0%</span></div>
+              <div id="sum-note" style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Supabase config (mirrors index.html / timesheets.html) ────────────────────
+const SB='https://dovdqmzyfgmkxvqdaeyr.supabase.co';
+const SK='sb_publishable_qYWGLAhOR63fEdh3qQcgXg_q57DQnUq';
+
+function getH(){
+  try{
+    const sess=JSON.parse(localStorage.getItem('sc_session')||'null');
+    const token=(sess&&sess.access_token&&sess.expires_at>Date.now())?sess.access_token:SK;
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+token};
+  }catch(e){
+    return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};
+  }
+}
+async function sb(method,table,data=null,query=''){
+  const headers=getH();
+  const opts={method,headers};
+  if(data){opts.body=JSON.stringify(data);opts.headers['Prefer']='return=representation';}
+  const r=await fetch(`${SB}/rest/v1/${table}?${query}`,opts);
+  if(r.status===401){localStorage.removeItem('sc_session');window.location.href='login.html';return null;}
+  if(!r.ok)throw new Error(await r.text());
+  if(r.status===204)return null;
+  const txt=await r.text();
+  return txt?JSON.parse(txt):null;
+}
+const sbGet=(t,q)=>sb('GET',t,null,q);
+const sbPost=(t,d)=>sb('POST',t,d,'');
+const sbPatch=(t,id,d)=>sb('PATCH',t,d,'id=eq.'+id);
+const sbDelete=(t,q)=>sb('DELETE',t,null,q);
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+const fmt=n=>'R '+Number(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const showToast=(m,t='ok')=>{const el=document.getElementById('toast');el.textContent=m;el.className='toast '+t;el.style.display='block';setTimeout(()=>el.style.display='none',3500);};
+const CATS=['Labour','Materials','Subcontract','Plant','Transport','Other'];
+const STATUS_B={draft:'badge-gray',submitted:'badge-blue',won:'badge-green',lost:'badge-red'};
+
+// ── RBAC (lite — full rules live in index.html) ────────────────────────────
+function getSession(){try{return JSON.parse(localStorage.getItem('sc_session')||'null');}catch{return null;}}
+function getUserRole(){const s=getSession();return s?.profile?.role||s?.user?.user_metadata?.role||'viewer';}
+function applyPageRBAC(){
+  const role=getUserRole();
+  if(role==='foreman'){window.location.href='index.html';return;}
+  if(role==='viewer'){
+    document.querySelectorAll('.btn-primary,.btn-teal').forEach(el=>{el.style.display='none';});
+    document.getElementById('btn-delete-est').style.display='none';
+  }
+}
+
+// ── State ───────────────────────────────────────────────────────────────────
+let allEstimates=[];
+let currentEstimateId=null;   // null = new
+let currentLines=[];          // [{tempId,id,category,description,task_type,unit,quantity,unit_rate}]
+let lineSeq=0;
+
+// ── Init ────────────────────────────────────────────────────────────────────
+async function init(){
+  try{
+    allEstimates=await sbGet('estimates','order=created_at.desc');
+    document.getElementById('conn-dot').className='conn-dot ok';
+    document.getElementById('conn-label').textContent='Connected — Supabase';
+    document.getElementById('conn-label').style.color='var(--green)';
+  }catch(e){
+    allEstimates=[];
+    document.getElementById('conn-dot').className='conn-dot err';
+    document.getElementById('conn-label').textContent='Setup required';
+    document.getElementById('conn-label').style.color='var(--red)';
+    if((e.message||'').includes('estimates')){showTableSetupBanner();}
+  }
+}
+
+function showTableSetupBanner(){
+  if(document.getElementById('setup-banner'))return;
+  const banner=document.createElement('div');
+  banner.id='setup-banner';
+  banner.style.cssText='margin-bottom:1rem;padding:12px 16px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:var(--r);font-size:13px;color:#93c5fd;line-height:1.6';
+  banner.innerHTML='<strong>⚙ Supabase Table Setup Required</strong><br>Run <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">estimator_schema.sql</code> in the Supabase SQL Editor to create the <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">estimates</code> and <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">estimate_line_items</code> tables.';
+  const list=document.getElementById('view-list');
+  list.insertBefore(banner,list.children[1]);
+}
+
+// ── List view ───────────────────────────────────────────────────────────────
+function calcTotals(est,lines){
+  const subtotal=lines.reduce((a,l)=>a+(l.quantity||0)*(l.unit_rate||0),0);
+  const contingency=subtotal*((est.contingency_pct||0)/100);
+  const overhead=subtotal*((est.overhead_pct||0)/100);
+  const totalCost=subtotal+contingency+overhead;
+  const po=est.proposed_po_value||0;
+  const gp=po-totalCost;
+  const margin=po>0?(gp/po*100):0;
+  return{subtotal,contingency,overhead,totalCost,po,gp,margin};
+}
+
+function renderStats(){
+  const total=allEstimates.length;
+  const draft=allEstimates.filter(e=>e.status==='draft').length;
+  const won=allEstimates.filter(e=>e.status==='won');
+  const wonValue=won.reduce((a,e)=>a+(e.proposed_po_value||0),0);
+  const priced=allEstimates.filter(e=>(e.proposed_po_value||0)>0);
+  const avgMargin=priced.length?priced.reduce((a,e)=>{
+    const lines=e._lines||[];
+    return a+calcTotals(e,lines).margin;
+  },0)/priced.length:0;
+  document.getElementById('est-stats').innerHTML=`
+    <div class="stat-card s-amber"><div class="stat-n">${total}</div><div class="stat-l">Total Estimates</div></div>
+    <div class="stat-card s-blue"><div class="stat-n">${draft}</div><div class="stat-l">Draft</div></div>
+    <div class="stat-card s-teal"><div class="stat-n">${avgMargin.toFixed(0)}%</div><div class="stat-l">Avg Projected Margin</div></div>
+    <div class="stat-card s-green"><div class="stat-n" style="font-size:20px">${fmt(wonValue)}</div><div class="stat-l">Won Value</div></div>`;
+}
+
+function renderList(){
+  const tbody=document.getElementById('est-table');
+  if(!allEstimates.length){
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><h3>No Estimates Yet</h3>Click <strong style="color:var(--accent)">+ New Estimate</strong> to project cost on your next opportunity.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=allEstimates.map(e=>{
+    const lines=e._lines||[];
+    const t=calcTotals(e,lines);
+    const mColor=t.margin>=20?'var(--green)':t.margin>=10?'var(--accent)':'var(--red)';
+    return`<tr onclick="openEstimate(${e.id})" style="cursor:pointer">
+      <td><div style="font-weight:500">${esc(e.opportunity_name)}</div></td>
+      <td style="color:var(--text2)">${esc(e.client)||'—'}</td>
+      <td><span class="badge ${STATUS_B[e.status]||'badge-gray'}">${e.status}</span></td>
+      <td style="font-family:var(--font-d);font-weight:700">${fmt(t.totalCost)}</td>
+      <td style="font-family:var(--font-d);font-weight:700;color:var(--accent)">${t.po>0?fmt(t.po):'—'}</td>
+      <td style="font-family:var(--font-d);font-weight:800;color:${mColor}">${t.po>0?t.margin.toFixed(0)+'%':'—'}</td>
+      <td style="color:var(--text2);font-size:12px">${e.estimate_date||'—'}</td>
+      <td onclick="event.stopPropagation()"><div class="tbl-actions"><button class="btn btn-ghost btn-sm" onclick="openEstimate(${e.id})">Open</button></div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function refreshEstimatesWithLines(){
+  // Pull line items for all estimates so list stats/margins are accurate
+  try{
+    const lines=await sbGet('estimate_line_items','order=sort_order.asc');
+    const byEst={};
+    (lines||[]).forEach(l=>{(byEst[l.estimate_id]=byEst[l.estimate_id]||[]).push(l);});
+    allEstimates.forEach(e=>{e._lines=byEst[e.id]||[];});
+  }catch(e){/* table may not exist yet */}
+}
+
+function esc(s){return s?String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])):'';}
+
+// ── Navigation between views ───────────────────────────────────────────────
+function showList(){
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-list').classList.add('active');
+  renderStats();renderList();
+}
+
+function newEstimate(){
+  currentEstimateId=null;
+  currentLines=[];
+  document.getElementById('detail-title').textContent='🧮 New Estimate';
+  document.getElementById('f-name').value='';
+  document.getElementById('f-client').value='';
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-status').value='draft';
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-contingency').value=10;
+  document.getElementById('f-overhead').value=8;
+  document.getElementById('f-po').value='';
+  document.getElementById('btn-delete-est').style.display='none';
+  renderLinesTable();
+  applyPageRBAC();
+  document.getElementById('view-list').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+}
+
+async function openEstimate(id){
+  const est=allEstimates.find(e=>e.id===id);
+  if(!est)return;
+  currentEstimateId=id;
+  document.getElementById('detail-title').textContent='🧮 '+est.opportunity_name;
+  document.getElementById('f-name').value=est.opportunity_name||'';
+  document.getElementById('f-client').value=est.client||'';
+  document.getElementById('f-date').value=est.estimate_date||'';
+  document.getElementById('f-status').value=est.status||'draft';
+  document.getElementById('f-notes').value=est.notes||'';
+  document.getElementById('f-contingency').value=est.contingency_pct??10;
+  document.getElementById('f-overhead').value=est.overhead_pct??8;
+  document.getElementById('f-po').value=est.proposed_po_value||'';
+  document.getElementById('btn-delete-est').style.display='';
+  try{
+    const lines=await sbGet('estimate_line_items','estimate_id=eq.'+id+'&order=sort_order.asc');
+    currentLines=(lines||[]).map(l=>({tempId:'l'+(lineSeq++),id:l.id,category:l.category,description:l.description,task_type:l.task_type,unit:l.unit,quantity:l.quantity,unit_rate:l.unit_rate}));
+  }catch(e){currentLines=[];}
+  renderLinesTable();
+  applyPageRBAC();
+  document.getElementById('view-list').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+}
+
+// ── Line items ──────────────────────────────────────────────────────────────
+function addLine(){
+  currentLines.push({tempId:'l'+(lineSeq++),category:'Labour',description:'',task_type:'',unit:'',quantity:0,unit_rate:0});
+  renderLinesTable();
+}
+function removeLine(tempId){
+  currentLines=currentLines.filter(l=>l.tempId!==tempId);
+  renderLinesTable();
+}
+function updateLine(tempId,field,value){
+  const line=currentLines.find(l=>l.tempId===tempId);
+  if(!line)return;
+  line[field]=(field==='quantity'||field==='unit_rate')?parseFloat(value)||0:value;
+  const totalEl=document.getElementById('lt-'+tempId);
+  if(totalEl)totalEl.textContent=fmt((line.quantity||0)*(line.unit_rate||0));
+  renderSummary();
+}
+function renderLinesTable(){
+  const container=document.getElementById('lines-container');
+  const empty=document.getElementById('lines-empty');
+  if(!currentLines.length){container.innerHTML='';empty.style.display='block';renderSummary();return;}
+  empty.style.display='none';
+  container.innerHTML=currentLines.map(l=>`
+    <div class="line-row">
+      <select onchange="updateLine('${l.tempId}','category',this.value)">
+        ${CATS.map(c=>`<option value="${c}" ${l.category===c?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <input type="text" placeholder="Description" value="${esc(l.description)}" oninput="updateLine('${l.tempId}','description',this.value)">
+      <input type="text" placeholder="Task type" value="${esc(l.task_type)}" oninput="updateLine('${l.tempId}','task_type',this.value)">
+      <input type="text" placeholder="Unit" value="${esc(l.unit)}" oninput="updateLine('${l.tempId}','unit',this.value)">
+      <input type="number" step="any" placeholder="0" value="${l.quantity||''}" oninput="updateLine('${l.tempId}','quantity',this.value)">
+      <input type="number" step="any" placeholder="0" value="${l.unit_rate||''}" oninput="updateLine('${l.tempId}','unit_rate',this.value)">
+      <div class="line-total-cell" id="lt-${l.tempId}">${fmt((l.quantity||0)*(l.unit_rate||0))}</div>
+      <button class="remove-line" onclick="removeLine('${l.tempId}')" title="Remove">✕</button>
+    </div>`).join('');
+  renderSummary();
+}
+
+// ── Summary calc ────────────────────────────────────────────────────────────
+function renderSummary(){
+  const subtotal=currentLines.reduce((a,l)=>a+(l.quantity||0)*(l.unit_rate||0),0);
+  const contPct=parseFloat(document.getElementById('f-contingency').value)||0;
+  const ohPct=parseFloat(document.getElementById('f-overhead').value)||0;
+  const po=parseFloat(document.getElementById('f-po').value)||0;
+  const contingency=subtotal*contPct/100;
+  const overhead=subtotal*ohPct/100;
+  const totalCost=subtotal+contingency+overhead;
+  const gp=po-totalCost;
+  const margin=po>0?(gp/po*100):0;
+  document.getElementById('sum-subtotal').textContent=fmt(subtotal);
+  document.getElementById('sum-contingency').textContent=fmt(contingency);
+  document.getElementById('sum-overhead').textContent=fmt(overhead);
+  document.getElementById('sum-totalcost').textContent=fmt(totalCost);
+  document.getElementById('sum-po').textContent=po>0?fmt(po):'—';
+  const gpEl=document.getElementById('sum-gp');
+  gpEl.textContent=po>0?fmt(gp):'—';
+  gpEl.style.color=gp>=0?'var(--green)':'var(--red)';
+  const mEl=document.getElementById('sum-margin');
+  mEl.textContent=po>0?margin.toFixed(1)+'%':'—';
+  mEl.style.color=margin>=20?'var(--green)':margin>=10?'var(--accent)':'var(--red)';
+  const note=document.getElementById('sum-note');
+  if(po<=0){note.textContent='Enter a Proposed PO Value to see projected margin.';}
+  else if(margin<10){note.textContent='⚠ Margin below 10% — tight for civils/trenching work where overruns are common.';}
+  else if(margin<20){note.textContent='Margin is workable but has limited buffer for scope creep.';}
+  else{note.textContent='Healthy margin with room to absorb site risk.';}
+}
+
+// ── Save / Delete ───────────────────────────────────────────────────────────
+async function saveEstimate(){
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){showToast('Opportunity name is required','err');return;}
+  const payload={
+    opportunity_name:name,
+    client:document.getElementById('f-client').value.trim(),
+    status:document.getElementById('f-status').value,
+    estimate_date:document.getElementById('f-date').value||null,
+    notes:document.getElementById('f-notes').value.trim(),
+    contingency_pct:parseFloat(document.getElementById('f-contingency').value)||0,
+    overhead_pct:parseFloat(document.getElementById('f-overhead').value)||0,
+    proposed_po_value:parseFloat(document.getElementById('f-po').value)||0,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    let estId=currentEstimateId;
+    if(estId){
+      await sbPatch('estimates',estId,payload);
+    }else{
+      const sess=getSession();
+      payload.created_by=sess?.user?.user_metadata?.full_name||sess?.user?.email||'';
+      const res=await sbPost('estimates',payload);
+      estId=res[0].id;
+      currentEstimateId=estId;
+    }
+    // Line items: delete-then-insert (simple, safe — no external references to line item ids)
+    await sbDelete('estimate_line_items','estimate_id=eq.'+estId);
+    if(currentLines.length){
+      const rows=currentLines.map((l,i)=>({
+        estimate_id:estId,category:l.category,description:l.description,task_type:l.task_type,
+        unit:l.unit,quantity:l.quantity||0,unit_rate:l.unit_rate||0,
+        line_total:(l.quantity||0)*(l.unit_rate||0),sort_order:i
+      }));
+      await sbPost('estimate_line_items',rows);
+    }
+    showToast('Estimate saved');
+    await init();
+    await refreshEstimatesWithLines();
+    openEstimate(estId);
+  }catch(e){
+    showToast('Save failed — check table setup','err');
+  }
+}
+
+async function deleteEstimate(){
+  if(!currentEstimateId)return;
+  const name=document.getElementById('f-name').value;
+  if(!confirm('Delete "'+name+'"? This cannot be undone.'))return;
+  try{
+    await sbDelete('estimates','id=eq.'+currentEstimateId);
+    showToast('Estimate deleted');
+    currentEstimateId=null;
+    await init();
+    await refreshEstimatesWithLines();
+    showList();
+  }catch(e){
+    showToast('Delete failed','err');
+  }
+}
+
+// ── Boot ────────────────────────────────────────────────────────────────────
+(async function(){
+  await init();
+  await refreshEstimatesWithLines();
+  applyPageRBAC();
+  renderStats();
+  renderList();
+})();
+</script>
+</body>
+</html>
