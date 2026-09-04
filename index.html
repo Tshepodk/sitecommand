@@ -325,6 +325,7 @@ tr:hover td{background:var(--bg3)}
       <a href="project_intake.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128196;</span>New Project</a>
       <a href="gantt.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128200;</span>Gantt Schedule</a>
       <a href="variations.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128260;</span>Variations</a>
+      <a href="estimator.html" class="nav-item" data-pm-link style="text-decoration:none"><span class="nav-icon">🧮</span>Estimator</a>
       <a href="users.html" class="nav-item" data-admin-link style="text-decoration:none;display:none"><span class="nav-icon">👥</span>User Management</a>
       <a href="login.html" class="nav-item" style="text-decoration:none"><span class="nav-icon">&#128274;</span>Sign In / Out</a>
     </div>
@@ -1003,7 +1004,7 @@ function applyRBAC(){
   if(role==='foreman'){
     // Redirect away from all restricted pages
     const page=window.location.pathname.split('/').pop();
-    const restricted=['variations.html','pmo.html','users.html','reports.html','gantt.html','project_intake.html','sc_search.html','approvals.html'];
+    const restricted=['variations.html','pmo.html','users.html','reports.html','gantt.html','project_intake.html','sc_search.html','approvals.html','estimator.html'];
     if(restricted.includes(page)){window.location.href='intake.html';return;}
 
     // Hide ALL sidebar nav sections except Daily Reports link and Sign In/Out
